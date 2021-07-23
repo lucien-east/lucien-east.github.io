@@ -1,10 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>fcitx 行列輸入法無法使用標點符號</title>
+    <url>/2021/07/24/Chinese-Input-Method-on-Manjaro-II/</url>
+    <content><![CDATA[<p>設定好 fcitx 的行列輸入法時，會發現有無法正常使用標點符號的問題 (i.e. <code>W</code> + <code>2</code> 沒反應)</p>
+<p>這部份需要更新 fcitx 的字碼表，來修改 <code>W</code> + <code>1</code> ~ <code>9</code> 的行為</p>
+<span id="more"></span>
+<h2 id="下載行列輸入法30字碼表">下載行列輸入法30字碼表</h2>
+<p>下載更新後的 array30.mb (<a href="https://drive.google.com/file/d/1fDcoUeD4uBa7KtgWA8f_Ayl3nQZzud6r/view?usp=sharing">GoogleDrive</a> by <a href="http://hyperrate.com/thread.php?tid=33369#33369">老刀</a>)</p>
+<blockquote>
+<p>若希望手動製作字碼表，可至官方下載字碼表原始檔 (<a href="http://array30.sourceforge.net/files/ar30.cin">gcin字碼表</a>)，並將其修改成 fcitx 的字碼表，再使用 fcitx 工具 <code>fcitx-tools</code> 轉為需要的格式: <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo pacman -S fcitx-tools</span><br><span class="line">txt2mb array30.txt array30.mb  <span class="comment"># Generate the table manually</span></span><br></pre></td></tr></table></figure></p>
+</blockquote>
+<h2 id="更新字碼表">更新字碼表</h2>
+<p>建議先將原來的字碼表做備份後，再將準備好的字碼表搬入</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo mv /usr/share/fcitx/table/array30.mb /usr/share/fcitx/table/array30.mb.bak  <span class="comment"># Backup</span></span><br><span class="line">sudo mv array30.mb /usr/share/fcitx/table/array30.mb</span><br></pre></td></tr></table></figure>
+<h2 id="修改-fcitx-裡候選字數的設定">修改 fcitx 裡候選字數的設定</h2>
+<p>這一步是為了讓配置和 Windows 一樣，將 fcitx 針對候選字數的設定變更為 10</p>
+<ol type="1">
+<li>進入 fcitx 的設定 (Configure)</li>
+<li>切至全域設定 (Global Config)</li>
+<li>更新候選字數 (Candidate Word Number) 為 10</li>
+</ol>
+<p>重新啟動 fcitx 或重新登入系統以載入新的字碼表就可以使用標點符號了，預設是使用 <code>↑</code> 和 <code>↓</code> 來切換上下頁</p>
+]]></content>
+      <categories>
+        <category>Environment SetUp</category>
+      </categories>
+      <tags>
+        <tag>Manjaro</tag>
+        <tag>InputMethod</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Manjaro上安裝行列或其他中文輸入法 (fcitx + rime)</title>
     <url>/2021/07/22/Chinese-Input-Method-on-Manjaro/</url>
     <content><![CDATA[<p>每一次重新安裝好用來開發的Linux環境時，總會因為自己是使用較小眾的行列輸入法，常得在過程中的安裝和設定上掙扎許久...</p>
-<p>以往這些紀錄都只會留存在我個人的Evernote；受惠於網路甚多，現在決定開始把這些過程重新整理並分享給有需要的人</p>
+<p>以往這些紀錄都只會留存在我個人的 Evernote；受惠於網路甚多，現在決定開始把這些過程重新整理並分享給有需要的人</p>
 <p>以下步驟也適用於倉頡、大易、速成、嘸蝦米等中文輸入法</p>
 <span id="more"></span>
 <h2 id="安裝fcitx相關package">安裝fcitx相關package</h2>
@@ -12,11 +43,11 @@
 <ul>
 <li><code>fcitx-im</code>: fcitx + fcitx-qt5
 <ul>
-<li><p>fcitx: flexible Xontext-aware Input tool with eXtension</p></li>
-<li><p>fcitx-qt5: fcitx Qt5 IM module</p></li>
+<li>fcitx: flexible Xontext-aware Input tool with eXtension</li>
+<li>fcitx-qt5: fcitx Qt5 IM module</li>
 </ul></li>
 <li><code>fcitx-chewing</code> : 注音輸入法</li>
-<li><code>fcitx-table-extra</code> : 含行列, 倉頡, 大易等輸入法之宇碼表，其支援的字碼表細節可參考 <a href="https://github.com/fcitx/fcitx5-table-extra">Fcitx5-table-extra</a></li>
+<li><code>fcitx-table-extra</code> : 含行列, 倉頡, 大易，嘸蝦米等輸入法之宇碼表，其支援的字碼表細節可參考 <a href="https://github.com/fcitx/fcitx5-table-extra">Fcitx5-table-extra</a></li>
 <li><code>fcitx-configtool</code> : 安裝fcitx圖形管理工具</li>
 <li><code>fcitx-rime</code> : 安裝rime
 <ul>
@@ -33,7 +64,7 @@
 <ol type="1">
 <li><p>右鍵點選 fcitx 的 Configure (在右下 icon 列或是直接在 Manjaro application launcher 裡尋找)</p></li>
 <li><p>按 + 來新增需要的輸入法</p></li>
-<li><p>選擇所需要新增的輸入法 (若環境預設為英文語系或其他，記得要先將 Only Show Current Language 的勾勾點掉)</p></li>
+<li><p>選擇需要新增的輸入法 (若環境預設為英文語系或其他，記得要先將 Only Show Current Language 的勾勾點掉)</p></li>
 <li><p>新增完畢後可使用 <code>ctrl</code>+<code>space</code> 來切換</p></li>
 </ol>
 ]]></content>

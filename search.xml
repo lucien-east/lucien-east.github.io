@@ -12,7 +12,7 @@
 <p>若希望手動製作字碼表，可至官方下載字碼表原始檔 (<a href="http://array30.sourceforge.net/files/ar30.cin">gcin字碼表</a>)，並將其修改成 fcitx 的字碼表，再使用 fcitx 工具 <code>fcitx-tools</code> 轉為需要的格式: <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo pacman -S fcitx-tools</span><br><span class="line">txt2mb array30.txt array30.mb  <span class="comment"># Generate the table manually</span></span><br></pre></td></tr></table></figure></p>
 </blockquote>
 <h2 id="更新字碼表">更新字碼表</h2>
-<p>建議先將原來的字碼表做備份後，再將準備好的字碼表搬至 fcitx 載入字根表的資料夾</p>
+<p>建議先將原來的字碼表做備份後，再將準備好的字碼表搬入</p>
 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo mv /usr/share/fcitx/table/array30.mb /usr/share/fcitx/table/array30.mb.bak  <span class="comment"># Backup</span></span><br><span class="line">sudo mv array30.mb /usr/share/fcitx/table/array30.mb</span><br></pre></td></tr></table></figure>
 <h2 id="修改-fcitx-裡候選字數的設定">修改 fcitx 裡候選字數的設定</h2>
 <p>這一步是為了讓配置和 Windows 一樣，將 fcitx 針對候選字數的設定變更為 10</p>

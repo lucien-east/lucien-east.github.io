@@ -192,6 +192,88 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/08/07/20210807-cpp-smart-pointers/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="East">
+      <meta itemprop="description" content="Let the light settle your heart">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="East TechNote">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/08/07/20210807-cpp-smart-pointers/" class="post-title-link" itemprop="url">[C++] Smart Pointers - unique_ptr, shared_ptr, weak_ptr - from the implementation to their usage</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2021-08-07 20:42:33 / Modified: 22:40:14" itemprop="dateCreated datePublished" datetime="2021-08-07T20:42:33+08:00">2021-08-07</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Programming-Language/" itemprop="url" rel="index"><span itemprop="name">Programming Language</span></a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Programming-Language/C/" itemprop="url" rel="index"><span itemprop="name">C++</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>When we develop our program or the system continues to grow as time goes by, <strong>memory leakage</strong> is usually a pain we suffer most. To militate against this problem, C++ has introduced smart pointer family - <code>unique_ptr</code>, <code>shared_ptr</code>, <code>weak_ptr</code>, defined in header <code>&lt;memory&gt;</code>, since C++11.</p>
+<blockquote>
+<p>Precisely, <code>unique_ptr</code> inherits most of characteristics from <code>auto_ptr</code>, which has been implemented since C++03. Yet, due to the lack of <code>move</code> semantics, it encounters significant limitation: <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">auto_ptr&lt;<span class="keyword">int</span>&gt; <span class="title">p</span> <span class="params">(<span class="keyword">new</span> <span class="keyword">int</span>(<span class="number">1</span>))</span></span>;</span><br><span class="line">vector&lt;auto_ptr&lt;<span class="keyword">int</span>&gt;&gt; vec;</span><br><span class="line"></span><br><span class="line">vec.<span class="built_in">push_back</span>(p);            <span class="comment">// !!! error, because of Copy constructor</span></span><br><span class="line">vec.<span class="built_in">push_back</span>(std::<span class="built_in">move</span>(p))  <span class="comment">// Okay, with move semantics since C++11</span></span><br></pre></td></tr></table></figure> Note that <code>auto_ptr</code> is <strong>deprecated</strong> now and should not be used any more for safety.</p>
+</blockquote>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2021/08/07/20210807-cpp-smart-pointers/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://example.com/2021/07/29/20210729-cpp-vector-emplace/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -206,7 +288,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2021/07/29/20210729-cpp-vector-emplace/" class="post-title-link" itemprop="url">[C++ STL] Optimise the Efficiency When Using STL Containers - taking vector emplace_back as an example</a>
+            <a href="/2021/07/29/20210729-cpp-vector-emplace/" class="post-title-link" itemprop="url">[C++] Optimise the Efficiency when Using STL Containers - taking vector emplace_back as an example</a>
         </h2>
 
         <div class="post-meta">
@@ -215,10 +297,16 @@
                 <i class="fa fa-calendar-o"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2021-07-29 17:35:20 / Modified: 21:45:13" itemprop="dateCreated datePublished" datetime="2021-07-29T17:35:20+08:00">2021-07-29</time>
+              <time title="Created: 2021-07-29 17:35:20" itemprop="dateCreated datePublished" datetime="2021-07-29T17:35:20+08:00">2021-07-29</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-08-05 17:32:58" itemprop="dateModified" datetime="2021-08-05T17:32:58+08:00">2021-08-05</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
@@ -585,7 +673,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">4</span>
+          <span class="site-state-item-count">5</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -603,6 +691,11 @@
       </div>
   </nav>
 </div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="mailto:lucien.omni@gmail.com" title="E-Mail → mailto:lucien.omni@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+  </div>
 
 
 

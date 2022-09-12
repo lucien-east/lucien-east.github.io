@@ -1,48 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>fcitx 行列輸入法無法使用標點符號</title>
-    <url>/2021/07/24/Chinese-Input-Method-on-Manjaro-II/</url>
-    <content><![CDATA[<p>設定好 fcitx 的行列輸入法時，會發現有無法正常使用標點符號的問題 (i.e.
-<code>W</code> + <code>2</code> 沒反應)</p>
-<p>這部份需要更新 fcitx 的字碼表，來修改 <code>W</code> + <code>1</code>
-~ <code>9</code> 的行為</p>
-<span id="more"></span>
-<h2 id="下載行列輸入法30字碼表">下載行列輸入法30字碼表</h2>
-<p>下載更新後的 array30.mb (<a
-href="https://drive.google.com/file/d/1fDcoUeD4uBa7KtgWA8f_Ayl3nQZzud6r/view?usp=sharing">GoogleDrive</a>
-by <a
-href="http://hyperrate.com/thread.php?tid=33369#33369">老刀</a>)</p>
-<blockquote>
-<p>若希望手動製作字碼表，可至官方下載字碼表原始檔 (<a
-href="http://array30.sourceforge.net/files/ar30.cin">gcin字碼表</a>)，並將其修改成
-fcitx 的字碼表，再使用 fcitx 工具 <code>fcitx-tools</code>
-轉為需要的格式: <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo pacman -S fcitx-tools</span><br><span class="line">txt2mb array30.txt array30.mb  <span class="comment"># Generate the table manually</span></span><br></pre></td></tr></table></figure></p>
-</blockquote>
-<h2 id="更新字碼表">更新字碼表</h2>
-<p>建議先將原來的字碼表做備份後，再將準備好的字碼表搬入</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo mv /usr/share/fcitx/table/array30.mb /usr/share/fcitx/table/array30.mb.bak  <span class="comment"># Backup</span></span><br><span class="line">sudo mv array30.mb /usr/share/fcitx/table/array30.mb</span><br></pre></td></tr></table></figure>
-<h2 id="修改-fcitx-裡候選字數的設定">修改 fcitx 裡候選字數的設定</h2>
-<p>這一步是為了讓配置和 Windows 一樣，將 fcitx 針對候選字數的設定變更為
-10</p>
-<ol type="1">
-<li>進入 fcitx 的設定 (Configure)</li>
-<li>切至全域設定 (Global Config)</li>
-<li>更新候選字數 (Candidate Word Number) 為 10</li>
-</ol>
-<p>重新啟動 fcitx
-或重新登入系統以載入新的字碼表就可以使用標點符號了，預設是使用
-<code>↑</code> 和 <code>↓</code> 來切換上下頁</p>
-]]></content>
-      <categories>
-        <category>Environment SetUp</category>
-      </categories>
-      <tags>
-        <tag>Manjaro</tag>
-        <tag>InputMethod</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Manjaro上安裝行列或其他中文輸入法 (fcitx + rime)</title>
     <url>/2021/07/22/Chinese-Input-Method-on-Manjaro/</url>
     <content><![CDATA[<p>每一次重新安裝好用來開發的Linux環境時，總會因為自己是使用較小眾的行列輸入法，常得在過程中的安裝和設定上掙扎許久...</p>
@@ -95,121 +53,45 @@ Show Current Language 的勾勾點掉)</p></li>
       </tags>
   </entry>
   <entry>
-    <title>[C++] Optimise the Efficiency when Using STL Containers - taking vector emplace_back as an example</title>
-    <url>/2021/07/29/cpp-vector-emplace/</url>
-    <content><![CDATA[<p>C++ provides a plethora of containers that allow us to dynamically
-allocate our elements in run time. Take <code>vector</code> as an
-example. It is widely used in many applications. However, for some
-extreme cases, we may still want to avoid the overhead of reallocation
-or copy operations when those operations are quite expensive.</p>
-<p>Since C++11, with the advent of <code>emplace</code> methods,
-developers are able to pursue more efficiency via them.</p>
+    <title>fcitx 行列輸入法無法使用標點符號</title>
+    <url>/2021/07/24/Chinese-Input-Method-on-Manjaro-II/</url>
+    <content><![CDATA[<p>設定好 fcitx 的行列輸入法時，會發現有無法正常使用標點符號的問題 (i.e.
+<code>W</code> + <code>2</code> 沒反應)</p>
+<p>這部份需要更新 fcitx 的字碼表，來修改 <code>W</code> + <code>1</code>
+~ <code>9</code> 的行為</p>
 <span id="more"></span>
-<h2 id="a-toy-example">A Toy Example</h2>
-<p>To get a grasp of the usage of <code>emplace</code> , let's firstly
-look at a simple object. Say we have a class containing the information
-of a stock:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Stock</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Stock</span>(string date, <span class="keyword">double</span> price, <span class="keyword">int</span> volume) :</span><br><span class="line">        <span class="built_in">date</span>(date), <span class="built_in">price</span>(price), <span class="built_in">volume</span>(volume)</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Contruct: &quot;</span> &lt;&lt; date &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">Stock</span>(<span class="keyword">const</span> Stock&amp; obj) :</span><br><span class="line">        <span class="built_in">date</span>(obj.date), <span class="built_in">price</span>(obj.price), <span class="built_in">volume</span>(obj.volume)</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Copied: &quot;</span> &lt;&lt; date &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    string date;</span><br><span class="line">    <span class="keyword">double</span> price;</span><br><span class="line">    <span class="keyword">int</span> volume;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>For the convenience of observation, when the object is created or
-copied, the corresponded message will be printed.</p>
-<h2 id="the-behavior-of-copy-between-push_back-and-emplace_back">The
-Behavior of Copy between <code>push_back</code> and
-<code>emplace_back</code></h2>
-<p>We now use a vector - <code>portfolio</code> - to maintain our stock
-objects.</p>
-<p>First, we add the object <code>2021-08-01</code> into it via
-<code>push_back()</code>:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    vector&lt;Stock&gt; portfolio;</span><br><span class="line">    portfolio.<span class="built_in">push_back</span>(&#123;<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>&#125;);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>When executing the program, we get the output:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Contruct: 2021-08-01</span><br><span class="line">Copied: 2021-08-01</span><br></pre></td></tr></table></figure>
-<p>It shows that this object is created and copied into the vector
-afterwards. The copy occurs for the reason that our object is not
-allocated on the space where our vector <code>portfolio</code> is
-located. The system still has to copy it onto the vector space.</p>
-<p>This copy operation can be spared if our system can simply construct
-our object onto <code>portfolio</code>'s space. The method
-<code>emplace_back()</code> can come into play:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">vector&lt;Stock&gt; portfolio;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>);</span><br></pre></td></tr></table></figure>
-<p>When executing the program, the copy operation has disappeared. The
-object now is constructed in place:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Contruct: 2021-08-01</span><br></pre></td></tr></table></figure>
-<p>Note the syntax sugar only needs us to specify our arguments: <a
-href="#fn1" class="footnote-ref" id="fnref1"
-role="doc-noteref"><sup>1</sup></a> <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;class... Args&gt;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">emplace_back</span> <span class="params">(Args&amp;&amp;... args)</span></span>;</span><br></pre></td></tr></table></figure></p>
-<h2 id="another-unexpected-copy-behind-the-background">Another
-Unexpected Copy behind the Background</h2>
-<p>Cautious readers would find that if we add more items, there might be
-still copy occurring:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">vector&lt;Stock&gt; portfolio;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>);</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-02&quot;</span>, <span class="number">12.5</span>, <span class="number">5</span>);</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-03&quot;</span>, <span class="number">15.7</span>, <span class="number">1</span>);</span><br></pre></td></tr></table></figure>
-<p>Its output:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Contruct: 2021-08-01</span><br><span class="line">Contruct: 2021-08-02</span><br><span class="line">Copied: 2021-08-01</span><br><span class="line">Contruct: 2021-08-03</span><br><span class="line">Copied: 2021-08-01</span><br><span class="line">Copied: 2021-08-02</span><br></pre></td></tr></table></figure>
-<p>To understand this, we have to know that the <strong>storage
-space</strong> of a vector ought to be allocated in advance. Do not
-confuse this storage space with the <strong>actual size</strong> used by
-the user (indicated by <code>size()</code>). The storage space is always
-equal or greater than the atual size of a vector, so that our system
-need not reallocate on each insertion. The size of the storage space can
-be obtained by the method <code>capacity()</code>.</p>
-<p>Now we are able to analyse this behavior with the help of it:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">vector&lt;Stock&gt; portfolio;</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-01 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>);</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-02 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-02&quot;</span>, <span class="number">12.5</span>, <span class="number">5</span>);</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-03 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-03&quot;</span>, <span class="number">15.7</span>, <span class="number">1</span>);</span><br></pre></td></tr></table></figure>
-<p>Output:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Capacity before inserting 2021-08-01 = 0</span><br><span class="line">Contruct: 2021-08-01</span><br><span class="line"></span><br><span class="line">Capacity before inserting 2021-08-02 = 1</span><br><span class="line">Contruct: 2021-08-02</span><br><span class="line">Copied: 2021-08-01</span><br><span class="line"></span><br><span class="line">Capacity before inserting 2021-08-03 = 2</span><br><span class="line">Contruct: 2021-08-03</span><br><span class="line">Copied: 2021-08-01</span><br><span class="line">Copied: 2021-08-02</span><br></pre></td></tr></table></figure>
-<p>When <code>2021-08-01</code> is constructed, it just allocates in
-place, no copy is needed as aforementioned.</p>
-<p>However, when adding <code>2021-08-02</code>, the acutual size of a
-vector now grows to 2, the storage space is not enough to accomodate.
-Thus, the system has to reallocate its storage space in advance, then
-<strong>constructing</strong> <code>2021-08-02</code> on it, followed by
-<strong>copying</strong> the <code>2021-08-01</code> objects into the
-newly allocated space.</p>
-<p>Similarly, <code>2021-08-03</code> is <strong>constructed in
-place</strong> before the system allocates enough storage space.
-Then,<code>2021-08-01</code> and <code>2021-08-02</code> will be
-<strong>copied</strong> into the reallocated space afterwards.</p>
+<h2 id="下載行列輸入法30字碼表">下載行列輸入法30字碼表</h2>
+<p>下載更新後的 array30.mb (<a
+href="https://drive.google.com/file/d/1fDcoUeD4uBa7KtgWA8f_Ayl3nQZzud6r/view?usp=sharing">GoogleDrive</a>
+by <a
+href="http://hyperrate.com/thread.php?tid=33369#33369">老刀</a>)</p>
 <blockquote>
-<p>Note the elements in a vector are stored in a <strong>contiguous
-memory block</strong>.<a href="#fn2" class="footnote-ref" id="fnref2"
-role="doc-noteref"><sup>2</sup></a> This is the reason that when there
-is no enough storage space for insertion, the system has to reallocate a
-memory block to arrange its elements. The behavior of how capacity will
-grow may vary by different system.</p>
+<p>若希望手動製作字碼表，可至官方下載字碼表原始檔 (<a
+href="http://array30.sourceforge.net/files/ar30.cin">gcin字碼表</a>)，並將其修改成
+fcitx 的字碼表，再使用 fcitx 工具 <code>fcitx-tools</code>
+轉為需要的格式: <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo pacman -S fcitx-tools</span><br><span class="line">txt2mb array30.txt array30.mb  <span class="comment"># Generate the table manually</span></span><br></pre></td></tr></table></figure></p>
 </blockquote>
-<h2 id="the-usage-of-reserve">The Usage of <code>reserve</code></h2>
-<p>To optimise this, we could have our vector contain enough storage
-space in advance. This is the moment when the method
-<code>reserve()</code> can take advantage:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">vector&lt;Stock&gt; portfolio;</span><br><span class="line"></span><br><span class="line">portfolio.<span class="built_in">reserve</span>(<span class="number">5</span>);   <span class="comment">// Request enough storage space</span></span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-01 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>);</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-02 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-02&quot;</span>, <span class="number">12.5</span>, <span class="number">5</span>);</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-03 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-03&quot;</span>, <span class="number">15.7</span>, <span class="number">1</span>);</span><br></pre></td></tr></table></figure>
-<p>Output:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Capacity before inserting 2021-08-01 = 5</span><br><span class="line">Contruct: 2021-08-01</span><br><span class="line"></span><br><span class="line">Capacity before inserting 2021-08-02 = 5</span><br><span class="line">Contruct: 2021-08-02</span><br><span class="line"></span><br><span class="line">Capacity before inserting 2021-08-03 = 5</span><br><span class="line">Contruct: 2021-08-03</span><br></pre></td></tr></table></figure>
-<p>The copy operations has disappeared if the storage size are large
-enough. Remember that <code>reserve()</code> does not cause any effect
-on the vector size.</p>
-<blockquote>
-<p>The maximum capacity of a vector is restricted by
-<code>vector::max_size</code>.</p>
-</blockquote>
-<section id="footnotes" class="footnotes footnotes-end-of-document"
-role="doc-endnotes">
-<hr />
-<ol>
-<li id="fn1"><p><a
-href="https://www.cplusplus.com/reference/vector/vector/emplace_back/">C++
-Reference - std::vector::emplace_back</a><a href="#fnref1"
-class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn2"><p><a
-href="https://timsong-cpp.github.io/cppwp/n4140/vector.overview#1">C++
-Standard n4140: Class template vector overview</a><a href="#fnref2"
-class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<h2 id="更新字碼表">更新字碼表</h2>
+<p>建議先將原來的字碼表做備份後，再將準備好的字碼表搬入</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo mv /usr/share/fcitx/table/array30.mb /usr/share/fcitx/table/array30.mb.bak  <span class="comment"># Backup</span></span><br><span class="line">sudo mv array30.mb /usr/share/fcitx/table/array30.mb</span><br></pre></td></tr></table></figure>
+<h2 id="修改-fcitx-裡候選字數的設定">修改 fcitx 裡候選字數的設定</h2>
+<p>這一步是為了讓配置和 Windows 一樣，將 fcitx 針對候選字數的設定變更為
+10</p>
+<ol type="1">
+<li>進入 fcitx 的設定 (Configure)</li>
+<li>切至全域設定 (Global Config)</li>
+<li>更新候選字數 (Candidate Word Number) 為 10</li>
 </ol>
-</section>
+<p>重新啟動 fcitx
+或重新登入系統以載入新的字碼表就可以使用標點符號了，預設是使用
+<code>↑</code> 和 <code>↓</code> 來切換上下頁</p>
 ]]></content>
       <categories>
-        <category>Programming Language</category>
-        <category>C++</category>
+        <category>Environment SetUp</category>
       </categories>
       <tags>
-        <tag>C++</tag>
-        <tag>Optimisation</tag>
+        <tag>Manjaro</tag>
+        <tag>InputMethod</tag>
       </tags>
   </entry>
   <entry>
@@ -368,6 +250,616 @@ in a year, with its initial at $10.</p>
         <tag>Brownian Motion</tag>
         <tag>Simulation</tag>
         <tag>Python</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>[C++] Optimise the Efficiency when Using STL Containers - taking vector emplace_back as an example</title>
+    <url>/2021/07/29/cpp-vector-emplace/</url>
+    <content><![CDATA[<p>C++ provides a plethora of containers that allow us to dynamically
+allocate our elements in run time. Take <code>vector</code> as an
+example. It is widely used in many applications. However, for some
+extreme cases, we may still want to avoid the overhead of reallocation
+or copy operations when those operations are quite expensive.</p>
+<p>Since C++11, with the advent of <code>emplace</code> methods,
+developers are able to pursue more efficiency via them.</p>
+<span id="more"></span>
+<h2 id="a-toy-example">A Toy Example</h2>
+<p>To get a grasp of the usage of <code>emplace</code> , let's firstly
+look at a simple object. Say we have a class containing the information
+of a stock:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Stock</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Stock</span>(string date, <span class="keyword">double</span> price, <span class="keyword">int</span> volume) :</span><br><span class="line">        <span class="built_in">date</span>(date), <span class="built_in">price</span>(price), <span class="built_in">volume</span>(volume)</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Contruct: &quot;</span> &lt;&lt; date &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">Stock</span>(<span class="keyword">const</span> Stock&amp; obj) :</span><br><span class="line">        <span class="built_in">date</span>(obj.date), <span class="built_in">price</span>(obj.price), <span class="built_in">volume</span>(obj.volume)</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Copied: &quot;</span> &lt;&lt; date &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    string date;</span><br><span class="line">    <span class="keyword">double</span> price;</span><br><span class="line">    <span class="keyword">int</span> volume;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>For the convenience of observation, when the object is created or
+copied, the corresponded message will be printed.</p>
+<h2 id="the-behavior-of-copy-between-push_back-and-emplace_back">The
+Behavior of Copy between <code>push_back</code> and
+<code>emplace_back</code></h2>
+<p>We now use a vector - <code>portfolio</code> - to maintain our stock
+objects.</p>
+<p>First, we add the object <code>2021-08-01</code> into it via
+<code>push_back()</code>:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    vector&lt;Stock&gt; portfolio;</span><br><span class="line">    portfolio.<span class="built_in">push_back</span>(&#123;<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>&#125;);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>When executing the program, we get the output:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Contruct: 2021-08-01</span><br><span class="line">Copied: 2021-08-01</span><br></pre></td></tr></table></figure>
+<p>It shows that this object is created and copied into the vector
+afterwards. The copy occurs for the reason that our object is not
+allocated on the space where our vector <code>portfolio</code> is
+located. The system still has to copy it onto the vector space.</p>
+<p>This copy operation can be spared if our system can simply construct
+our object onto <code>portfolio</code>'s space. The method
+<code>emplace_back()</code> can come into play:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">vector&lt;Stock&gt; portfolio;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>);</span><br></pre></td></tr></table></figure>
+<p>When executing the program, the copy operation has disappeared. The
+object now is constructed in place:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Contruct: 2021-08-01</span><br></pre></td></tr></table></figure>
+<p>Note the syntax sugar only needs us to specify our arguments: <a
+href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a> <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;class... Args&gt;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">emplace_back</span> <span class="params">(Args&amp;&amp;... args)</span></span>;</span><br></pre></td></tr></table></figure></p>
+<h2 id="another-unexpected-copy-behind-the-background">Another
+Unexpected Copy behind the Background</h2>
+<p>Cautious readers would find that if we add more items, there might be
+still copy occurring:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">vector&lt;Stock&gt; portfolio;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>);</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-02&quot;</span>, <span class="number">12.5</span>, <span class="number">5</span>);</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-03&quot;</span>, <span class="number">15.7</span>, <span class="number">1</span>);</span><br></pre></td></tr></table></figure>
+<p>Its output:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Contruct: 2021-08-01</span><br><span class="line">Contruct: 2021-08-02</span><br><span class="line">Copied: 2021-08-01</span><br><span class="line">Contruct: 2021-08-03</span><br><span class="line">Copied: 2021-08-01</span><br><span class="line">Copied: 2021-08-02</span><br></pre></td></tr></table></figure>
+<p>To understand this, we have to know that the <strong>storage
+space</strong> of a vector ought to be allocated in advance. Do not
+confuse this storage space with the <strong>actual size</strong> used by
+the user (indicated by <code>size()</code>). The storage space is always
+equal or greater than the atual size of a vector, so that our system
+need not reallocate on each insertion. The size of the storage space can
+be obtained by the method <code>capacity()</code>.</p>
+<p>Now we are able to analyse this behavior with the help of it:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">vector&lt;Stock&gt; portfolio;</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-01 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>);</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-02 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-02&quot;</span>, <span class="number">12.5</span>, <span class="number">5</span>);</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-03 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-03&quot;</span>, <span class="number">15.7</span>, <span class="number">1</span>);</span><br></pre></td></tr></table></figure>
+<p>Output:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Capacity before inserting 2021-08-01 = 0</span><br><span class="line">Contruct: 2021-08-01</span><br><span class="line"></span><br><span class="line">Capacity before inserting 2021-08-02 = 1</span><br><span class="line">Contruct: 2021-08-02</span><br><span class="line">Copied: 2021-08-01</span><br><span class="line"></span><br><span class="line">Capacity before inserting 2021-08-03 = 2</span><br><span class="line">Contruct: 2021-08-03</span><br><span class="line">Copied: 2021-08-01</span><br><span class="line">Copied: 2021-08-02</span><br></pre></td></tr></table></figure>
+<p>When <code>2021-08-01</code> is constructed, it just allocates in
+place, no copy is needed as aforementioned.</p>
+<p>However, when adding <code>2021-08-02</code>, the acutual size of a
+vector now grows to 2, the storage space is not enough to accomodate.
+Thus, the system has to reallocate its storage space in advance, then
+<strong>constructing</strong> <code>2021-08-02</code> on it, followed by
+<strong>copying</strong> the <code>2021-08-01</code> objects into the
+newly allocated space.</p>
+<p>Similarly, <code>2021-08-03</code> is <strong>constructed in
+place</strong> before the system allocates enough storage space.
+Then,<code>2021-08-01</code> and <code>2021-08-02</code> will be
+<strong>copied</strong> into the reallocated space afterwards.</p>
+<blockquote>
+<p>Note the elements in a vector are stored in a <strong>contiguous
+memory block</strong>.<a href="#fn2" class="footnote-ref" id="fnref2"
+role="doc-noteref"><sup>2</sup></a> This is the reason that when there
+is no enough storage space for insertion, the system has to reallocate a
+memory block to arrange its elements. The behavior of how capacity will
+grow may vary by different system.</p>
+</blockquote>
+<h2 id="the-usage-of-reserve">The Usage of <code>reserve</code></h2>
+<p>To optimise this, we could have our vector contain enough storage
+space in advance. This is the moment when the method
+<code>reserve()</code> can take advantage:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">vector&lt;Stock&gt; portfolio;</span><br><span class="line"></span><br><span class="line">portfolio.<span class="built_in">reserve</span>(<span class="number">5</span>);   <span class="comment">// Request enough storage space</span></span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-01 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>);</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-02 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-02&quot;</span>, <span class="number">12.5</span>, <span class="number">5</span>);</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-03 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-03&quot;</span>, <span class="number">15.7</span>, <span class="number">1</span>);</span><br></pre></td></tr></table></figure>
+<p>Output:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Capacity before inserting 2021-08-01 = 5</span><br><span class="line">Contruct: 2021-08-01</span><br><span class="line"></span><br><span class="line">Capacity before inserting 2021-08-02 = 5</span><br><span class="line">Contruct: 2021-08-02</span><br><span class="line"></span><br><span class="line">Capacity before inserting 2021-08-03 = 5</span><br><span class="line">Contruct: 2021-08-03</span><br></pre></td></tr></table></figure>
+<p>The copy operations has disappeared if the storage size are large
+enough. Remember that <code>reserve()</code> does not cause any effect
+on the vector size.</p>
+<blockquote>
+<p>The maximum capacity of a vector is restricted by
+<code>vector::max_size</code>.</p>
+</blockquote>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p><a
+href="https://www.cplusplus.com/reference/vector/vector/emplace_back/">C++
+Reference - std::vector::emplace_back</a><a href="#fnref1"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p><a
+href="https://timsong-cpp.github.io/cppwp/n4140/vector.overview#1">C++
+Standard n4140: Class template vector overview</a><a href="#fnref2"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+]]></content>
+      <categories>
+        <category>Programming Language</category>
+        <category>C++</category>
+      </categories>
+      <tags>
+        <tag>C++</tag>
+        <tag>Optimisation</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Sampling - Inverse Transformation Method</title>
+    <url>/2021/09/11/Inverse-Transform-Method/</url>
+    <content><![CDATA[<p>Sometimes, we may wanna simulate certain random variable to get the
+desired approximation. Yet, if the scenario is rather complicated, the
+computation cost can be exorbitant. With the help of <strong>inverse
+transformation method</strong>, we are able to generate many special
+random variables efficienctly.</p>
+<span id="more"></span>
+<h2 id="a-toy-example">A Toy Example</h2>
+<blockquote>
+<p>With replacement, we draw cards at random from an ordinary deck of 52
+cards, and successively until an ACE is drawn. What is the probability
+of exactly 10 draws?</p>
+</blockquote>
+<p>Apparently, let <span class="math inline">\(X\)</span> be the number
+of draws until the first ace. The random variable <span
+class="math inline">\(X\)</span> is of <strong>geometric
+distribution</strong> with the parameter <span class="math inline">\(p =
+\frac{1}{13}\)</span>. The answer of the desired probability is</p>
+<p><span class="math display">\[
+P(x) = (1-p)^{x-1} * p = (\frac{12}{13})^9 * (\frac{1}{13})
+\]</span></p>
+<h2 id="simulating-x">Simulating <span
+class="math inline">\(X\)</span></h2>
+<p>Now, if we wanna approximate the desired probability by simulating
+<span class="math inline">\(X\)</span>, an intuitive way might look like
+as below:</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment">### Pseudo-code of Simulation</span></span><br><span class="line"></span><br><span class="line">i = <span class="number">0</span>    <span class="comment"># iterator</span></span><br><span class="line">k = <span class="number">0</span>    <span class="comment"># Record the desired events</span></span><br><span class="line"><span class="keyword">while</span> i &lt; N:      <span class="comment"># Repeat N trials</span></span><br><span class="line">    draws = <span class="number">0</span>     <span class="comment"># Count how many draws when the first ACE appears</span></span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:   <span class="comment"># Draw the card with replacement until it is an ACE</span></span><br><span class="line">        draws +=<span class="number">1</span></span><br><span class="line">        Generate a random sample x <span class="keyword">from</span> [A,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,..<span class="number">.9</span>,<span class="number">10</span>,J,Q,K]</span><br><span class="line">        <span class="keyword">if</span> x <span class="keyword">is</span> ACE:   <span class="comment"># Let 1 represent the ACE</span></span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> draws <span class="keyword">is</span> <span class="number">10</span>:  <span class="comment"># Number of draws is exactly 10</span></span><br><span class="line">        k +=<span class="number">1</span></span><br><span class="line">    </span><br><span class="line">    i +=<span class="number">1</span></span><br><span class="line"></span><br><span class="line">prob = k/N   <span class="comment"># The approximate value</span></span><br></pre></td></tr></table></figure>
+<p>From the experiment, it can be observed that <span
+class="math inline">\(N\)</span> has to be quite large (&gt;10000) if we
+would like to get enough accuracy:</p>
+<img src="/2021/09/11/Inverse-Transform-Method/geomtric_sim.png" class="" title="This is an image">
+<p>Below is the source code:</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"></span><br><span class="line"><span class="comment"># N trials</span></span><br><span class="line"><span class="comment"># k: Count the desired events obtained in N trials</span></span><br><span class="line"></span><br><span class="line">N = [<span class="number">100</span>, <span class="number">250</span>, <span class="number">500</span>, <span class="number">750</span>, </span><br><span class="line">     <span class="number">1000</span>, <span class="number">1500</span>, <span class="number">2000</span>, <span class="number">2500</span>, <span class="number">3000</span>, <span class="number">3500</span>, <span class="number">4000</span>, <span class="number">4500</span>, <span class="number">5000</span>,</span><br><span class="line">     <span class="number">5500</span>, <span class="number">6000</span>, <span class="number">6500</span>, <span class="number">7000</span>, <span class="number">7500</span>, <span class="number">8000</span>, <span class="number">8500</span>, <span class="number">9000</span>, <span class="number">9500</span>,</span><br><span class="line">     <span class="number">10000</span>, <span class="number">12500</span>, <span class="number">15000</span>, <span class="number">17500</span>, <span class="number">20000</span>]</span><br><span class="line">approx = []</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> n <span class="keyword">in</span> N:</span><br><span class="line">    i = <span class="number">0</span></span><br><span class="line">    k = <span class="number">0</span></span><br><span class="line">    <span class="keyword">while</span> i &lt; n:</span><br><span class="line">        <span class="comment"># draw the card with replacement until it is ACE</span></span><br><span class="line">        j = <span class="number">0</span></span><br><span class="line">        <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">            j +=<span class="number">1</span></span><br><span class="line">            draw = np.random.randint(<span class="number">1</span>, <span class="number">13</span>)</span><br><span class="line">            <span class="keyword">if</span> draw == <span class="number">1</span>:</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> j == <span class="number">10</span>:  <span class="comment"># draw number is 10</span></span><br><span class="line">            k +=<span class="number">1</span></span><br><span class="line">        </span><br><span class="line">        i +=<span class="number">1</span></span><br><span class="line"></span><br><span class="line">    approx.append(k/n)</span><br><span class="line"></span><br><span class="line">ans = (<span class="number">12</span>/<span class="number">13</span>)**<span class="number">9</span> * (<span class="number">1</span>/<span class="number">13</span>)</span><br><span class="line"></span><br><span class="line">plt.scatter(x=N, y=approx)</span><br><span class="line">plt.xlabel(<span class="string">&#x27;Number of trials&#x27;</span>)</span><br><span class="line">plt.ylabel(<span class="string">&#x27;Approximate probability&#x27;</span>)</span><br><span class="line">plt.axhline(y=ans, color=<span class="string">&#x27;r&#x27;</span>, linestyle=<span class="string">&#x27;-&#x27;</span>, label=<span class="string">&#x27;Answer&#x27;</span>)</span><br><span class="line">plt.legend()</span><br><span class="line">plt.title(<span class="string">&#x27;Simulation to get the Ace at exactly 10 draws&#x27;</span>)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
+<p>However, this approach is not efficient because the time complexity
+is proportional to the draw number. Thus, let's introduce the inverse
+transformation method. By this method, we are able to get the same
+result as well but only need to choose one random point in (0,1),
+significantly reducing the time cost.</p>
+<h2 id="inverse-transformation-method">Inverse Transformation
+Method</h2>
+<p>Let <span class="math inline">\(F(X) = P(X \leq x)\)</span> be the
+probability distribution function of the random variable <span
+class="math inline">\(X\)</span>. Remember that for uniform random
+variable <span class="math inline">\(U\)</span> over <span
+class="math inline">\((0,1)\)</span>,</p>
+<p><span class="math display">\[
+F(U) = P(U \leq x) = x, x \in (0,1) \tag{1}
+\]</span></p>
+<p>Imagine that our objective is to simulate a random variable <span
+class="math inline">\(X\)</span> from a uniform random variable <span
+class="math inline">\(U\)</span>, i.e., <span class="math inline">\(P(X
+\leq x) = P(T(U) \leq x)\)</span>. We hope to find a transformation
+<span class="math inline">\(T\)</span> that is able to convert the
+random variable <span class="math inline">\(U\)</span> into our desired
+<span class="math inline">\(X\)</span>.</p>
+
+$$
+\displaylines {
+P(X \leq x) \\
+= P(T(U) \leq x) \\
+= P(U \leq T^{-1}(x)) \\
+}
+$$
+
+<p>Remember that <span class="math inline">\(F(X) = P(X \leq x)\)</span>
+and from <span class="math inline">\((1)\)</span>:</p>
+
+$$
+\displaylines {
+P(U \leq T^{-1}(x)) \\
+= P(U \leq F(x)) \\
+= P(F^{-1}(U) \leq x)
+}
+$$
+
+<p><span class="math display">\[
+\longrightarrow X = F^{-1}(U) \tag{2}
+\]</span></p>
+<p>From <span class="math inline">\((2)\)</span>, we know the
+transformation <span class="math inline">\(T\)</span> we are looking for
+is just <span class="math inline">\(F^{-1}\)</span>. Therefore, after
+solving <span class="math inline">\(F^{-1}\)</span>, we are able to
+generate the desired <span class="math inline">\(X\)</span> from uniform
+random variable <span class="math inline">\(U\)</span> directly without
+complications.<a href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a></p>
+<h2
+id="simulating-geometric-distribution-via-inverse-transformation-method">Simulating
+Geometric Distribution via Inverse Transformation Method</h2>
+<p>Back to our original problem, we wanna simulate <span
+class="math inline">\(X\)</span> in the toy example, and we know that
+the <span class="math inline">\(F(x)\)</span> of geometric distribution
+with parameter <span class="math inline">\(p\)</span> is</p>
+<p><span class="math display">\[
+F(x) = 1 - (1-p)^{x-1}
+\]</span></p>
+<p>Solve <span class="math inline">\(u = F(x)\)</span>:</p>
+
+$$
+\displaylines {
+u = 1 - (1-p)^{x-1} \\
+x = 1 + \frac{\log{(1-u)}}{\log{(1-p)}}
+}
+$$
+
+<p><span class="math display">\[
+\equiv 1 + \frac{\log{u}}{\log{(1-p)}}  \tag{3}
+\]</span></p>
+<p>If <span class="math inline">\(u\)</span> is a random number variable
+from (0,1), then <span class="math inline">\((1-u)\)</span> is a random
+number variable from (0,1) as well.</p>
+<p>Now, from <span class="math inline">\((3)\)</span>, we are able to
+generate <span class="math inline">\(X\)</span> from <span
+class="math inline">\(U\)</span> efficiently. Because <span
+class="math inline">\(X\)</span> is an integer, we use the <em>floor
+operation</em> (with the <em>ceiling</em> is also equivalent):</p>
+<p><span class="math display">\[
+X = \lfloor 1 + \frac{\log{u}}{\log{(1-p)}} \rfloor
+\]</span></p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment">### Pseudo-code of Geometric Distribution Simulation with Inverse Transform method</span></span><br><span class="line"></span><br><span class="line">i = <span class="number">0</span>    <span class="comment"># iterator</span></span><br><span class="line">k = <span class="number">0</span>    <span class="comment"># Record the desired events</span></span><br><span class="line"><span class="keyword">while</span> i &lt; N:      <span class="comment"># Repeat N trials</span></span><br><span class="line">    Generate a uniform random variable u <span class="keyword">from</span> (<span class="number">0</span>,<span class="number">1</span>)</span><br><span class="line">    <span class="comment"># p is the parameter of geometric distribution</span></span><br><span class="line">    X = floor(<span class="number">1</span> + log(u)/log(<span class="number">1</span>-p))   <span class="comment"># inverse transform</span></span><br><span class="line">    <span class="keyword">if</span> X <span class="keyword">is</span> <span class="number">10</span>:</span><br><span class="line">        k +=<span class="number">1</span></span><br><span class="line"></span><br><span class="line">    i +=<span class="number">1</span></span><br><span class="line"></span><br><span class="line">prob = k/N   <span class="comment"># The approximate value</span></span><br></pre></td></tr></table></figure>
+<p>Below is the experimental result and the related source code:</p>
+<img src="/2021/09/11/Inverse-Transform-Method/geomtric_sim_with_inv.png" class="" title="This is an image">
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"><span class="keyword">from</span> math <span class="keyword">import</span> log, floor</span><br><span class="line"></span><br><span class="line"><span class="comment"># N trials</span></span><br><span class="line"><span class="comment"># k: Count the desired events obtained in N trials</span></span><br><span class="line"></span><br><span class="line">N = [<span class="number">100</span>, <span class="number">250</span>, <span class="number">500</span>, <span class="number">750</span>, </span><br><span class="line">     <span class="number">1000</span>, <span class="number">1500</span>, <span class="number">2000</span>, <span class="number">2500</span>, <span class="number">3000</span>, <span class="number">3500</span>, <span class="number">4000</span>, <span class="number">4500</span>, <span class="number">5000</span>,</span><br><span class="line">     <span class="number">5500</span>, <span class="number">6000</span>, <span class="number">6500</span>, <span class="number">7000</span>, <span class="number">7500</span>, <span class="number">8000</span>, <span class="number">8500</span>, <span class="number">9000</span>, <span class="number">9500</span>,</span><br><span class="line">     <span class="number">10000</span>, <span class="number">12500</span>, <span class="number">15000</span>, <span class="number">17500</span>, <span class="number">20000</span>]</span><br><span class="line">approx = []</span><br><span class="line">p = <span class="number">1</span>/<span class="number">13</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> n <span class="keyword">in</span> N:</span><br><span class="line">    i = <span class="number">0</span></span><br><span class="line">    k = <span class="number">0</span></span><br><span class="line">    <span class="keyword">while</span> i &lt; n:</span><br><span class="line">        <span class="comment"># inverse transformation method</span></span><br><span class="line">        u = np.random.rand()</span><br><span class="line">        X = floor(<span class="number">1</span> + log(u)/log(<span class="number">1</span>-p))</span><br><span class="line">        <span class="keyword">if</span> X == <span class="number">10</span>:</span><br><span class="line">            k +=<span class="number">1</span></span><br><span class="line">        </span><br><span class="line">        i +=<span class="number">1</span></span><br><span class="line"></span><br><span class="line">    approx.append(k/n)</span><br><span class="line"></span><br><span class="line">ans = (<span class="number">12</span>/<span class="number">13</span>)**<span class="number">9</span> * (<span class="number">1</span>/<span class="number">13</span>)</span><br><span class="line"></span><br><span class="line">plt.scatter(x=N, y=approx)</span><br><span class="line">plt.xlabel(<span class="string">&#x27;Number of trials&#x27;</span>)</span><br><span class="line">plt.ylabel(<span class="string">&#x27;Approximate probability&#x27;</span>)</span><br><span class="line">plt.axhline(y=ans, color=<span class="string">&#x27;r&#x27;</span>, linestyle=<span class="string">&#x27;-&#x27;</span>, label=<span class="string">&#x27;Answer&#x27;</span>)</span><br><span class="line">plt.legend()</span><br><span class="line">plt.title(<span class="string">&#x27;Simulation with Inverse Tranformation Method&#x27;</span>)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
+<h2 id="performance-comparison">Performance Comparison</h2>
+<p>Let N be 500000 trials.</p>
+<p>Original method:</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment">### Original Method</span></span><br><span class="line"><span class="keyword">from</span> time <span class="keyword">import</span> perf_counter</span><br><span class="line"></span><br><span class="line">i = <span class="number">0</span></span><br><span class="line">k = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">t1_start = perf_counter()</span><br><span class="line"><span class="keyword">while</span> i &lt; <span class="number">500000</span>:</span><br><span class="line">    <span class="comment"># draw the card with replacement until it is ACE</span></span><br><span class="line">    j = <span class="number">0</span></span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        j +=<span class="number">1</span></span><br><span class="line">        draw = np.random.randint(<span class="number">1</span>, <span class="number">13</span>)</span><br><span class="line">        <span class="keyword">if</span> draw == <span class="number">1</span>:</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> j == <span class="number">10</span>:  <span class="comment"># draw number is 10</span></span><br><span class="line">        k +=<span class="number">1</span></span><br><span class="line"></span><br><span class="line">    i +=<span class="number">1</span></span><br><span class="line">t1_stop = perf_counter()</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;Elapsed time (sec):&quot;</span>, t1_stop-t1_start) </span><br></pre></td></tr></table></figure>
+<p>Inverse transformation method:</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> time <span class="keyword">import</span> perf_counter</span><br><span class="line"></span><br><span class="line">i = <span class="number">0</span></span><br><span class="line">k = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">t1_start = perf_counter()  </span><br><span class="line"><span class="keyword">while</span> i &lt; <span class="number">500000</span>:</span><br><span class="line">    <span class="comment"># inverse transformation method</span></span><br><span class="line">    u = np.random.rand()</span><br><span class="line">    X = floor(<span class="number">1</span> + log(u)/log(<span class="number">1</span>-p))</span><br><span class="line">    <span class="keyword">if</span> X == <span class="number">10</span>:</span><br><span class="line">        k +=<span class="number">1</span></span><br><span class="line">    </span><br><span class="line">    i +=<span class="number">1</span></span><br><span class="line">t1_stop = perf_counter()</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;Elapsed time (sec):&quot;</span>, t1_stop-t1_start) </span><br></pre></td></tr></table></figure>
+<p>Results:</p>
+<table>
+<thead>
+<tr class="header">
+<th>N = 500000 (trials)</th>
+<th>Elapsed Time (sec)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Original Method</td>
+<td>10.832</td>
+</tr>
+<tr class="even">
+<td>Inverse Transformation Method</td>
+<td>0.363</td>
+</tr>
+</tbody>
+</table>
+<p>We can observe that the elapsed time has been substantially reduced
+after applying inverse transformation method.</p>
+<blockquote>
+<p>Note that the inverse transformation method is to mainly improve the
+computation cost. It does <strong>not</strong> increase the convergence
+rate. From the previous experimental results, you can see that the N
+trials required to converge are roughly the same for both methods.</p>
+</blockquote>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>For rigorous proof, you can refer to <a
+href="https://en.wikipedia.org/wiki/Inverse_transform_sampling">Inverse
+transform sampling</a>. The aim here is to grasp the idea intuitively.<a
+href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+]]></content>
+      <categories>
+        <category>Mathematics</category>
+        <category>Probability and Statistics</category>
+      </categories>
+      <tags>
+        <tag>Simulation</tag>
+        <tag>Python</tag>
+        <tag>Sampling</tag>
+        <tag>Inverse Transformation Method</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Implement SVM with SMO from scratch in Python</title>
+    <url>/2022/07/30/Implement-SVM-with-SMO-from-scratch/</url>
+    <content><![CDATA[<p><strong>Support vector machine</strong> (SVM) plays an important role
+in machine learning. Actually, SVM is one of my favorite models because
+of its analytical property. Its main idea is to find the optimal
+hyperplane that can linearly separate the data, or maximise
+<strong>margin</strong> in the feature space. It is one of the most
+robust models based on statistical learning framework in <strong>VC
+theory</strong> (Vapnik–Chervonenkis theory). The determination of the
+model parameters is a quadratic programming problem, or <strong>convex
+optimisation</strong> more specifically. Its solution is usually
+<strong>sparse</strong>, and the new input prediction depends only on
+the evaluation of a subset of training data with kernel function. One of
+the most common and efficient approaches to train SVM is
+<strong>sequential minimal optimisation</strong> (SMO), which breaks
+down the problem into solving a pair of parameters analytically at each
+step. Besides, SMO also eliminates the need for matrix storage issue
+when the training data size is huge.</p>
+<span id="more"></span>
+<h2 id="recall-the-objective-function-of-svm">Recall the Objective
+Function of SVM</h2>
+<img src="/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_1.png" class="" title="Figure 1">
+<p>We want to find a hyperplane <span class="math inline">\(w^T x + b =
+0\)</span> and maximise the margin width <span
+class="math inline">\(2M\)</span> in order to separate the data labeled
+as <span class="math inline">\(y = \pm 1\)</span>. All data points
+should be correctly classified, i.e. <span class="math inline">\(y_i(w^T
+x_i + b) &gt; 0\)</span> for all <span
+class="math inline">\(i\)</span>,</p>
+
+$$
+\displaylines {
+\max_{w,b} M \\
+\textrm{ s.t. } \frac{y_i(w^T x_i + b)}{ \Vert w \Vert} \ge M, \forall i=1,2,...,N
+}
+$$
+
+<p>The above optimisation problem can be converted into a dual form of
+Lagrangian function, maximising <span
+class="math inline">\(L\)</span>:</p>
+
+$$
+\displaylines {
+L(\alpha)=\sum^{N}_{i} \alpha_i - \frac{1}{2} \sum^{N}_{i}\sum^{N}_{j} y_i y_j \alpha_i \alpha_j {x_i}^T x_j \\
+\textrm{ s.t. } 0 \le \alpha_i,  \forall i \\
+\textrm{ and } \sum^{N}_{i}y_i \alpha_i = 0
+}
+\tag{1}
+$$
+
+<p>The solution for <span class="math inline">\(w\)</span> is</p>
+<p><span class="math display">\[
+w = \sum^{N}_{i} y_i \alpha_i x_i \tag{2}
+\]</span></p>
+<p>If we allow some points are misclassified with penalty <span
+class="math inline">\(C\)</span>, then the constraints of <span
+class="math inline">\(\alpha_i\)</span> become</p>
+<p><span class="math display">\[
+0 \le \alpha_i \le C,  \forall i
+\]</span></p>
+<blockquote>
+<p>For points with <span class="math inline">\(0 \lt \alpha_i \lt
+C\)</span>, they just lie on the edge of the margin. In contrast, when
+<span class="math inline">\(\alpha_i = 0\)</span>, it is in the decision
+boundary and does not contribute to the prediction. The points with
+<span class="math inline">\(\alpha_i = C\)</span> lie inside the margin
+and might either be classified correctly or not.</p>
+</blockquote>
+<p>Points with non-zero <span class="math inline">\(\alpha_i\)</span>
+are called <strong>support vectors</strong>. These can be demonstrated
+as below:</p>
+<img src="/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_2.png" class="" title="Figure 2">
+<p>If we apply the feature transformation with kernel function <span
+class="math inline">\(K(x_i, x_j)\)</span>, then the Lagrangian function
+<span class="math inline">\((1)\)</span> turns into</p>
+<p><span class="math display">\[
+L(\alpha)=\sum^{N}_{i} \alpha_i - \frac{1}{2} \sum^{N}_{i}\sum^{N}_{j}
+y_i y_j \alpha_i \alpha_j K(x_i, x_j) \tag{3}
+\]</span></p>
+<p>The constraints of Lagrangian multipliers are the same as before.</p>
+<p>The predicted <span class="math inline">\(\hat{y}\)</span> of new
+input is</p>
+<p><span class="math display">\[
+\hat{y} = \sum^{N}_{i} y_i \alpha_i K(x_i, x) + b  \tag{4}
+\]</span></p>
+<h2 id="sequential-minimal-optimisation">Sequential Minimal
+Optimisation</h2>
+<p>SMO process mainly contains two parts: one is to solve two Lagrangian
+parameters analytically at a step, and then decide how to choose these
+two parameters heuristically for speed up.</p>
+<h3 id="solving-lagrangian-multipliers">Solving Lagrangian
+Multipliers</h3>
+<p>Using the constraint <span class="math inline">\(\sum^{N}_{i}y_i
+\alpha_i = 0\)</span> in <span class="math inline">\((1)\)</span>, we
+can get</p>
+<p><span class="math display">\[
+0 = y_1 \alpha^{old}_1 + y_2 \alpha^{old}_2 + \sum^{N}_{i=3}y_i \alpha_i
+= y_1 \alpha^{new}_1 + y_2 \alpha^{new}_2 + \sum^{N}_{i=3}y_i \alpha_i
+\]</span></p>
+<p><span class="math display">\[
+\Rightarrow y_1 \alpha^{old}_1 + y_2 \alpha^{old}_2 = k = y_1
+\alpha^{new}_1 + y_2 \alpha^{new}_2  \tag{5}
+\]</span></p>
+<p>where <span class="math inline">\(k = -\sum^{N}_{i=3}y_i
+\alpha_i\)</span>.</p>
+<p>Remember that <span class="math inline">\(y\)</span> is either <span
+class="math inline">\(1\)</span> or <span
+class="math inline">\(-1\)</span> , with the constraint <span
+class="math inline">\(0 \le \alpha_i \le C\)</span>, <span
+class="math inline">\(\alpha_1\)</span> and <span
+class="math inline">\(\alpha_2\)</span> can only lie on the diagonal
+line segment shown as below:</p>
+<img src="/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_3.png" class="" title="Figure 3">
+<p>The Lagrangian multiplier <span
+class="math inline">\(\alpha_2\)</span> can be solved by the first
+derivative of the objective function to find its extremum. The
+analytical form to solve <span class="math inline">\(\alpha_2\)</span>
+is</p>
+<p><span class="math display">\[
+\alpha^{new}_2 = \alpha^{old}_2 + y_2 \frac{E_2 - E_1}{\eta},
+\]</span></p>
+<p><span class="math display">\[
+E_i = \hat{y_i} - y_i  \text{, } \eta = K_{11} + K_{22} - 2K_{12}
+\tag{6}
+\]</span> <span class="math display">\[
+K_{ij} = K(x_i, x_j)
+\]</span></p>
+<img src="/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_4.png" class="" title="Figure 4">
+<h4 id="case-1-y_1-neq-y_2">Case 1: <span
+class="math inline">\(y_1\)</span> <span
+class="math inline">\(\neq\)</span> <span
+class="math inline">\(y_2\)</span></h4>
+<p><span class="math display">\[
+L = \max(0, \alpha_2 - \alpha_1)
+\]</span></p>
+<p><span class="math display">\[
+H = \min(C, C + \alpha_2 - \alpha_1)
+\]</span></p>
+<h4 id="case-2-y_1-y_2">Case 2: <span class="math inline">\(y_1 =
+y_2\)</span></h4>
+<p><span class="math display">\[
+L = \max(0, \alpha_2 + \alpha_1 - C)
+\]</span></p>
+<p><span class="math display">\[
+H = \min(C, \alpha_2 + \alpha_1)
+\]</span></p>
+<p>The <span class="math inline">\(\alpha^{new}_2\)</span> should be
+bounded by <span class="math inline">\(L\)</span> and <span
+class="math inline">\(H\)</span>.</p>
+
+$$
+  \alpha^{new}_2=\begin{cases}
+    L, & \text{if $\alpha^{new}_2 \lt L$}.\\
+    \alpha^{new}_2, & \text{if $L \le \alpha^{new}_2 \le H$}.\\
+    H, & \text{if $\alpha^{new}_2 \gt H$}
+  \end{cases}
+$$
+
+<p>We can then obtain <span
+class="math inline">\(\alpha^{new}_1\)</span> by multiplying <span
+class="math inline">\(y_1\)</span> on both sides in <span
+class="math inline">\((5)\)</span>,</p>
+<p><span class="math display">\[
+\alpha^{new}_1 = \alpha^{old}_1 + y_1 y_2 (\alpha^{old}_2 -
+\alpha^{new}_2) \tag{7}
+\]</span></p>
+<h4 id="abnormal-case-for-eta">Abnormal Case for <span
+class="math inline">\(\eta\)</span></h4>
+<p>Normally, <span class="math inline">\(\eta\)</span> should be greater
+than 0. However, if we encounter the abnormal case that <span
+class="math inline">\(\eta \le 0\)</span>, e.g. picking the same points
+or an incorrect kernel that does not obey Mercer's condition, the full
+version of SMO algorithm will move the Lagrangian multiplier to the end
+of the line segment that can maximise the objective function.<a
+href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a> <a href="#fn2" class="footnote-ref"
+id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
+<p>Another simple way to handle this is to treat the scenario as no
+progress being made for this pair of <span
+class="math inline">\(\alpha\)</span>.</p>
+<h3 id="comupting-the-threshold-b">Comupting the Threshold b</h3>
+<p>We can update the threshold <span class="math inline">\(b\)</span>
+after getting <span class="math inline">\(\alpha\)</span> at each
+step.</p>
+<p>When <span class="math inline">\(0 \lt \alpha_1 \lt C\)</span>, <span
+class="math inline">\(b_1\)</span> is a valid threshold because it makes
+the output <span class="math inline">\(\hat{y_1}\)</span> be the same as
+<span class="math inline">\(y_1\)</span> when the input is <span
+class="math inline">\(x_1\)</span></p>
+<p><span class="math display">\[
+E_1 = (y_1 \alpha^{old}_1 K_{11} + y_2 \alpha^{old}_2 K_{12} + b) - (y_1
+\alpha^{new}_1 K_{11} + y_2 \alpha^{new}_2 K_{12} + b_1)
+\]</span></p>
+<p><span class="math display">\[
+\Rightarrow b_1 = b - E_1 - y_1 (\alpha^{new}_1 - \alpha^{old}_1) K_{11}
+- y_2 (\alpha^{new}_2  - \alpha^{old}_2) K_{12}
+\]</span></p>
+<p>Similarly, when <span class="math inline">\(\alpha_2\)</span> is not
+at bounds, <span class="math inline">\(b_2\)</span> is a valid
+threshold</p>
+<p><span class="math display">\[
+b_2 = b - E_2 - y_1 (\alpha^{new}_1 - \alpha^{old}_1) K_{12} - y_2
+(\alpha^{new}_2  - \alpha^{old}_2) K_{22}
+\]</span></p>
+<p>When both <span class="math inline">\(b_1\)</span> and <span
+class="math inline">\(b_2\)</span> are valid, they will be equal because
+<span class="math inline">\(\hat{y_i} y_i = 1\)</span>, and the new
+<span class="math inline">\(E_1\)</span> and <span
+class="math inline">\(E_2\)</span> will be 0. This can be easily
+verified with <span class="math inline">\((6)\)</span> and <span
+class="math inline">\((7)\)</span>. Intuitively, when <span
+class="math inline">\(y_1 = y_2\)</span>, they are both at bounds and is
+trivial, whereas for <span class="math inline">\(y_1 \neq y_2\)</span>,
+they both try to maximise the margin width, and this results in <span
+class="math inline">\(b_1\)</span> and <span
+class="math inline">\(b_2\)</span> being equal.</p>
+<p>For other cases, we could choose the halfway between <span
+class="math inline">\(b_1\)</span> and <span
+class="math inline">\(b_2\)</span>.</p>
+
+$$
+  b=\begin{cases}
+    b_1, & \text{if $0 \lt \alpha^{new}_1 \lt C$}.\\
+    b_2, & \text{if $0 \lt \alpha^{new}_2 \lt C$}.\\
+    \frac{(b_1+b_2)}{2}, & \text{otherwise}.
+  \end{cases}
+$$
+
+<h3 id="choosing-the-multipliers-to-optimise">Choosing the Multipliers
+to Optimise</h3>
+<p>In order to speed up the training rate, the main idea of choosing the
+multipliers in SMO can be briefly summarised as the following.</p>
+<blockquote>
+<p>Firstly, choose the multiplier that are likely to violate the KKT
+conditions to optimise, i.e. <span class="math inline">\(0 &lt; \alpha_i
+&lt; C\)</span>. When one multiplier is chosen, another multiplier would
+be the one that can maximise the step size, <span
+class="math inline">\(\vert E_2 - E_1 \vert\)</span>.</p>
+</blockquote>
+<p>Then SMO will scan the entire data sets until the algorithm
+terminates.</p>
+<h3 id="other-tricks-to-make-the-training-process-faster">Other Tricks
+to Make the Training Process Faster</h3>
+<h4 id="error-cache-update">Error Cache Update</h4>
+<p>We can reduce the computational cost to compute the error cache,
+which stores <span class="math inline">\(E_i\)</span>, after Lagrangian
+multipliers update. From <span class="math inline">\((6)\)</span>,</p>
+<p><span class="math display">\[
+E^{old}_i = y_1 \alpha^{old}_1 K_{1i} + y_2 \alpha^{old} K_{2i} +
+\sum^N_{j=3} y_j \alpha_j K_{ij} + b - y_i
+\]</span></p>
+<p><span class="math display">\[
+E^{new}_i = y_1 \alpha^{new}_1 K_{1i} + y_2 \alpha^{new} K_{2i} +
+\sum^N_{j=3} y_j \alpha_j K_{ij} + b_{new} - y_i
+\]</span></p>
+<p><span class="math display">\[
+\Rightarrow E^{new}_i = E^{old}_i + y_1 (\alpha^{new}_1 -
+\alpha^{old}_1) K_{1i} + y_2 (\alpha^{new}_2 - \alpha^{old}_2) K_{2i} +
+(b_{new} - b)
+\]</span></p>
+<h4 id="linear-svm-optimisation">Linear SVM Optimisation</h4>
+<p>The linear SVM only needs to store a single weight vector, <span
+class="math inline">\(w\)</span>. It can also be updated using similar
+mechanism as error cache. From <span
+class="math inline">\((2)\)</span>,</p>
+<p><span class="math display">\[
+w^{old} = y_1 \alpha^{old}_1 x_1 + y_2 \alpha^{old}_2 x_2 + \sum^N_{j=3}
+\alpha_j x_j
+\]</span></p>
+<p><span class="math display">\[
+w^{new} = y_1 \alpha^{new}_1 x_1 + y_2 \alpha^{new}_2 x_2 + \sum^N_{j=3}
+\alpha_j x_j
+\]</span></p>
+<p><span class="math display">\[
+\Rightarrow w^{new} = w^{old} + y_1 (\alpha^{new}_1 - \alpha^{old}_1)
+x_1 + y_2 (\alpha^{new}_2 - \alpha^{old}_2) x_2
+\]</span></p>
+<h2 id="implementation">Implementation</h2>
+<h3 id="source-code">Source Code</h3>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment"># File: MySVM.py</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SVM</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, X, y, C=<span class="number">1</span>, kernel=<span class="string">&#x27;linear&#x27;</span>, b=<span class="number">0</span>, max_iter=<span class="number">300</span>, tol=<span class="number">1e-5</span>, eps=<span class="number">1e-8</span></span>):</span></span><br><span class="line">        self.X = X</span><br><span class="line">        self.y = y</span><br><span class="line">        self.m, self.n = np.shape(self.X)</span><br><span class="line">        self.C = C</span><br><span class="line"></span><br><span class="line">        self.alphas = np.zeros(self.m)</span><br><span class="line">        self.b = b</span><br><span class="line"></span><br><span class="line">        self.kernel = kernel       <span class="comment"># &#x27;linear&#x27;, &#x27;rbf&#x27;</span></span><br><span class="line">        <span class="keyword">if</span> kernel == <span class="string">&#x27;linear&#x27;</span>:</span><br><span class="line">            self.kernel_func = self.linear_kernel</span><br><span class="line">        <span class="keyword">elif</span> kernel == <span class="string">&#x27;gaussian&#x27;</span> <span class="keyword">or</span> kernel == <span class="string">&#x27;rbf&#x27;</span>:</span><br><span class="line">            self.kernel_func = self.gaussian_kernel</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">raise</span> ValueError(<span class="string">&#x27;unknown kernel type&#x27;</span>)</span><br><span class="line"></span><br><span class="line">        self.error = np.zeros(self.m)</span><br><span class="line"></span><br><span class="line">        self.max_iter=max_iter</span><br><span class="line">        self.tol = tol</span><br><span class="line">        self.eps = eps</span><br><span class="line"></span><br><span class="line">        self.is_linear_kernel = <span class="literal">True</span> <span class="keyword">if</span> self.kernel == <span class="string">&#x27;linear&#x27;</span> <span class="keyword">else</span> <span class="literal">False</span></span><br><span class="line">        self.w = np.zeros(self.n)  <span class="comment"># used by linear kernel</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">linear_kernel</span>(<span class="params">self, x1, x2, b=<span class="number">0</span></span>):</span></span><br><span class="line">        <span class="keyword">return</span> x1 @ x2.T + b</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">gaussian_kernel</span>(<span class="params">self, x1, x2, sigma=<span class="number">1</span></span>):</span></span><br><span class="line">        <span class="keyword">if</span> np.ndim(x1) == <span class="number">1</span> <span class="keyword">and</span> np.ndim(x2) == <span class="number">1</span>:</span><br><span class="line">            <span class="keyword">return</span> np.exp(-(np.linalg.norm(x1-x2,<span class="number">2</span>))**<span class="number">2</span>/(<span class="number">2</span>*sigma**<span class="number">2</span>))</span><br><span class="line">        <span class="keyword">elif</span>(np.ndim(x1)&gt;<span class="number">1</span> <span class="keyword">and</span> np.ndim(x2) == <span class="number">1</span>) <span class="keyword">or</span> (np.ndim(x1) == <span class="number">1</span> <span class="keyword">and</span> np.ndim(x2)&gt;<span class="number">1</span>):</span><br><span class="line">            <span class="keyword">return</span> np.exp(-(np.linalg.norm(x1-x2, <span class="number">2</span>, axis=<span class="number">1</span>)**<span class="number">2</span>)/(<span class="number">2</span>*sigma**<span class="number">2</span>))</span><br><span class="line">        <span class="keyword">elif</span> np.ndim(x1) &gt; <span class="number">1</span> <span class="keyword">and</span> np.ndim(x2) &gt; <span class="number">1</span> :</span><br><span class="line">            <span class="keyword">return</span> np.exp(-(np.linalg.norm(x1[:, np.newaxis] \</span><br><span class="line">                             - x2[np.newaxis, :], <span class="number">2</span>, axis = <span class="number">2</span>) ** <span class="number">2</span>)/(<span class="number">2</span>*sigma**<span class="number">2</span>))</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0.</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">predict</span>(<span class="params">self, x</span>):</span></span><br><span class="line">        result = (self.alphas * self.y) @ self.kernel_func(self.X, x) + self.b</span><br><span class="line">        <span class="keyword">return</span> result</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_error</span>(<span class="params">self, i</span>):</span></span><br><span class="line">        <span class="keyword">return</span> self.predict(self.X[i,:]) - self.y[i]</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">take_step</span>(<span class="params">self, i1, i2</span>):</span></span><br><span class="line">        <span class="keyword">if</span> (i1 == i2):</span><br><span class="line">            <span class="keyword">return</span> <span class="number">0</span></span><br><span class="line"></span><br><span class="line">        x1 = self.X[i1, :]</span><br><span class="line">        x2 = self.X[i2, :]</span><br><span class="line"></span><br><span class="line">        y1 = self.y[i1]</span><br><span class="line">        y2 = self.y[i2]</span><br><span class="line"></span><br><span class="line">        alpha1 = self.alphas[i1]</span><br><span class="line">        alpha2 = self.alphas[i2]</span><br><span class="line"></span><br><span class="line">        b = self.b</span><br><span class="line"></span><br><span class="line">        E1 = self.get_error(i1)</span><br><span class="line">        E2 = self.get_error(i2)</span><br><span class="line"></span><br><span class="line">        s = y1 * y2</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> y1 != y2:</span><br><span class="line">            L = <span class="built_in">max</span>(<span class="number">0</span>, alpha2 - alpha1)</span><br><span class="line">            H = <span class="built_in">min</span>(self.C, self.C + alpha2 - alpha1)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            L = <span class="built_in">max</span>(<span class="number">0</span>, alpha2 + alpha1 - self.C)</span><br><span class="line">            H = <span class="built_in">min</span>(self.C, alpha2 + alpha1)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> L == H:</span><br><span class="line">            <span class="keyword">return</span> <span class="number">0</span></span><br><span class="line"></span><br><span class="line">        k11 = self.kernel_func(x1, x1)</span><br><span class="line">        k12 = self.kernel_func(x1, x2)</span><br><span class="line">        k22 = self.kernel_func(x2, x2)</span><br><span class="line"></span><br><span class="line">        eta = k11 + k22 - <span class="number">2</span> * k12</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> eta &gt; <span class="number">0</span>:</span><br><span class="line">            alpha2_new = alpha2 + y2 * (E1 - E2) / eta</span><br><span class="line">            <span class="keyword">if</span> alpha2_new &gt;= H:</span><br><span class="line">                alpha2_new = H</span><br><span class="line">            <span class="keyword">elif</span> alpha2_new &lt;= L:</span><br><span class="line">                alpha2_new = L</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="comment"># Abnormal case for eta &lt;= 0, treat this scenario as no progress</span></span><br><span class="line">            <span class="keyword">return</span> <span class="number">0</span></span><br><span class="line"></span><br><span class="line">        <span class="comment"># Numerical tolerance</span></span><br><span class="line">        <span class="comment"># if abs(alpha2_new - alpha2) &lt; self.eps:   # this is slower</span></span><br><span class="line">        <span class="comment"># below is faster, not degrade the SVM performance</span></span><br><span class="line">        <span class="keyword">if</span> <span class="built_in">abs</span>(alpha2_new - alpha2) &lt; self.eps * (alpha2 + alpha2_new + self.eps):</span><br><span class="line">            <span class="keyword">return</span> <span class="number">0</span></span><br><span class="line"></span><br><span class="line">        alpha1_new = alpha1 + s * (alpha2 - alpha2_new)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Numerical tolerance</span></span><br><span class="line">        <span class="keyword">if</span> alpha1_new &lt; self.eps:</span><br><span class="line">            alpha1_new = <span class="number">0</span></span><br><span class="line">        <span class="keyword">elif</span> alpha1_new &gt; (self.C - self.eps):</span><br><span class="line">            alpha1_new = self.C</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Update threshold</span></span><br><span class="line">        b1 = b - E1 - y1 * (alpha1_new - alpha1) * k11 - y2 * (alpha2_new - alpha2) * k12</span><br><span class="line">        b2 = b - E2 - y1 * (alpha1_new - alpha1) * k12 - y2 * (alpha2_new - alpha2) * k22</span><br><span class="line">        <span class="keyword">if</span> <span class="number">0</span> &lt; alpha1_new &lt; self.C:</span><br><span class="line">            self.b = b1</span><br><span class="line">        <span class="keyword">elif</span> <span class="number">0</span> &lt; alpha2_new &lt; self.C:</span><br><span class="line">            self.b = b2</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            self.b = <span class="number">0.5</span> * (b1 + b2)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Update weight vector for linear SVM</span></span><br><span class="line">        <span class="keyword">if</span> self.is_linear_kernel:</span><br><span class="line">            self.w = self.w + y1 * (alpha1_new - alpha1) * x1 \</span><br><span class="line">                            + y2 * (alpha2_new - alpha2) * x2</span><br><span class="line"></span><br><span class="line">        self.alphas[i1] = alpha1_new</span><br><span class="line">        self.alphas[i2] = alpha2_new</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Error cache update</span></span><br><span class="line">        <span class="comment">## if alpha1 &amp; alpha2 are not at bounds, the error will be 0</span></span><br><span class="line">        self.error[i1] = <span class="number">0</span></span><br><span class="line">        self.error[i2] = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">        i_list = [idx <span class="keyword">for</span> idx, alpha <span class="keyword">in</span> <span class="built_in">enumerate</span>(self.alphas) \</span><br><span class="line">                      <span class="keyword">if</span> <span class="number">0</span> &lt; alpha <span class="keyword">and</span> alpha &lt; self.C]</span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> i_list:</span><br><span class="line">            self.error[i] += \</span><br><span class="line">                  y1 * (alpha1_new - alpha1) * self.kernel_func(x1, self.X[i,:]) \</span><br><span class="line">                + y2 * (alpha2_new - alpha2) * self.kernel_func(x2, self.X[i,:]) \</span><br><span class="line">                + (self.b - b)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">examine_example</span>(<span class="params">self, i2</span>):</span></span><br><span class="line">        y2 = self.y[i2]</span><br><span class="line">        alpha2 = self.alphas[i2]</span><br><span class="line">        E2 = self.get_error(i2)</span><br><span class="line">        r2 = E2 * y2</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Choose the one that is likely to violiate KKT</span></span><br><span class="line">        <span class="comment"># if (0 &lt; alpha2 &lt; self.C) or (abs(r2) &gt; self.tol):  # this is slow</span></span><br><span class="line">        <span class="comment"># below is faster, not degrade the SVM performance</span></span><br><span class="line">        <span class="keyword">if</span> ((r2 &lt; -self.tol <span class="keyword">and</span> alpha2 &lt; self.C) <span class="keyword">or</span> (r2 &gt; self.tol <span class="keyword">and</span> alpha2 &gt; <span class="number">0</span>)):</span><br><span class="line">            <span class="keyword">if</span> <span class="built_in">len</span>(self.alphas[(<span class="number">0</span> &lt; self.alphas) &amp; (self.alphas &lt; self.C)]) &gt; <span class="number">1</span>:</span><br><span class="line">                <span class="keyword">if</span> E2 &gt; <span class="number">0</span>:</span><br><span class="line">                    i1 = np.argmin(self.error)</span><br><span class="line">                <span class="keyword">else</span>:</span><br><span class="line">                    i1 = np.argmax(self.error)</span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span> self.take_step(i1, i2):</span><br><span class="line">                    <span class="keyword">return</span> <span class="number">1</span></span><br><span class="line"></span><br><span class="line">            <span class="comment"># loop over all non-zero and non-C alpha, starting at a random point</span></span><br><span class="line">            i1_list = [idx <span class="keyword">for</span> idx, alpha <span class="keyword">in</span> <span class="built_in">enumerate</span>(self.alphas) \</span><br><span class="line">                           <span class="keyword">if</span> <span class="number">0</span> &lt; alpha <span class="keyword">and</span> alpha &lt; self.C]</span><br><span class="line">            i1_list = np.roll(i1_list, np.random.choice(np.arange(self.m)))</span><br><span class="line">            <span class="keyword">for</span> i1 <span class="keyword">in</span> i1_list:</span><br><span class="line">                <span class="keyword">if</span> self.take_step(i1, i2):</span><br><span class="line">                    <span class="keyword">return</span> <span class="number">1</span></span><br><span class="line"></span><br><span class="line">            <span class="comment"># loop over all possible i1, starting at a random point</span></span><br><span class="line">            i1_list = np.roll(np.arange(self.m), np.random.choice(np.arange(self.m)))</span><br><span class="line">            <span class="keyword">for</span> i1 <span class="keyword">in</span> i1_list:</span><br><span class="line">                <span class="keyword">if</span> self.take_step(i1, i2):</span><br><span class="line">                    <span class="keyword">return</span> <span class="number">1</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">fit</span>(<span class="params">self</span>):</span></span><br><span class="line">        loop_num = <span class="number">0</span></span><br><span class="line">        numChanged = <span class="number">0</span></span><br><span class="line">        examineAll = <span class="literal">True</span></span><br><span class="line">        <span class="keyword">while</span> numChanged &gt; <span class="number">0</span> <span class="keyword">or</span> examineAll:</span><br><span class="line">            <span class="keyword">if</span> loop_num &gt;= self.max_iter:</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">            numChanged = <span class="number">0</span></span><br><span class="line">            <span class="keyword">if</span> examineAll:</span><br><span class="line">                <span class="keyword">for</span> i2 <span class="keyword">in</span> <span class="built_in">range</span>(self.m):</span><br><span class="line">                    numChanged += self.examine_example(i2)</span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                i2_list = [idx <span class="keyword">for</span> idx, alpha <span class="keyword">in</span> <span class="built_in">enumerate</span>(self.alphas) \</span><br><span class="line">                                <span class="keyword">if</span> <span class="number">0</span> &lt; alpha <span class="keyword">and</span> alpha &lt; self.C]</span><br><span class="line">                <span class="keyword">for</span> i2 <span class="keyword">in</span> i2_list:</span><br><span class="line">                    numChanged += self.examine_example(i2)</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> examineAll:</span><br><span class="line">                examineAll = <span class="literal">False</span></span><br><span class="line">            <span class="keyword">elif</span> numChanged == <span class="number">0</span>:</span><br><span class="line">                examineAll = <span class="literal">True</span></span><br><span class="line"></span><br><span class="line">            loop_num += <span class="number">1</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="demo">Demo</h3>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment"># File: SVM_test.py</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"><span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> MySVM</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">gen_circle</span>(<span class="params">n=<span class="number">50</span>, center_x=<span class="number">0</span>, center_y=<span class="number">0</span>, radius=<span class="number">1</span>, label=<span class="number">0</span></span>):</span></span><br><span class="line">    </span><br><span class="line">    <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">    A simple function that generates circular distribution</span></span><br><span class="line"><span class="string">    n: number of points (default=50)</span></span><br><span class="line"><span class="string">    center_x: the center for X (default=0)</span></span><br><span class="line"><span class="string">    center_y: the center for Y (default=0)</span></span><br><span class="line"><span class="string">    radius: the radius of circle (default=1)</span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># random angle</span></span><br><span class="line">    alpha = <span class="number">2</span> * np.pi * np.random.rand(n)</span><br><span class="line">    <span class="comment"># random radius</span></span><br><span class="line">    r = radius * np.sqrt(np.random.rand(n))</span><br><span class="line">    <span class="comment"># calculating coordinates</span></span><br><span class="line">    x = r * np.cos(alpha) + center_x</span><br><span class="line">    y = r * np.sin(alpha) + center_y</span><br><span class="line"></span><br><span class="line">    label = np.ones(n) * label</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> [x, y, label]</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    np.random.seed(<span class="number">5</span>)   <span class="comment"># to reproduce</span></span><br><span class="line"></span><br><span class="line">    n = <span class="number">100</span></span><br><span class="line">    C0 = gen_circle(n, center_x=<span class="number">1</span>, center_y=<span class="number">1</span>, radius=<span class="number">1.05</span>, label=<span class="number">1</span>)</span><br><span class="line">    C1 = gen_circle(n, center_x=-<span class="number">1</span>, center_y=-<span class="number">1</span>, radius=<span class="number">1.05</span>, label=-<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line">    x0 = np.append(C0[<span class="number">0</span>], C1[<span class="number">0</span>])</span><br><span class="line">    x1 = np.append(C0[<span class="number">1</span>], C1[<span class="number">1</span>])</span><br><span class="line"></span><br><span class="line">    X = np.c_[x0, x1]</span><br><span class="line">    Y = np.append(C0[<span class="number">2</span>], C1[<span class="number">2</span>])</span><br><span class="line"></span><br><span class="line">    scaler = StandardScaler()</span><br><span class="line">    train_x = scaler.fit_transform(X)</span><br><span class="line"></span><br><span class="line">    model = MySVM.SVM(train_x, Y, C=<span class="number">1</span>, kernel=<span class="string">&#x27;linear&#x27;</span>, max_iter=<span class="number">600</span>, tol=<span class="number">1e-5</span>, eps=<span class="number">1e-5</span>)</span><br><span class="line">    <span class="comment"># model = MySVM.SVM(train_x, Y, C=1, kernel=&#x27;rbf&#x27;, max_iter=600, tol=1e-5, eps=1e-5)</span></span><br><span class="line">    model.fit()</span><br><span class="line"></span><br><span class="line">    train_y = model.predict(train_x)</span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;support vector: &#123;&#125; / &#123;&#125;&#x27;</span>\</span><br><span class="line">        .<span class="built_in">format</span>(<span class="built_in">len</span>(model.alphas[model.alphas != <span class="number">0</span>]), <span class="built_in">len</span>(model.alphas)))</span><br><span class="line">    sv_idx = []</span><br><span class="line">    <span class="keyword">for</span> idx, alpha <span class="keyword">in</span> <span class="built_in">enumerate</span>(model.alphas):</span><br><span class="line">        <span class="keyword">if</span> alpha != <span class="number">0</span>:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&#x27;index = &#123;&#125;, alpha = &#123;:.3f&#125;, predict y=&#123;:.3f&#125;&#x27;</span>\</span><br><span class="line">                .<span class="built_in">format</span>(idx, alpha, train_y[idx]))</span><br><span class="line">            sv_idx.append(idx)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;bias = <span class="subst">&#123;model.b&#125;</span>&#x27;</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;training data error rate = &#123;&#125;&#x27;</span>.<span class="built_in">format</span>(<span class="built_in">len</span>(Y[Y * train_y &lt; <span class="number">0</span>])/<span class="built_in">len</span>(Y)))</span><br><span class="line"></span><br><span class="line">    <span class="comment">## Draw the Plot</span></span><br><span class="line">    plt.plot(C0[<span class="number">0</span>], C0[<span class="number">1</span>], <span class="string">&#x27;o&#x27;</span>, markerfacecolor=<span class="string">&#x27;r&#x27;</span>, markeredgecolor=<span class="string">&#x27;None&#x27;</span>, alpha=<span class="number">0.55</span>)</span><br><span class="line">    plt.plot(C1[<span class="number">0</span>], C1[<span class="number">1</span>], <span class="string">&#x27;o&#x27;</span>, markerfacecolor=<span class="string">&#x27;b&#x27;</span>, markeredgecolor=<span class="string">&#x27;None&#x27;</span>, alpha=<span class="number">0.55</span>)</span><br><span class="line"></span><br><span class="line">    resolution = <span class="number">50</span></span><br><span class="line">    dx = np.linspace(X[:, <span class="number">0</span>].<span class="built_in">min</span>(), X[:, <span class="number">0</span>].<span class="built_in">max</span>(), resolution)</span><br><span class="line">    dy = np.linspace(X[:, <span class="number">1</span>].<span class="built_in">min</span>(), X[:, <span class="number">1</span>].<span class="built_in">max</span>(), resolution)</span><br><span class="line">    dx, dy = np.meshgrid(dx, dy)</span><br><span class="line">    plot_x = np.c_[dx.flatten(), dy.flatten()]</span><br><span class="line"></span><br><span class="line">    dz = model.predict(scaler.transform(plot_x))</span><br><span class="line">    dz = dz.reshape(dx.shape)</span><br><span class="line"></span><br><span class="line">    plt.contour(dx, dy, dz, alpha=<span class="number">1</span>, colors=(<span class="string">&#x27;b&#x27;</span>, <span class="string">&#x27;k&#x27;</span>, <span class="string">&#x27;r&#x27;</span>), \</span><br><span class="line">                levels=(-<span class="number">1</span>, <span class="number">0</span>, <span class="number">1</span>), linestyles = (<span class="string">&#x27;--&#x27;</span>, <span class="string">&#x27;-&#x27;</span>, <span class="string">&#x27;--&#x27;</span>))</span><br><span class="line"></span><br><span class="line">    label_cnt = <span class="number">0</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> sv_idx:</span><br><span class="line">        <span class="keyword">if</span> label_cnt == <span class="number">0</span>:</span><br><span class="line">            plt.scatter(X[i, <span class="number">0</span>], X[i, <span class="number">1</span>], marker=<span class="string">&#x27;*&#x27;</span>, color=<span class="string">&#x27;k&#x27;</span>, \</span><br><span class="line">                        s=<span class="number">120</span>, label=<span class="string">&#x27;Support vector&#x27;</span>)</span><br><span class="line">            label_cnt += <span class="number">1</span></span><br><span class="line">            <span class="keyword">continue</span></span><br><span class="line"></span><br><span class="line">        plt.scatter(X[i, <span class="number">0</span>], X[i, <span class="number">1</span>], marker=<span class="string">&#x27;*&#x27;</span>, color=<span class="string">&#x27;k&#x27;</span>, s=<span class="number">120</span>)</span><br><span class="line"></span><br><span class="line">    plt.legend()</span><br><span class="line">    plt.show()</span><br></pre></td></tr></table></figure>
+<img src="/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_5.png" class="" title="Figure 5">
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p><a
+href="https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-98-14.pdf">Sequential
+Minimal Optimization: A Fast Algorithm for Training Support Vector
+Machines</a><a href="#fnref1" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p><a
+href="https://www.cs.mcgill.ca/~hv/publications/99.04.McGill.thesis.gmak.pdf">The
+implementation of Support Vector Machines using the sequential minimal
+optimization algorithm</a><a href="#fnref2" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+]]></content>
+      <categories>
+        <category>Mathematics</category>
+        <category>Machine Learning</category>
+      </categories>
+      <tags>
+        <tag>Python</tag>
+        <tag>Optimisation</tag>
+        <tag>Kernel Method</tag>
+        <tag>SVM</tag>
       </tags>
   </entry>
   <entry>
@@ -723,498 +1215,6 @@ class="footnote-back" role="doc-backlink">↩︎</a></p></li>
       <tags>
         <tag>C++</tag>
         <tag>Optimisation</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Implement SVM with SMO from scratch in Python</title>
-    <url>/2022/07/30/Implement-SVM-with-SMO-from-scratch/</url>
-    <content><![CDATA[<p><strong>Support vector machine</strong> (SVM) plays an important role
-in machine learning. Actually, SVM is one of my favorite models because
-of its analytical property. Its main idea is to find the optimal
-hyperplane that can linearly separate the data, or maximise
-<strong>margin</strong> in the feature space. It is one of the most
-robust models based on statistical learning framework in <strong>VC
-theory</strong> (Vapnik–Chervonenkis theory). The determination of the
-model parameters is a quadratic programming problem, or <strong>convex
-optimisation</strong> more specifically. Its solution is usually
-<strong>sparse</strong>, and the new input prediction depends only on
-the evaluation of a subset of training data with kernel function. One of
-the most common and efficient approaches to train SVM is
-<strong>sequential minimal optimisation</strong> (SMO), which breaks
-down the problem into solving a pair of parameters analytically at each
-step. Besides, SMO also eliminates the need for matrix storage issue
-when the training data size is huge.</p>
-<span id="more"></span>
-<h2 id="recall-the-objective-function-of-svm">Recall the Objective
-Function of SVM</h2>
-<img src="/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_1.png" class="" title="Figure 1">
-<p>We want to find a hyperplane <span class="math inline">\(w^T x + b =
-0\)</span> and maximise the margin width <span
-class="math inline">\(2M\)</span> in order to separate the data labeled
-as <span class="math inline">\(y = \pm 1\)</span>. All data points
-should be correctly classified, i.e. <span class="math inline">\(y_i(w^T
-x_i + b) &gt; 0\)</span> for all <span
-class="math inline">\(i\)</span>,</p>
-
-$$
-\displaylines {
-\max_{w,b} M \\
-\textrm{ s.t. } \frac{y_i(w^T x_i + b)}{ \Vert w \Vert} \ge M, \forall i=1,2,...,N
-}
-$$
-
-<p>The above optimisation problem can be converted into a dual form of
-Lagrangian function, maximising <span
-class="math inline">\(L\)</span>:</p>
-
-$$
-\displaylines {
-L(\alpha)=\sum^{N}_{i} \alpha_i - \frac{1}{2} \sum^{N}_{i}\sum^{N}_{j} y_i y_j \alpha_i \alpha_j {x_i}^T x_j \\
-\textrm{ s.t. } 0 \le \alpha_i,  \forall i \\
-\textrm{ and } \sum^{N}_{i}y_i \alpha_i = 0
-}
-\tag{1}
-$$
-
-<p>The solution for <span class="math inline">\(w\)</span> is</p>
-<p><span class="math display">\[
-w = \sum^{N}_{i} y_i \alpha_i x_i \tag{2}
-\]</span></p>
-<p>If we allow some points are misclassified with penalty <span
-class="math inline">\(C\)</span>, then the constraints of <span
-class="math inline">\(\alpha_i\)</span> become</p>
-<p><span class="math display">\[
-0 \le \alpha_i \le C,  \forall i
-\]</span></p>
-<blockquote>
-<p>For points with <span class="math inline">\(0 \lt \alpha_i \lt
-C\)</span>, they just lie on the edge of the margin. In contrast, when
-<span class="math inline">\(\alpha_i = 0\)</span>, it is in the decision
-boundary and does not contribute to the prediction. The points with
-<span class="math inline">\(\alpha_i = C\)</span> lie inside the margin
-and might either be classified correctly or not.</p>
-</blockquote>
-<p>Points with non-zero <span class="math inline">\(\alpha_i\)</span>
-are called <strong>support vectors</strong>. These can be demonstrated
-as below:</p>
-<img src="/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_2.png" class="" title="Figure 2">
-<p>If we apply the feature transformation with kernel function <span
-class="math inline">\(K(x_i, x_j)\)</span>, then the Lagrangian function
-<span class="math inline">\((1)\)</span> turns into</p>
-<p><span class="math display">\[
-L(\alpha)=\sum^{N}_{i} \alpha_i - \frac{1}{2} \sum^{N}_{i}\sum^{N}_{j}
-y_i y_j \alpha_i \alpha_j K(x_i, x_j) \tag{3}
-\]</span></p>
-<p>The constraints of Lagrangian multipliers are the same as before.</p>
-<p>The predicted <span class="math inline">\(\hat{y}\)</span> of new
-input is</p>
-<p><span class="math display">\[
-\hat{y} = \sum^{N}_{i} y_i \alpha_i K(x_i, x) + b  \tag{4}
-\]</span></p>
-<h2 id="sequential-minimal-optimisation">Sequential Minimal
-Optimisation</h2>
-<p>SMO process mainly contains two parts: one is to solve two Lagrangian
-parameters analytically at a step, and then decide how to choose these
-two parameters heuristically for speed up.</p>
-<h3 id="solving-lagrangian-multipliers">Solving Lagrangian
-Multipliers</h3>
-<p>Using the constraint <span class="math inline">\(\sum^{N}_{i}y_i
-\alpha_i = 0\)</span> in <span class="math inline">\((1)\)</span>, we
-can get</p>
-<p><span class="math display">\[
-0 = y_1 \alpha^{old}_1 + y_2 \alpha^{old}_2 + \sum^{N}_{i=3}y_i \alpha_i
-= y_1 \alpha^{new}_1 + y_2 \alpha^{new}_2 + \sum^{N}_{i=3}y_i \alpha_i
-\]</span></p>
-<p><span class="math display">\[
-\Rightarrow y_1 \alpha^{old}_1 + y_2 \alpha^{old}_2 = k = y_1
-\alpha^{new}_1 + y_2 \alpha^{new}_2  \tag{5}
-\]</span></p>
-<p>where <span class="math inline">\(k = -\sum^{N}_{i=3}y_i
-\alpha_i\)</span>.</p>
-<p>Remember that <span class="math inline">\(y\)</span> is either <span
-class="math inline">\(1\)</span> or <span
-class="math inline">\(-1\)</span> , with the constraint <span
-class="math inline">\(0 \le \alpha_i \le C\)</span>, <span
-class="math inline">\(\alpha_1\)</span> and <span
-class="math inline">\(\alpha_2\)</span> can only lie on the diagonal
-line segment shown as below:</p>
-<img src="/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_3.png" class="" title="Figure 3">
-<p>The Lagrangian multiplier <span
-class="math inline">\(\alpha_2\)</span> can be solved by the first
-derivative of the objective function to find its extremum. The
-analytical form to solve <span class="math inline">\(\alpha_2\)</span>
-is</p>
-<p><span class="math display">\[
-\alpha^{new}_2 = \alpha^{old}_2 + y_2 \frac{E_2 - E_1}{\eta},
-\]</span></p>
-<p><span class="math display">\[
-E_i = \hat{y_i} - y_i  \text{, } \eta = K_{11} + K_{22} - 2K_{12}
-\tag{6}
-\]</span> <span class="math display">\[
-K_{ij} = K(x_i, x_j)
-\]</span></p>
-<img src="/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_4.png" class="" title="Figure 4">
-<h4 id="case-1-y_1-neq-y_2">Case 1: <span
-class="math inline">\(y_1\)</span> <span
-class="math inline">\(\neq\)</span> <span
-class="math inline">\(y_2\)</span></h4>
-<p><span class="math display">\[
-L = \max(0, \alpha_2 - \alpha_1)
-\]</span></p>
-<p><span class="math display">\[
-H = \min(C, C + \alpha_2 - \alpha_1)
-\]</span></p>
-<h4 id="case-2-y_1-y_2">Case 2: <span class="math inline">\(y_1 =
-y_2\)</span></h4>
-<p><span class="math display">\[
-L = \max(0, \alpha_2 + \alpha_1 - C)
-\]</span></p>
-<p><span class="math display">\[
-H = \min(C, \alpha_2 + \alpha_1)
-\]</span></p>
-<p>The <span class="math inline">\(\alpha^{new}_2\)</span> should be
-bounded by <span class="math inline">\(L\)</span> and <span
-class="math inline">\(H\)</span>.</p>
-
-$$
-  \alpha^{new}_2=\begin{cases}
-    L, & \text{if $\alpha^{new}_2 \lt L$}.\\
-    \alpha^{new}_2, & \text{if $L \le \alpha^{new}_2 \le H$}.\\
-    H, & \text{if $\alpha^{new}_2 \gt H$}
-  \end{cases}
-$$
-
-<p>We can then obtain <span
-class="math inline">\(\alpha^{new}_1\)</span> by multiplying <span
-class="math inline">\(y_1\)</span> on both sides in <span
-class="math inline">\((5)\)</span>,</p>
-<p><span class="math display">\[
-\alpha^{new}_1 = \alpha^{old}_1 + y_1 y_2 (\alpha^{old}_2 -
-\alpha^{new}_2) \tag{7}
-\]</span></p>
-<h4 id="abnormal-case-for-eta">Abnormal Case for <span
-class="math inline">\(\eta\)</span></h4>
-<p>Normally, <span class="math inline">\(\eta\)</span> should be greater
-than 0. However, if we encounter the abnormal case that <span
-class="math inline">\(\eta \le 0\)</span>, e.g. picking the same points
-or an incorrect kernel that does not obey Mercer's condition, the full
-version of SMO algorithm will move the Lagrangian multiplier to the end
-of the line segment that can maximise the objective function.<a
-href="#fn1" class="footnote-ref" id="fnref1"
-role="doc-noteref"><sup>1</sup></a> <a href="#fn2" class="footnote-ref"
-id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
-<p>Another simple way to handle this is to treat the scenario as no
-progress being made for this pair of <span
-class="math inline">\(\alpha\)</span>.</p>
-<h3 id="comupting-the-threshold-b">Comupting the Threshold b</h3>
-<p>We can update the threshold <span class="math inline">\(b\)</span>
-after getting <span class="math inline">\(\alpha\)</span> at each
-step.</p>
-<p>When <span class="math inline">\(0 \lt \alpha_1 \lt C\)</span>, <span
-class="math inline">\(b_1\)</span> is a valid threshold because it makes
-the output <span class="math inline">\(\hat{y_1}\)</span> be the same as
-<span class="math inline">\(y_1\)</span> when the input is <span
-class="math inline">\(x_1\)</span></p>
-<p><span class="math display">\[
-E_1 = (y_1 \alpha^{old}_1 K_{11} + y_2 \alpha^{old}_2 K_{12} + b) - (y_1
-\alpha^{new}_1 K_{11} + y_2 \alpha^{new}_2 K_{12} + b_1)
-\]</span></p>
-<p><span class="math display">\[
-\Rightarrow b_1 = b - E_1 - y_1 (\alpha^{new}_1 - \alpha^{old}_1) K_{11}
-- y_2 (\alpha^{new}_2  - \alpha^{old}_2) K_{12}
-\]</span></p>
-<p>Similarly, when <span class="math inline">\(\alpha_2\)</span> is not
-at bounds, <span class="math inline">\(b_2\)</span> is a valid
-threshold</p>
-<p><span class="math display">\[
-b_2 = b - E_2 - y_1 (\alpha^{new}_1 - \alpha^{old}_1) K_{12} - y_2
-(\alpha^{new}_2  - \alpha^{old}_2) K_{22}
-\]</span></p>
-<p>When both <span class="math inline">\(b_1\)</span> and <span
-class="math inline">\(b_2\)</span> are valid, they will be equal because
-<span class="math inline">\(\hat{y_i} y_i = 1\)</span>, and the new
-<span class="math inline">\(E_1\)</span> and <span
-class="math inline">\(E_2\)</span> will be 0. This can be easily
-verified with <span class="math inline">\((6)\)</span> and <span
-class="math inline">\((7)\)</span>. Intuitively, when <span
-class="math inline">\(y_1 = y_2\)</span>, they are both at bounds and is
-trivial, whereas for <span class="math inline">\(y_1 \neq y_2\)</span>,
-they both try to maximise the margin width, and this results in <span
-class="math inline">\(b_1\)</span> and <span
-class="math inline">\(b_2\)</span> being equal.</p>
-<p>For other cases, we could choose the halfway between <span
-class="math inline">\(b_1\)</span> and <span
-class="math inline">\(b_2\)</span>.</p>
-
-$$
-  b=\begin{cases}
-    b_1, & \text{if $0 \lt \alpha^{new}_1 \lt C$}.\\
-    b_2, & \text{if $0 \lt \alpha^{new}_2 \lt C$}.\\
-    \frac{(b_1+b_2)}{2}, & \text{otherwise}.
-  \end{cases}
-$$
-
-<h3 id="choosing-the-multipliers-to-optimise">Choosing the Multipliers
-to Optimise</h3>
-<p>In order to speed up the training rate, the main idea of choosing the
-multipliers in SMO can be briefly summarised as the following.</p>
-<blockquote>
-<p>Firstly, choose the multiplier that are likely to violate the KKT
-conditions to optimise, i.e. <span class="math inline">\(0 &lt; \alpha_i
-&lt; C\)</span>. When one multiplier is chosen, another multiplier would
-be the one that can maximise the step size, <span
-class="math inline">\(\vert E_2 - E_1 \vert\)</span>.</p>
-</blockquote>
-<p>Then SMO will scan the entire data sets until the algorithm
-terminates.</p>
-<h3 id="other-tricks-to-make-the-training-process-faster">Other Tricks
-to Make the Training Process Faster</h3>
-<h4 id="error-cache-update">Error Cache Update</h4>
-<p>We can reduce the computational cost to compute the error cache,
-which stores <span class="math inline">\(E_i\)</span>, after Lagrangian
-multipliers update. From <span class="math inline">\((6)\)</span>,</p>
-<p><span class="math display">\[
-E^{old}_i = y_1 \alpha^{old}_1 K_{1i} + y_2 \alpha^{old} K_{2i} +
-\sum^N_{j=3} y_j \alpha_j K_{ij} + b - y_i
-\]</span></p>
-<p><span class="math display">\[
-E^{new}_i = y_1 \alpha^{new}_1 K_{1i} + y_2 \alpha^{new} K_{2i} +
-\sum^N_{j=3} y_j \alpha_j K_{ij} + b_{new} - y_i
-\]</span></p>
-<p><span class="math display">\[
-\Rightarrow E^{new}_i = E^{old}_i + y_1 (\alpha^{new}_1 -
-\alpha^{old}_1) K_{1i} + y_2 (\alpha^{new}_2 - \alpha^{old}_2) K_{2i} +
-(b_{new} - b)
-\]</span></p>
-<h4 id="linear-svm-optimisation">Linear SVM Optimisation</h4>
-<p>The linear SVM only needs to store a single weight vector, <span
-class="math inline">\(w\)</span>. It can also be updated using similar
-mechanism as error cache. From <span
-class="math inline">\((2)\)</span>,</p>
-<p><span class="math display">\[
-w^{old} = y_1 \alpha^{old}_1 x_1 + y_2 \alpha^{old}_2 x_2 + \sum^N_{j=3}
-\alpha_j x_j
-\]</span></p>
-<p><span class="math display">\[
-w^{new} = y_1 \alpha^{new}_1 x_1 + y_2 \alpha^{new}_2 x_2 + \sum^N_{j=3}
-\alpha_j x_j
-\]</span></p>
-<p><span class="math display">\[
-\Rightarrow w^{new} = w^{old} + y_1 (\alpha^{new}_1 - \alpha^{old}_1)
-x_1 + y_2 (\alpha^{new}_2 - \alpha^{old}_2) x_2
-\]</span></p>
-<h2 id="implementation">Implementation</h2>
-<h3 id="source-code">Source Code</h3>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment"># File: MySVM.py</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SVM</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, X, y, C=<span class="number">1</span>, kernel=<span class="string">&#x27;linear&#x27;</span>, b=<span class="number">0</span>, max_iter=<span class="number">300</span>, tol=<span class="number">1e-5</span>, eps=<span class="number">1e-8</span></span>):</span></span><br><span class="line">        self.X = X</span><br><span class="line">        self.y = y</span><br><span class="line">        self.m, self.n = np.shape(self.X)</span><br><span class="line">        self.C = C</span><br><span class="line"></span><br><span class="line">        self.alphas = np.zeros(self.m)</span><br><span class="line">        self.b = b</span><br><span class="line"></span><br><span class="line">        self.kernel = kernel       <span class="comment"># &#x27;linear&#x27;, &#x27;rbf&#x27;</span></span><br><span class="line">        <span class="keyword">if</span> kernel == <span class="string">&#x27;linear&#x27;</span>:</span><br><span class="line">            self.kernel_func = self.linear_kernel</span><br><span class="line">        <span class="keyword">elif</span> kernel == <span class="string">&#x27;gaussian&#x27;</span> <span class="keyword">or</span> kernel == <span class="string">&#x27;rbf&#x27;</span>:</span><br><span class="line">            self.kernel_func = self.gaussian_kernel</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">raise</span> ValueError(<span class="string">&#x27;unknown kernel type&#x27;</span>)</span><br><span class="line"></span><br><span class="line">        self.error = np.zeros(self.m)</span><br><span class="line"></span><br><span class="line">        self.max_iter=max_iter</span><br><span class="line">        self.tol = tol</span><br><span class="line">        self.eps = eps</span><br><span class="line"></span><br><span class="line">        self.is_linear_kernel = <span class="literal">True</span> <span class="keyword">if</span> self.kernel == <span class="string">&#x27;linear&#x27;</span> <span class="keyword">else</span> <span class="literal">False</span></span><br><span class="line">        self.w = np.zeros(self.n)  <span class="comment"># used by linear kernel</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">linear_kernel</span>(<span class="params">self, x1, x2, b=<span class="number">0</span></span>):</span></span><br><span class="line">        <span class="keyword">return</span> x1 @ x2.T + b</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">gaussian_kernel</span>(<span class="params">self, x1, x2, sigma=<span class="number">1</span></span>):</span></span><br><span class="line">        <span class="keyword">if</span> np.ndim(x1) == <span class="number">1</span> <span class="keyword">and</span> np.ndim(x2) == <span class="number">1</span>:</span><br><span class="line">            <span class="keyword">return</span> np.exp(-(np.linalg.norm(x1-x2,<span class="number">2</span>))**<span class="number">2</span>/(<span class="number">2</span>*sigma**<span class="number">2</span>))</span><br><span class="line">        <span class="keyword">elif</span>(np.ndim(x1)&gt;<span class="number">1</span> <span class="keyword">and</span> np.ndim(x2) == <span class="number">1</span>) <span class="keyword">or</span> (np.ndim(x1) == <span class="number">1</span> <span class="keyword">and</span> np.ndim(x2)&gt;<span class="number">1</span>):</span><br><span class="line">            <span class="keyword">return</span> np.exp(-(np.linalg.norm(x1-x2, <span class="number">2</span>, axis=<span class="number">1</span>)**<span class="number">2</span>)/(<span class="number">2</span>*sigma**<span class="number">2</span>))</span><br><span class="line">        <span class="keyword">elif</span> np.ndim(x1) &gt; <span class="number">1</span> <span class="keyword">and</span> np.ndim(x2) &gt; <span class="number">1</span> :</span><br><span class="line">            <span class="keyword">return</span> np.exp(-(np.linalg.norm(x1[:, np.newaxis] \</span><br><span class="line">                             - x2[np.newaxis, :], <span class="number">2</span>, axis = <span class="number">2</span>) ** <span class="number">2</span>)/(<span class="number">2</span>*sigma**<span class="number">2</span>))</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0.</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">predict</span>(<span class="params">self, x</span>):</span></span><br><span class="line">        result = (self.alphas * self.y) @ self.kernel_func(self.X, x) + self.b</span><br><span class="line">        <span class="keyword">return</span> result</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_error</span>(<span class="params">self, i</span>):</span></span><br><span class="line">        <span class="keyword">return</span> self.predict(self.X[i,:]) - self.y[i]</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">take_step</span>(<span class="params">self, i1, i2</span>):</span></span><br><span class="line">        <span class="keyword">if</span> (i1 == i2):</span><br><span class="line">            <span class="keyword">return</span> <span class="number">0</span></span><br><span class="line"></span><br><span class="line">        x1 = self.X[i1, :]</span><br><span class="line">        x2 = self.X[i2, :]</span><br><span class="line"></span><br><span class="line">        y1 = self.y[i1]</span><br><span class="line">        y2 = self.y[i2]</span><br><span class="line"></span><br><span class="line">        alpha1 = self.alphas[i1]</span><br><span class="line">        alpha2 = self.alphas[i2]</span><br><span class="line"></span><br><span class="line">        b = self.b</span><br><span class="line"></span><br><span class="line">        E1 = self.get_error(i1)</span><br><span class="line">        E2 = self.get_error(i2)</span><br><span class="line"></span><br><span class="line">        s = y1 * y2</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> y1 != y2:</span><br><span class="line">            L = <span class="built_in">max</span>(<span class="number">0</span>, alpha2 - alpha1)</span><br><span class="line">            H = <span class="built_in">min</span>(self.C, self.C + alpha2 - alpha1)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            L = <span class="built_in">max</span>(<span class="number">0</span>, alpha2 + alpha1 - self.C)</span><br><span class="line">            H = <span class="built_in">min</span>(self.C, alpha2 + alpha1)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> L == H:</span><br><span class="line">            <span class="keyword">return</span> <span class="number">0</span></span><br><span class="line"></span><br><span class="line">        k11 = self.kernel_func(x1, x1)</span><br><span class="line">        k12 = self.kernel_func(x1, x2)</span><br><span class="line">        k22 = self.kernel_func(x2, x2)</span><br><span class="line"></span><br><span class="line">        eta = k11 + k22 - <span class="number">2</span> * k12</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> eta &gt; <span class="number">0</span>:</span><br><span class="line">            alpha2_new = alpha2 + y2 * (E1 - E2) / eta</span><br><span class="line">            <span class="keyword">if</span> alpha2_new &gt;= H:</span><br><span class="line">                alpha2_new = H</span><br><span class="line">            <span class="keyword">elif</span> alpha2_new &lt;= L:</span><br><span class="line">                alpha2_new = L</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="comment"># Abnormal case for eta &lt;= 0, treat this scenario as no progress</span></span><br><span class="line">            <span class="keyword">return</span> <span class="number">0</span></span><br><span class="line"></span><br><span class="line">        <span class="comment"># Numerical tolerance</span></span><br><span class="line">        <span class="comment"># if abs(alpha2_new - alpha2) &lt; self.eps:   # this is slower</span></span><br><span class="line">        <span class="comment"># below is faster, not degrade the SVM performance</span></span><br><span class="line">        <span class="keyword">if</span> <span class="built_in">abs</span>(alpha2_new - alpha2) &lt; self.eps * (alpha2 + alpha2_new + self.eps):</span><br><span class="line">            <span class="keyword">return</span> <span class="number">0</span></span><br><span class="line"></span><br><span class="line">        alpha1_new = alpha1 + s * (alpha2 - alpha2_new)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Numerical tolerance</span></span><br><span class="line">        <span class="keyword">if</span> alpha1_new &lt; self.eps:</span><br><span class="line">            alpha1_new = <span class="number">0</span></span><br><span class="line">        <span class="keyword">elif</span> alpha1_new &gt; (self.C - self.eps):</span><br><span class="line">            alpha1_new = self.C</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Update threshold</span></span><br><span class="line">        b1 = b - E1 - y1 * (alpha1_new - alpha1) * k11 - y2 * (alpha2_new - alpha2) * k12</span><br><span class="line">        b2 = b - E2 - y1 * (alpha1_new - alpha1) * k12 - y2 * (alpha2_new - alpha2) * k22</span><br><span class="line">        <span class="keyword">if</span> <span class="number">0</span> &lt; alpha1_new &lt; self.C:</span><br><span class="line">            self.b = b1</span><br><span class="line">        <span class="keyword">elif</span> <span class="number">0</span> &lt; alpha2_new &lt; self.C:</span><br><span class="line">            self.b = b2</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            self.b = <span class="number">0.5</span> * (b1 + b2)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Update weight vector for linear SVM</span></span><br><span class="line">        <span class="keyword">if</span> self.is_linear_kernel:</span><br><span class="line">            self.w = self.w + y1 * (alpha1_new - alpha1) * x1 \</span><br><span class="line">                            + y2 * (alpha2_new - alpha2) * x2</span><br><span class="line"></span><br><span class="line">        self.alphas[i1] = alpha1_new</span><br><span class="line">        self.alphas[i2] = alpha2_new</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Error cache update</span></span><br><span class="line">        <span class="comment">## if alpha1 &amp; alpha2 are not at bounds, the error will be 0</span></span><br><span class="line">        self.error[i1] = <span class="number">0</span></span><br><span class="line">        self.error[i2] = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">        i_list = [idx <span class="keyword">for</span> idx, alpha <span class="keyword">in</span> <span class="built_in">enumerate</span>(self.alphas) \</span><br><span class="line">                      <span class="keyword">if</span> <span class="number">0</span> &lt; alpha <span class="keyword">and</span> alpha &lt; self.C]</span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> i_list:</span><br><span class="line">            self.error[i] += \</span><br><span class="line">                  y1 * (alpha1_new - alpha1) * self.kernel_func(x1, self.X[i,:]) \</span><br><span class="line">                + y2 * (alpha2_new - alpha2) * self.kernel_func(x2, self.X[i,:]) \</span><br><span class="line">                + (self.b - b)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">examine_example</span>(<span class="params">self, i2</span>):</span></span><br><span class="line">        y2 = self.y[i2]</span><br><span class="line">        alpha2 = self.alphas[i2]</span><br><span class="line">        E2 = self.get_error(i2)</span><br><span class="line">        r2 = E2 * y2</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Choose the one that is likely to violiate KKT</span></span><br><span class="line">        <span class="comment"># if (0 &lt; alpha2 &lt; self.C) or (abs(r2) &gt; self.tol):  # this is slow</span></span><br><span class="line">        <span class="comment"># below is faster, not degrade the SVM performance</span></span><br><span class="line">        <span class="keyword">if</span> ((r2 &lt; -self.tol <span class="keyword">and</span> alpha2 &lt; self.C) <span class="keyword">or</span> (r2 &gt; self.tol <span class="keyword">and</span> alpha2 &gt; <span class="number">0</span>)):</span><br><span class="line">            <span class="keyword">if</span> <span class="built_in">len</span>(self.alphas[(<span class="number">0</span> &lt; self.alphas) &amp; (self.alphas &lt; self.C)]) &gt; <span class="number">1</span>:</span><br><span class="line">                <span class="keyword">if</span> E2 &gt; <span class="number">0</span>:</span><br><span class="line">                    i1 = np.argmin(self.error)</span><br><span class="line">                <span class="keyword">else</span>:</span><br><span class="line">                    i1 = np.argmax(self.error)</span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span> self.take_step(i1, i2):</span><br><span class="line">                    <span class="keyword">return</span> <span class="number">1</span></span><br><span class="line"></span><br><span class="line">            <span class="comment"># loop over all non-zero and non-C alpha, starting at a random point</span></span><br><span class="line">            i1_list = [idx <span class="keyword">for</span> idx, alpha <span class="keyword">in</span> <span class="built_in">enumerate</span>(self.alphas) \</span><br><span class="line">                           <span class="keyword">if</span> <span class="number">0</span> &lt; alpha <span class="keyword">and</span> alpha &lt; self.C]</span><br><span class="line">            i1_list = np.roll(i1_list, np.random.choice(np.arange(self.m)))</span><br><span class="line">            <span class="keyword">for</span> i1 <span class="keyword">in</span> i1_list:</span><br><span class="line">                <span class="keyword">if</span> self.take_step(i1, i2):</span><br><span class="line">                    <span class="keyword">return</span> <span class="number">1</span></span><br><span class="line"></span><br><span class="line">            <span class="comment"># loop over all possible i1, starting at a random point</span></span><br><span class="line">            i1_list = np.roll(np.arange(self.m), np.random.choice(np.arange(self.m)))</span><br><span class="line">            <span class="keyword">for</span> i1 <span class="keyword">in</span> i1_list:</span><br><span class="line">                <span class="keyword">if</span> self.take_step(i1, i2):</span><br><span class="line">                    <span class="keyword">return</span> <span class="number">1</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">fit</span>(<span class="params">self</span>):</span></span><br><span class="line">        loop_num = <span class="number">0</span></span><br><span class="line">        numChanged = <span class="number">0</span></span><br><span class="line">        examineAll = <span class="literal">True</span></span><br><span class="line">        <span class="keyword">while</span> numChanged &gt; <span class="number">0</span> <span class="keyword">or</span> examineAll:</span><br><span class="line">            <span class="keyword">if</span> loop_num &gt;= self.max_iter:</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">            numChanged = <span class="number">0</span></span><br><span class="line">            <span class="keyword">if</span> examineAll:</span><br><span class="line">                <span class="keyword">for</span> i2 <span class="keyword">in</span> <span class="built_in">range</span>(self.m):</span><br><span class="line">                    numChanged += self.examine_example(i2)</span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                i2_list = [idx <span class="keyword">for</span> idx, alpha <span class="keyword">in</span> <span class="built_in">enumerate</span>(self.alphas) \</span><br><span class="line">                                <span class="keyword">if</span> <span class="number">0</span> &lt; alpha <span class="keyword">and</span> alpha &lt; self.C]</span><br><span class="line">                <span class="keyword">for</span> i2 <span class="keyword">in</span> i2_list:</span><br><span class="line">                    numChanged += self.examine_example(i2)</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> examineAll:</span><br><span class="line">                examineAll = <span class="literal">False</span></span><br><span class="line">            <span class="keyword">elif</span> numChanged == <span class="number">0</span>:</span><br><span class="line">                examineAll = <span class="literal">True</span></span><br><span class="line"></span><br><span class="line">            loop_num += <span class="number">1</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h3 id="demo">Demo</h3>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment"># File: SVM_test.py</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"><span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> MySVM</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">gen_circle</span>(<span class="params">n=<span class="number">50</span>, center_x=<span class="number">0</span>, center_y=<span class="number">0</span>, radius=<span class="number">1</span>, label=<span class="number">0</span></span>):</span></span><br><span class="line">    </span><br><span class="line">    <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">    A simple function that generates circular distribution</span></span><br><span class="line"><span class="string">    n: number of points (default=50)</span></span><br><span class="line"><span class="string">    center_x: the center for X (default=0)</span></span><br><span class="line"><span class="string">    center_y: the center for Y (default=0)</span></span><br><span class="line"><span class="string">    radius: the radius of circle (default=1)</span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># random angle</span></span><br><span class="line">    alpha = <span class="number">2</span> * np.pi * np.random.rand(n)</span><br><span class="line">    <span class="comment"># random radius</span></span><br><span class="line">    r = radius * np.sqrt(np.random.rand(n))</span><br><span class="line">    <span class="comment"># calculating coordinates</span></span><br><span class="line">    x = r * np.cos(alpha) + center_x</span><br><span class="line">    y = r * np.sin(alpha) + center_y</span><br><span class="line"></span><br><span class="line">    label = np.ones(n) * label</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> [x, y, label]</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    np.random.seed(<span class="number">5</span>)   <span class="comment"># to reproduce</span></span><br><span class="line"></span><br><span class="line">    n = <span class="number">100</span></span><br><span class="line">    C0 = gen_circle(n, center_x=<span class="number">1</span>, center_y=<span class="number">1</span>, radius=<span class="number">1.05</span>, label=<span class="number">1</span>)</span><br><span class="line">    C1 = gen_circle(n, center_x=-<span class="number">1</span>, center_y=-<span class="number">1</span>, radius=<span class="number">1.05</span>, label=-<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line">    x0 = np.append(C0[<span class="number">0</span>], C1[<span class="number">0</span>])</span><br><span class="line">    x1 = np.append(C0[<span class="number">1</span>], C1[<span class="number">1</span>])</span><br><span class="line"></span><br><span class="line">    X = np.c_[x0, x1]</span><br><span class="line">    Y = np.append(C0[<span class="number">2</span>], C1[<span class="number">2</span>])</span><br><span class="line"></span><br><span class="line">    scaler = StandardScaler()</span><br><span class="line">    train_x = scaler.fit_transform(X)</span><br><span class="line"></span><br><span class="line">    model = MySVM.SVM(train_x, Y, C=<span class="number">1</span>, kernel=<span class="string">&#x27;linear&#x27;</span>, max_iter=<span class="number">600</span>, tol=<span class="number">1e-5</span>, eps=<span class="number">1e-5</span>)</span><br><span class="line">    <span class="comment"># model = MySVM.SVM(train_x, Y, C=1, kernel=&#x27;rbf&#x27;, max_iter=600, tol=1e-5, eps=1e-5)</span></span><br><span class="line">    model.fit()</span><br><span class="line"></span><br><span class="line">    train_y = model.predict(train_x)</span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;support vector: &#123;&#125; / &#123;&#125;&#x27;</span>\</span><br><span class="line">        .<span class="built_in">format</span>(<span class="built_in">len</span>(model.alphas[model.alphas != <span class="number">0</span>]), <span class="built_in">len</span>(model.alphas)))</span><br><span class="line">    sv_idx = []</span><br><span class="line">    <span class="keyword">for</span> idx, alpha <span class="keyword">in</span> <span class="built_in">enumerate</span>(model.alphas):</span><br><span class="line">        <span class="keyword">if</span> alpha != <span class="number">0</span>:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&#x27;index = &#123;&#125;, alpha = &#123;:.3f&#125;, predict y=&#123;:.3f&#125;&#x27;</span>\</span><br><span class="line">                .<span class="built_in">format</span>(idx, alpha, train_y[idx]))</span><br><span class="line">            sv_idx.append(idx)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;bias = <span class="subst">&#123;model.b&#125;</span>&#x27;</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;training data error rate = &#123;&#125;&#x27;</span>.<span class="built_in">format</span>(<span class="built_in">len</span>(Y[Y * train_y &lt; <span class="number">0</span>])/<span class="built_in">len</span>(Y)))</span><br><span class="line"></span><br><span class="line">    <span class="comment">## Draw the Plot</span></span><br><span class="line">    plt.plot(C0[<span class="number">0</span>], C0[<span class="number">1</span>], <span class="string">&#x27;o&#x27;</span>, markerfacecolor=<span class="string">&#x27;r&#x27;</span>, markeredgecolor=<span class="string">&#x27;None&#x27;</span>, alpha=<span class="number">0.55</span>)</span><br><span class="line">    plt.plot(C1[<span class="number">0</span>], C1[<span class="number">1</span>], <span class="string">&#x27;o&#x27;</span>, markerfacecolor=<span class="string">&#x27;b&#x27;</span>, markeredgecolor=<span class="string">&#x27;None&#x27;</span>, alpha=<span class="number">0.55</span>)</span><br><span class="line"></span><br><span class="line">    resolution = <span class="number">50</span></span><br><span class="line">    dx = np.linspace(X[:, <span class="number">0</span>].<span class="built_in">min</span>(), X[:, <span class="number">0</span>].<span class="built_in">max</span>(), resolution)</span><br><span class="line">    dy = np.linspace(X[:, <span class="number">1</span>].<span class="built_in">min</span>(), X[:, <span class="number">1</span>].<span class="built_in">max</span>(), resolution)</span><br><span class="line">    dx, dy = np.meshgrid(dx, dy)</span><br><span class="line">    plot_x = np.c_[dx.flatten(), dy.flatten()]</span><br><span class="line"></span><br><span class="line">    dz = model.predict(scaler.transform(plot_x))</span><br><span class="line">    dz = dz.reshape(dx.shape)</span><br><span class="line"></span><br><span class="line">    plt.contour(dx, dy, dz, alpha=<span class="number">1</span>, colors=(<span class="string">&#x27;b&#x27;</span>, <span class="string">&#x27;k&#x27;</span>, <span class="string">&#x27;r&#x27;</span>), \</span><br><span class="line">                levels=(-<span class="number">1</span>, <span class="number">0</span>, <span class="number">1</span>), linestyles = (<span class="string">&#x27;--&#x27;</span>, <span class="string">&#x27;-&#x27;</span>, <span class="string">&#x27;--&#x27;</span>))</span><br><span class="line"></span><br><span class="line">    label_cnt = <span class="number">0</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> sv_idx:</span><br><span class="line">        <span class="keyword">if</span> label_cnt == <span class="number">0</span>:</span><br><span class="line">            plt.scatter(X[i, <span class="number">0</span>], X[i, <span class="number">1</span>], marker=<span class="string">&#x27;*&#x27;</span>, color=<span class="string">&#x27;k&#x27;</span>, \</span><br><span class="line">                        s=<span class="number">120</span>, label=<span class="string">&#x27;Support vector&#x27;</span>)</span><br><span class="line">            label_cnt += <span class="number">1</span></span><br><span class="line">            <span class="keyword">continue</span></span><br><span class="line"></span><br><span class="line">        plt.scatter(X[i, <span class="number">0</span>], X[i, <span class="number">1</span>], marker=<span class="string">&#x27;*&#x27;</span>, color=<span class="string">&#x27;k&#x27;</span>, s=<span class="number">120</span>)</span><br><span class="line"></span><br><span class="line">    plt.legend()</span><br><span class="line">    plt.show()</span><br></pre></td></tr></table></figure>
-<img src="/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_5.png" class="" title="Figure 5">
-<section id="footnotes" class="footnotes footnotes-end-of-document"
-role="doc-endnotes">
-<hr />
-<ol>
-<li id="fn1"><p><a
-href="https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-98-14.pdf">Sequential
-Minimal Optimization: A Fast Algorithm for Training Support Vector
-Machines</a><a href="#fnref1" class="footnote-back"
-role="doc-backlink">↩︎</a></p></li>
-<li id="fn2"><p><a
-href="https://www.cs.mcgill.ca/~hv/publications/99.04.McGill.thesis.gmak.pdf">The
-implementation of Support Vector Machines using the sequential minimal
-optimization algorithm</a><a href="#fnref2" class="footnote-back"
-role="doc-backlink">↩︎</a></p></li>
-</ol>
-</section>
-]]></content>
-      <categories>
-        <category>Mathematics</category>
-        <category>Machine Learning</category>
-      </categories>
-      <tags>
-        <tag>Optimisation</tag>
-        <tag>Python</tag>
-        <tag>Kernel Method</tag>
-        <tag>SVM</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Sampling - Inverse Transformation Method</title>
-    <url>/2021/09/11/Inverse-Transform-Method/</url>
-    <content><![CDATA[<p>Sometimes, we may wanna simulate certain random variable to get the
-desired approximation. Yet, if the scenario is rather complicated, the
-computation cost can be exorbitant. With the help of <strong>inverse
-transformation method</strong>, we are able to generate many special
-random variables efficienctly.</p>
-<span id="more"></span>
-<h2 id="a-toy-example">A Toy Example</h2>
-<blockquote>
-<p>With replacement, we draw cards at random from an ordinary deck of 52
-cards, and successively until an ACE is drawn. What is the probability
-of exactly 10 draws?</p>
-</blockquote>
-<p>Apparently, let <span class="math inline">\(X\)</span> be the number
-of draws until the first ace. The random variable <span
-class="math inline">\(X\)</span> is of <strong>geometric
-distribution</strong> with the parameter <span class="math inline">\(p =
-\frac{1}{13}\)</span>. The answer of the desired probability is</p>
-<p><span class="math display">\[
-P(x) = (1-p)^{x-1} * p = (\frac{12}{13})^9 * (\frac{1}{13})
-\]</span></p>
-<h2 id="simulating-x">Simulating <span
-class="math inline">\(X\)</span></h2>
-<p>Now, if we wanna approximate the desired probability by simulating
-<span class="math inline">\(X\)</span>, an intuitive way might look like
-as below:</p>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment">### Pseudo-code of Simulation</span></span><br><span class="line"></span><br><span class="line">i = <span class="number">0</span>    <span class="comment"># iterator</span></span><br><span class="line">k = <span class="number">0</span>    <span class="comment"># Record the desired events</span></span><br><span class="line"><span class="keyword">while</span> i &lt; N:      <span class="comment"># Repeat N trials</span></span><br><span class="line">    draws = <span class="number">0</span>     <span class="comment"># Count how many draws when the first ACE appears</span></span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:   <span class="comment"># Draw the card with replacement until it is an ACE</span></span><br><span class="line">        draws +=<span class="number">1</span></span><br><span class="line">        Generate a random sample x <span class="keyword">from</span> [A,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,..<span class="number">.9</span>,<span class="number">10</span>,J,Q,K]</span><br><span class="line">        <span class="keyword">if</span> x <span class="keyword">is</span> ACE:   <span class="comment"># Let 1 represent the ACE</span></span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> draws <span class="keyword">is</span> <span class="number">10</span>:  <span class="comment"># Number of draws is exactly 10</span></span><br><span class="line">        k +=<span class="number">1</span></span><br><span class="line">    </span><br><span class="line">    i +=<span class="number">1</span></span><br><span class="line"></span><br><span class="line">prob = k/N   <span class="comment"># The approximate value</span></span><br></pre></td></tr></table></figure>
-<p>From the experiment, it can be observed that <span
-class="math inline">\(N\)</span> has to be quite large (&gt;10000) if we
-would like to get enough accuracy:</p>
-<img src="/2021/09/11/Inverse-Transform-Method/geomtric_sim.png" class="" title="This is an image">
-<p>Below is the source code:</p>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"></span><br><span class="line"><span class="comment"># N trials</span></span><br><span class="line"><span class="comment"># k: Count the desired events obtained in N trials</span></span><br><span class="line"></span><br><span class="line">N = [<span class="number">100</span>, <span class="number">250</span>, <span class="number">500</span>, <span class="number">750</span>, </span><br><span class="line">     <span class="number">1000</span>, <span class="number">1500</span>, <span class="number">2000</span>, <span class="number">2500</span>, <span class="number">3000</span>, <span class="number">3500</span>, <span class="number">4000</span>, <span class="number">4500</span>, <span class="number">5000</span>,</span><br><span class="line">     <span class="number">5500</span>, <span class="number">6000</span>, <span class="number">6500</span>, <span class="number">7000</span>, <span class="number">7500</span>, <span class="number">8000</span>, <span class="number">8500</span>, <span class="number">9000</span>, <span class="number">9500</span>,</span><br><span class="line">     <span class="number">10000</span>, <span class="number">12500</span>, <span class="number">15000</span>, <span class="number">17500</span>, <span class="number">20000</span>]</span><br><span class="line">approx = []</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> n <span class="keyword">in</span> N:</span><br><span class="line">    i = <span class="number">0</span></span><br><span class="line">    k = <span class="number">0</span></span><br><span class="line">    <span class="keyword">while</span> i &lt; n:</span><br><span class="line">        <span class="comment"># draw the card with replacement until it is ACE</span></span><br><span class="line">        j = <span class="number">0</span></span><br><span class="line">        <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">            j +=<span class="number">1</span></span><br><span class="line">            draw = np.random.randint(<span class="number">1</span>, <span class="number">13</span>)</span><br><span class="line">            <span class="keyword">if</span> draw == <span class="number">1</span>:</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> j == <span class="number">10</span>:  <span class="comment"># draw number is 10</span></span><br><span class="line">            k +=<span class="number">1</span></span><br><span class="line">        </span><br><span class="line">        i +=<span class="number">1</span></span><br><span class="line"></span><br><span class="line">    approx.append(k/n)</span><br><span class="line"></span><br><span class="line">ans = (<span class="number">12</span>/<span class="number">13</span>)**<span class="number">9</span> * (<span class="number">1</span>/<span class="number">13</span>)</span><br><span class="line"></span><br><span class="line">plt.scatter(x=N, y=approx)</span><br><span class="line">plt.xlabel(<span class="string">&#x27;Number of trials&#x27;</span>)</span><br><span class="line">plt.ylabel(<span class="string">&#x27;Approximate probability&#x27;</span>)</span><br><span class="line">plt.axhline(y=ans, color=<span class="string">&#x27;r&#x27;</span>, linestyle=<span class="string">&#x27;-&#x27;</span>, label=<span class="string">&#x27;Answer&#x27;</span>)</span><br><span class="line">plt.legend()</span><br><span class="line">plt.title(<span class="string">&#x27;Simulation to get the Ace at exactly 10 draws&#x27;</span>)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
-<p>However, this approach is not efficient because the time complexity
-is proportional to the draw number. Thus, let's introduce the inverse
-transformation method. By this method, we are able to get the same
-result as well but only need to choose one random point in (0,1),
-significantly reducing the time cost.</p>
-<h2 id="inverse-transformation-method">Inverse Transformation
-Method</h2>
-<p>Let <span class="math inline">\(F(X) = P(X \leq x)\)</span> be the
-probability distribution function of the random variable <span
-class="math inline">\(X\)</span>. Remember that for uniform random
-variable <span class="math inline">\(U\)</span> over <span
-class="math inline">\((0,1)\)</span>,</p>
-<p><span class="math display">\[
-F(U) = P(U \leq x) = x, x \in (0,1) \tag{1}
-\]</span></p>
-<p>Imagine that our objective is to simulate a random variable <span
-class="math inline">\(X\)</span> from a uniform random variable <span
-class="math inline">\(U\)</span>, i.e., <span class="math inline">\(P(X
-\leq x) = P(T(U) \leq x)\)</span>. We hope to find a transformation
-<span class="math inline">\(T\)</span> that is able to convert the
-random variable <span class="math inline">\(U\)</span> into our desired
-<span class="math inline">\(X\)</span>.</p>
-
-$$
-\displaylines {
-P(X \leq x) \\
-= P(T(U) \leq x) \\
-= P(U \leq T^{-1}(x)) \\
-}
-$$
-
-<p>Remember that <span class="math inline">\(F(X) = P(X \leq x)\)</span>
-and from <span class="math inline">\((1)\)</span>:</p>
-
-$$
-\displaylines {
-P(U \leq T^{-1}(x)) \\
-= P(U \leq F(x)) \\
-= P(F^{-1}(U) \leq x)
-}
-$$
-
-<p><span class="math display">\[
-\longrightarrow X = F^{-1}(U) \tag{2}
-\]</span></p>
-<p>From <span class="math inline">\((2)\)</span>, we know the
-transformation <span class="math inline">\(T\)</span> we are looking for
-is just <span class="math inline">\(F^{-1}\)</span>. Therefore, after
-solving <span class="math inline">\(F^{-1}\)</span>, we are able to
-generate the desired <span class="math inline">\(X\)</span> from uniform
-random variable <span class="math inline">\(U\)</span> directly without
-complications.<a href="#fn1" class="footnote-ref" id="fnref1"
-role="doc-noteref"><sup>1</sup></a></p>
-<h2
-id="simulating-geometric-distribution-via-inverse-transformation-method">Simulating
-Geometric Distribution via Inverse Transformation Method</h2>
-<p>Back to our original problem, we wanna simulate <span
-class="math inline">\(X\)</span> in the toy example, and we know that
-the <span class="math inline">\(F(x)\)</span> of geometric distribution
-with parameter <span class="math inline">\(p\)</span> is</p>
-<p><span class="math display">\[
-F(x) = 1 - (1-p)^{x-1}
-\]</span></p>
-<p>Solve <span class="math inline">\(u = F(x)\)</span>:</p>
-
-$$
-\displaylines {
-u = 1 - (1-p)^{x-1} \\
-x = 1 + \frac{\log{(1-u)}}{\log{(1-p)}}
-}
-$$
-
-<p><span class="math display">\[
-\equiv 1 + \frac{\log{u}}{\log{(1-p)}}  \tag{3}
-\]</span></p>
-<p>If <span class="math inline">\(u\)</span> is a random number variable
-from (0,1), then <span class="math inline">\((1-u)\)</span> is a random
-number variable from (0,1) as well.</p>
-<p>Now, from <span class="math inline">\((3)\)</span>, we are able to
-generate <span class="math inline">\(X\)</span> from <span
-class="math inline">\(U\)</span> efficiently. Because <span
-class="math inline">\(X\)</span> is an integer, we use the <em>floor
-operation</em> (with the <em>ceiling</em> is also equivalent):</p>
-<p><span class="math display">\[
-X = \lfloor 1 + \frac{\log{u}}{\log{(1-p)}} \rfloor
-\]</span></p>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment">### Pseudo-code of Geometric Distribution Simulation with Inverse Transform method</span></span><br><span class="line"></span><br><span class="line">i = <span class="number">0</span>    <span class="comment"># iterator</span></span><br><span class="line">k = <span class="number">0</span>    <span class="comment"># Record the desired events</span></span><br><span class="line"><span class="keyword">while</span> i &lt; N:      <span class="comment"># Repeat N trials</span></span><br><span class="line">    Generate a uniform random variable u <span class="keyword">from</span> (<span class="number">0</span>,<span class="number">1</span>)</span><br><span class="line">    <span class="comment"># p is the parameter of geometric distribution</span></span><br><span class="line">    X = floor(<span class="number">1</span> + log(u)/log(<span class="number">1</span>-p))   <span class="comment"># inverse transform</span></span><br><span class="line">    <span class="keyword">if</span> X <span class="keyword">is</span> <span class="number">10</span>:</span><br><span class="line">        k +=<span class="number">1</span></span><br><span class="line"></span><br><span class="line">    i +=<span class="number">1</span></span><br><span class="line"></span><br><span class="line">prob = k/N   <span class="comment"># The approximate value</span></span><br></pre></td></tr></table></figure>
-<p>Below is the experimental result and the related source code:</p>
-<img src="/2021/09/11/Inverse-Transform-Method/geomtric_sim_with_inv.png" class="" title="This is an image">
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"><span class="keyword">from</span> math <span class="keyword">import</span> log, floor</span><br><span class="line"></span><br><span class="line"><span class="comment"># N trials</span></span><br><span class="line"><span class="comment"># k: Count the desired events obtained in N trials</span></span><br><span class="line"></span><br><span class="line">N = [<span class="number">100</span>, <span class="number">250</span>, <span class="number">500</span>, <span class="number">750</span>, </span><br><span class="line">     <span class="number">1000</span>, <span class="number">1500</span>, <span class="number">2000</span>, <span class="number">2500</span>, <span class="number">3000</span>, <span class="number">3500</span>, <span class="number">4000</span>, <span class="number">4500</span>, <span class="number">5000</span>,</span><br><span class="line">     <span class="number">5500</span>, <span class="number">6000</span>, <span class="number">6500</span>, <span class="number">7000</span>, <span class="number">7500</span>, <span class="number">8000</span>, <span class="number">8500</span>, <span class="number">9000</span>, <span class="number">9500</span>,</span><br><span class="line">     <span class="number">10000</span>, <span class="number">12500</span>, <span class="number">15000</span>, <span class="number">17500</span>, <span class="number">20000</span>]</span><br><span class="line">approx = []</span><br><span class="line">p = <span class="number">1</span>/<span class="number">13</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> n <span class="keyword">in</span> N:</span><br><span class="line">    i = <span class="number">0</span></span><br><span class="line">    k = <span class="number">0</span></span><br><span class="line">    <span class="keyword">while</span> i &lt; n:</span><br><span class="line">        <span class="comment"># inverse transformation method</span></span><br><span class="line">        u = np.random.rand()</span><br><span class="line">        X = floor(<span class="number">1</span> + log(u)/log(<span class="number">1</span>-p))</span><br><span class="line">        <span class="keyword">if</span> X == <span class="number">10</span>:</span><br><span class="line">            k +=<span class="number">1</span></span><br><span class="line">        </span><br><span class="line">        i +=<span class="number">1</span></span><br><span class="line"></span><br><span class="line">    approx.append(k/n)</span><br><span class="line"></span><br><span class="line">ans = (<span class="number">12</span>/<span class="number">13</span>)**<span class="number">9</span> * (<span class="number">1</span>/<span class="number">13</span>)</span><br><span class="line"></span><br><span class="line">plt.scatter(x=N, y=approx)</span><br><span class="line">plt.xlabel(<span class="string">&#x27;Number of trials&#x27;</span>)</span><br><span class="line">plt.ylabel(<span class="string">&#x27;Approximate probability&#x27;</span>)</span><br><span class="line">plt.axhline(y=ans, color=<span class="string">&#x27;r&#x27;</span>, linestyle=<span class="string">&#x27;-&#x27;</span>, label=<span class="string">&#x27;Answer&#x27;</span>)</span><br><span class="line">plt.legend()</span><br><span class="line">plt.title(<span class="string">&#x27;Simulation with Inverse Tranformation Method&#x27;</span>)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
-<h2 id="performance-comparison">Performance Comparison</h2>
-<p>Let N be 500000 trials.</p>
-<p>Original method:</p>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment">### Original Method</span></span><br><span class="line"><span class="keyword">from</span> time <span class="keyword">import</span> perf_counter</span><br><span class="line"></span><br><span class="line">i = <span class="number">0</span></span><br><span class="line">k = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">t1_start = perf_counter()</span><br><span class="line"><span class="keyword">while</span> i &lt; <span class="number">500000</span>:</span><br><span class="line">    <span class="comment"># draw the card with replacement until it is ACE</span></span><br><span class="line">    j = <span class="number">0</span></span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        j +=<span class="number">1</span></span><br><span class="line">        draw = np.random.randint(<span class="number">1</span>, <span class="number">13</span>)</span><br><span class="line">        <span class="keyword">if</span> draw == <span class="number">1</span>:</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> j == <span class="number">10</span>:  <span class="comment"># draw number is 10</span></span><br><span class="line">        k +=<span class="number">1</span></span><br><span class="line"></span><br><span class="line">    i +=<span class="number">1</span></span><br><span class="line">t1_stop = perf_counter()</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;Elapsed time (sec):&quot;</span>, t1_stop-t1_start) </span><br></pre></td></tr></table></figure>
-<p>Inverse transformation method:</p>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> time <span class="keyword">import</span> perf_counter</span><br><span class="line"></span><br><span class="line">i = <span class="number">0</span></span><br><span class="line">k = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">t1_start = perf_counter()  </span><br><span class="line"><span class="keyword">while</span> i &lt; <span class="number">500000</span>:</span><br><span class="line">    <span class="comment"># inverse transformation method</span></span><br><span class="line">    u = np.random.rand()</span><br><span class="line">    X = floor(<span class="number">1</span> + log(u)/log(<span class="number">1</span>-p))</span><br><span class="line">    <span class="keyword">if</span> X == <span class="number">10</span>:</span><br><span class="line">        k +=<span class="number">1</span></span><br><span class="line">    </span><br><span class="line">    i +=<span class="number">1</span></span><br><span class="line">t1_stop = perf_counter()</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;Elapsed time (sec):&quot;</span>, t1_stop-t1_start) </span><br></pre></td></tr></table></figure>
-<p>Results:</p>
-<table>
-<thead>
-<tr class="header">
-<th>N = 500000 (trials)</th>
-<th>Elapsed Time (sec)</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Original Method</td>
-<td>10.832</td>
-</tr>
-<tr class="even">
-<td>Inverse Transformation Method</td>
-<td>0.363</td>
-</tr>
-</tbody>
-</table>
-<p>We can observe that the elapsed time has been substantially reduced
-after applying inverse transformation method.</p>
-<blockquote>
-<p>Note that the inverse transformation method is to mainly improve the
-computation cost. It does <strong>not</strong> increase the convergence
-rate. From the previous experimental results, you can see that the N
-trials required to converge are roughly the same for both methods.</p>
-</blockquote>
-<section id="footnotes" class="footnotes footnotes-end-of-document"
-role="doc-endnotes">
-<hr />
-<ol>
-<li id="fn1"><p>For rigorous proof, you can refer to <a
-href="https://en.wikipedia.org/wiki/Inverse_transform_sampling">Inverse
-transform sampling</a>. The aim here is to grasp the idea intuitively.<a
-href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-</ol>
-</section>
-]]></content>
-      <categories>
-        <category>Mathematics</category>
-        <category>Probability and Statistics</category>
-      </categories>
-      <tags>
-        <tag>Simulation</tag>
-        <tag>Python</tag>
-        <tag>Sampling</tag>
-        <tag>Inverse Transformation Method</tag>
       </tags>
   </entry>
 </search>

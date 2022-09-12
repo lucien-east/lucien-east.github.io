@@ -17,32 +17,32 @@
 
 <script id="hexo-configurations">
     var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+    var CONFIG = {"hostname":"lucien-east.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
   <meta name="description" content="Support vector machine (SVM) plays an important role in machine learning. Actually, SVM is one of my favorite models because of its analytical property. Its main idea is to find the optimal hyperplane">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Implement SVM with SMO from scratch in Python">
-<meta property="og:url" content="http://example.com/2022/07/30/Implement-SVM-with-SMO-from-scratch/index.html">
+<meta property="og:url" content="https://lucien-east.github.io/2022/07/30/Implement-SVM-with-SMO-from-scratch/index.html">
 <meta property="og:site_name" content="East TechNote">
 <meta property="og:description" content="Support vector machine (SVM) plays an important role in machine learning. Actually, SVM is one of my favorite models because of its analytical property. Its main idea is to find the optimal hyperplane">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="http://example.com/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_1.png">
-<meta property="og:image" content="http://example.com/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_2.png">
-<meta property="og:image" content="http://example.com/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_3.png">
-<meta property="og:image" content="http://example.com/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_4.png">
-<meta property="og:image" content="http://example.com/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_5.png">
+<meta property="og:image" content="https://lucien-east.github.io/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_1.png">
+<meta property="og:image" content="https://lucien-east.github.io/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_2.png">
+<meta property="og:image" content="https://lucien-east.github.io/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_3.png">
+<meta property="og:image" content="https://lucien-east.github.io/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_4.png">
+<meta property="og:image" content="https://lucien-east.github.io/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_5.png">
 <meta property="article:published_time" content="2022-07-30T10:39:12.000Z">
 <meta property="article:modified_time" content="2022-09-12T17:33:39.086Z">
 <meta property="article:author" content="East">
-<meta property="article:tag" content="Optimisation">
 <meta property="article:tag" content="Python">
+<meta property="article:tag" content="Optimisation">
 <meta property="article:tag" content="Kernel Method">
 <meta property="article:tag" content="SVM">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://example.com/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_1.png">
+<meta name="twitter:image" content="https://lucien-east.github.io/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_1.png">
 
-<link rel="canonical" href="http://example.com/2022/07/30/Implement-SVM-with-SMO-from-scratch/">
+<link rel="canonical" href="https://lucien-east.github.io/2022/07/30/Implement-SVM-with-SMO-from-scratch/">
 
 
 <script id="page-configurations">
@@ -205,7 +205,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/07/30/Implement-SVM-with-SMO-from-scratch/">
+    <link itemprop="mainEntityOfPage" href="https://lucien-east.github.io/2022/07/30/Implement-SVM-with-SMO-from-scratch/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -568,8 +568,8 @@ role="doc-backlink">↩︎</a></p></li>
 
       <footer class="post-footer">
           <div class="post-tags">
-              <a href="/tags/Optimisation/" rel="tag"># Optimisation</a>
               <a href="/tags/Python/" rel="tag"># Python</a>
+              <a href="/tags/Optimisation/" rel="tag"># Optimisation</a>
               <a href="/tags/Kernel-Method/" rel="tag"># Kernel Method</a>
               <a href="/tags/SVM/" rel="tag"># SVM</a>
           </div>

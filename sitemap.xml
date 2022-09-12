@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>http://example.com/2021/07/29/cpp-vector-emplace/</loc>
+    <loc>https://lucien-east.github.io/2021/07/29/cpp-vector-emplace/</loc>
     
     <lastmod>2022-09-12</lastmod>
     
@@ -11,7 +11,7 @@
   </url>
   
   <url>
-    <loc>http://example.com/2021/08/07/cpp-smart-pointers/</loc>
+    <loc>https://lucien-east.github.io/2021/09/11/Inverse-Transform-Method/</loc>
     
     <lastmod>2022-09-12</lastmod>
     
@@ -20,7 +20,7 @@
   </url>
   
   <url>
-    <loc>http://example.com/2022/07/30/Implement-SVM-with-SMO-from-scratch/</loc>
+    <loc>https://lucien-east.github.io/2022/07/30/Implement-SVM-with-SMO-from-scratch/</loc>
     
     <lastmod>2022-09-12</lastmod>
     
@@ -29,7 +29,7 @@
   </url>
   
   <url>
-    <loc>http://example.com/2021/09/11/Inverse-Transform-Method/</loc>
+    <loc>https://lucien-east.github.io/2021/08/07/cpp-smart-pointers/</loc>
     
     <lastmod>2022-09-12</lastmod>
     
@@ -38,7 +38,7 @@
   </url>
   
   <url>
-    <loc>http://example.com/google36e1ee3508942c37.html</loc>
+    <loc>https://lucien-east.github.io/google36e1ee3508942c37.html</loc>
     
     <lastmod>2022-09-12</lastmod>
     
@@ -47,7 +47,7 @@
   </url>
   
   <url>
-    <loc>http://example.com/tags/index.html</loc>
+    <loc>https://lucien-east.github.io/about/index.html</loc>
     
     <lastmod>2022-09-12</lastmod>
     
@@ -56,7 +56,7 @@
   </url>
   
   <url>
-    <loc>http://example.com/about/index.html</loc>
+    <loc>https://lucien-east.github.io/categories/index.html</loc>
     
     <lastmod>2022-09-12</lastmod>
     
@@ -65,7 +65,7 @@
   </url>
   
   <url>
-    <loc>http://example.com/categories/index.html</loc>
+    <loc>https://lucien-east.github.io/tags/index.html</loc>
     
     <lastmod>2022-09-12</lastmod>
     
@@ -74,7 +74,7 @@
   </url>
   
   <url>
-    <loc>http://example.com/2021/07/24/Chinese-Input-Method-on-Manjaro-II/</loc>
+    <loc>https://lucien-east.github.io/2021/07/22/Chinese-Input-Method-on-Manjaro/</loc>
     
     <lastmod>2022-09-12</lastmod>
     
@@ -83,7 +83,7 @@
   </url>
   
   <url>
-    <loc>http://example.com/2021/07/22/Chinese-Input-Method-on-Manjaro/</loc>
+    <loc>https://lucien-east.github.io/2021/07/24/Chinese-Input-Method-on-Manjaro-II/</loc>
     
     <lastmod>2022-09-12</lastmod>
     
@@ -92,7 +92,7 @@
   </url>
   
   <url>
-    <loc>http://example.com/2021/07/27/Brownian-motion/</loc>
+    <loc>https://lucien-east.github.io/2021/07/27/Brownian-motion/</loc>
     
     <lastmod>2022-09-12</lastmod>
     
@@ -102,7 +102,7 @@
   
 
   <url>
-    <loc>http://example.com/</loc>
+    <loc>https://lucien-east.github.io/</loc>
     <lastmod>2022-09-12</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
@@ -110,84 +110,84 @@
 
   
   <url>
-    <loc>http://example.com/tags/Manjaro/</loc>
+    <loc>https://lucien-east.github.io/tags/Manjaro/</loc>
     <lastmod>2022-09-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://example.com/tags/InputMethod/</loc>
+    <loc>https://lucien-east.github.io/tags/InputMethod/</loc>
     <lastmod>2022-09-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://example.com/tags/C/</loc>
+    <loc>https://lucien-east.github.io/tags/Stochastic-Process/</loc>
     <lastmod>2022-09-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://example.com/tags/Optimisation/</loc>
+    <loc>https://lucien-east.github.io/tags/Brownian-Motion/</loc>
     <lastmod>2022-09-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://example.com/tags/Stochastic-Process/</loc>
+    <loc>https://lucien-east.github.io/tags/Simulation/</loc>
     <lastmod>2022-09-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://example.com/tags/Brownian-Motion/</loc>
+    <loc>https://lucien-east.github.io/tags/Python/</loc>
     <lastmod>2022-09-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://example.com/tags/Simulation/</loc>
+    <loc>https://lucien-east.github.io/tags/C/</loc>
     <lastmod>2022-09-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://example.com/tags/Python/</loc>
+    <loc>https://lucien-east.github.io/tags/Optimisation/</loc>
     <lastmod>2022-09-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://example.com/tags/Kernel-Method/</loc>
+    <loc>https://lucien-east.github.io/tags/Sampling/</loc>
     <lastmod>2022-09-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://example.com/tags/SVM/</loc>
+    <loc>https://lucien-east.github.io/tags/Inverse-Transformation-Method/</loc>
     <lastmod>2022-09-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://example.com/tags/Sampling/</loc>
+    <loc>https://lucien-east.github.io/tags/Kernel-Method/</loc>
     <lastmod>2022-09-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://example.com/tags/Inverse-Transformation-Method/</loc>
+    <loc>https://lucien-east.github.io/tags/SVM/</loc>
     <lastmod>2022-09-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
@@ -196,42 +196,42 @@
 
   
   <url>
-    <loc>http://example.com/categories/Environment-SetUp/</loc>
+    <loc>https://lucien-east.github.io/categories/Environment-SetUp/</loc>
     <lastmod>2022-09-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://example.com/categories/Programming-Language/</loc>
+    <loc>https://lucien-east.github.io/categories/Mathematics/</loc>
     <lastmod>2022-09-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://example.com/categories/Mathematics/</loc>
+    <loc>https://lucien-east.github.io/categories/Programming-Language/</loc>
     <lastmod>2022-09-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://example.com/categories/Programming-Language/C/</loc>
+    <loc>https://lucien-east.github.io/categories/Mathematics/Probability-and-Statistics/</loc>
     <lastmod>2022-09-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://example.com/categories/Mathematics/Probability-and-Statistics/</loc>
+    <loc>https://lucien-east.github.io/categories/Programming-Language/C/</loc>
     <lastmod>2022-09-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>http://example.com/categories/Mathematics/Machine-Learning/</loc>
+    <loc>https://lucien-east.github.io/categories/Mathematics/Machine-Learning/</loc>
     <lastmod>2022-09-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>

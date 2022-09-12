@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.2">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Support vector machine (SVM) plays an important role in machine learning. Actually, SVM is one of my favorite models because of its analytical property. Its main idea is to find the optimal hyperplane">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Implement SVM with SMO from scratch in Python">
+<meta property="og:url" content="http://example.com/2022/07/30/Implement-SVM-with-SMO-from-scratch/index.html">
+<meta property="og:site_name" content="East TechNote">
+<meta property="og:description" content="Support vector machine (SVM) plays an important role in machine learning. Actually, SVM is one of my favorite models because of its analytical property. Its main idea is to find the optimal hyperplane">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_1.png">
+<meta property="og:image" content="http://example.com/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_2.png">
+<meta property="og:image" content="http://example.com/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_3.png">
+<meta property="og:image" content="http://example.com/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_4.png">
+<meta property="og:image" content="http://example.com/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_5.png">
+<meta property="article:published_time" content="2022-07-30T10:39:12.000Z">
+<meta property="article:modified_time" content="2022-09-04T11:02:47.495Z">
+<meta property="article:author" content="East">
+<meta property="article:tag" content="Optimisation">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="Kernel Method">
+<meta property="article:tag" content="SVM">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_1.png">
+
+<link rel="canonical" href="http://example.com/2022/07/30/Implement-SVM-with-SMO-from-scratch/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>Implement SVM with SMO from scratch in Python | East TechNote</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">East TechNote</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">Perhaps it's all about Math</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/07/30/Implement-SVM-with-SMO-from-scratch/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="East">
+      <meta itemprop="description" content="Let the light settle your heart">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="East TechNote">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Implement SVM with SMO from scratch in Python
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2022-07-30 18:39:12" itemprop="dateCreated datePublished" datetime="2022-07-30T18:39:12+08:00">2022-07-30</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2022-09-04 19:02:47" itemprop="dateModified" datetime="2022-09-04T19:02:47+08:00">2022-09-04</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Mathematics/" itemprop="url" rel="index"><span itemprop="name">Mathematics</span></a>
+                </span>
+                  , 
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Mathematics/Machine-Learning/" itemprop="url" rel="index"><span itemprop="name">Machine Learning</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><strong>Support vector machine</strong> (SVM) plays an important role
+in machine learning. Actually, SVM is one of my favorite models because
+of its analytical property. Its main idea is to find the optimal
+hyperplane that can linearly separate the data, or maximise
+<strong>margin</strong> in the feature space. It is one of the most
+robust models based on statistical learning framework in <strong>VC
+theory</strong> (Vapnik–Chervonenkis theory). The determination of the
+model parameters is a quadratic programming problem, or <strong>convex
+optimisation</strong> more specifically. Its solution is usually
+<strong>sparse</strong>, and the new input prediction depends only on
+the evaluation of a subset of training data with kernel function. One of
+the most common and efficient approaches to train SVM is
+<strong>sequential minimal optimisation</strong> (SMO), which breaks
+down the problem into solving a pair of parameters analytically at each
+step. Besides, SMO also eliminates the need for matrix storage issue
+when the training data size is huge.</p>
+<span id="more"></span>
+<h2 id="recall-the-objective-function-of-svm">Recall the Objective
+Function of SVM</h2>
+<img src="/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_1.png" class="" title="Figure 1">
+<p>We want to find a hyperplane <span class="math inline">\(w^T x + b =
+0\)</span> and maximise the margin width <span
+class="math inline">\(2M\)</span> in order to separate the data labeled
+as <span class="math inline">\(y = \pm 1\)</span>. All data points
+should be correctly classified, i.e. <span class="math inline">\(y_i(w^T
+x_i + b) &gt; 0\)</span> for all <span
+class="math inline">\(i\)</span>,</p>
+
+$$
+\displaylines {
+\max_{w,b} M \\
+\textrm{ s.t. } \frac{y_i(w^T x_i + b)}{ \Vert w \Vert} \ge M, \forall i=1,2,...,N
+}
+$$
+
+<p>The above optimisation problem can be converted into a dual form of
+Lagrangian function, maximising <span
+class="math inline">\(L\)</span>:</p>
+
+$$
+\displaylines {
+L(\alpha)=\sum^{N}_{i} \alpha_i - \frac{1}{2} \sum^{N}_{i}\sum^{N}_{j} y_i y_j \alpha_i \alpha_j {x_i}^T x_j \\
+\textrm{ s.t. } 0 \le \alpha_i,  \forall i \\
+\textrm{ and } \sum^{N}_{i}y_i \alpha_i = 0
+}
+\tag{1}
+$$
+
+<p>The solution for <span class="math inline">\(w\)</span> is</p>
+<p><span class="math display">\[
+w = \sum^{N}_{i} y_i \alpha_i x_i \tag{2}
+\]</span></p>
+<p>If we allow some points are misclassified with penalty <span
+class="math inline">\(C\)</span>, then the constraints of <span
+class="math inline">\(\alpha_i\)</span> become</p>
+<p><span class="math display">\[
+0 \le \alpha_i \le C,  \forall i
+\]</span></p>
+<blockquote>
+<p>For points with <span class="math inline">\(0 \lt \alpha_i \lt
+C\)</span>, they just lie on the edge of the margin. In contrast, when
+<span class="math inline">\(\alpha_i = 0\)</span>, it is in the decision
+boundary and does not contribute to the prediction. The points with
+<span class="math inline">\(\alpha_i = C\)</span> lie inside the margin
+and might either be classified correctly or not.</p>
+</blockquote>
+<p>Points with non-zero <span class="math inline">\(\alpha_i\)</span>
+are called <strong>support vectors</strong>. These can be demonstrated
+as below:</p>
+<img src="/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_2.png" class="" title="Figure 2">
+<p>If we apply the feature transformation with kernel function <span
+class="math inline">\(K(x_i, x_j)\)</span>, then the Lagrangian function
+<span class="math inline">\((1)\)</span> turns into</p>
+<p><span class="math display">\[
+L(\alpha)=\sum^{N}_{i} \alpha_i - \frac{1}{2} \sum^{N}_{i}\sum^{N}_{j}
+y_i y_j \alpha_i \alpha_j K(x_i, x_j) \tag{3}
+\]</span></p>
+<p>The constraints of Lagrangian multipliers are the same as before.</p>
+<p>The predicted <span class="math inline">\(\hat{y}\)</span> of new
+input is</p>
+<p><span class="math display">\[
+\hat{y} = \sum^{N}_{i} y_i \alpha_i K(x_i, x) + b  \tag{4}
+\]</span></p>
+<h2 id="sequential-minimal-optimisation">Sequential Minimal
+Optimisation</h2>
+<p>SMO process mainly contains two parts: one is to solve two Lagrangian
+parameters analytically at a step, and then decide how to choose these
+two parameters heuristically for speed up.</p>
+<h3 id="solving-lagrangian-multipliers">Solving Lagrangian
+Multipliers</h3>
+<p>Using the constraint <span class="math inline">\(\sum^{N}_{i}y_i
+\alpha_i = 0\)</span> in <span class="math inline">\((1)\)</span>, we
+can get</p>
+<p><span class="math display">\[
+0 = y_1 \alpha^{old}_1 + y_2 \alpha^{old}_2 + \sum^{N}_{i=3}y_i \alpha_i
+= y_1 \alpha^{new}_1 + y_2 \alpha^{new}_2 + \sum^{N}_{i=3}y_i \alpha_i
+\]</span></p>
+<p><span class="math display">\[
+\Rightarrow y_1 \alpha^{old}_1 + y_2 \alpha^{old}_2 = k = y_1
+\alpha^{new}_1 + y_2 \alpha^{new}_2  \tag{5}
+\]</span></p>
+<p>where <span class="math inline">\(k = -\sum^{N}_{i=3}y_i
+\alpha_i\)</span>.</p>
+<p>Remember that <span class="math inline">\(y\)</span> is either <span
+class="math inline">\(1\)</span> or <span
+class="math inline">\(-1\)</span> , with the constraint <span
+class="math inline">\(0 \le \alpha_i \le C\)</span>, <span
+class="math inline">\(\alpha_1\)</span> and <span
+class="math inline">\(\alpha_2\)</span> can only lie on the diagonal
+line segment shown as below:</p>
+<img src="/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_3.png" class="" title="Figure 3">
+<p>The Lagrangian multiplier <span
+class="math inline">\(\alpha_2\)</span> can be solved by the first
+derivative of the objective function to find its extremum. The
+analytical form to solve <span class="math inline">\(\alpha_2\)</span>
+is</p>
+<p><span class="math display">\[
+\alpha^{new}_2 = \alpha^{old}_2 + y_2 \frac{E_2 - E_1}{\eta},
+\]</span></p>
+<p><span class="math display">\[
+E_i = \hat{y_i} - y_i  \text{, } \eta = K_{11} + K_{22} - 2K_{12}
+\tag{6}
+\]</span> <span class="math display">\[
+K_{ij} = K(x_i, x_j)
+\]</span></p>
+<img src="/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_4.png" class="" title="Figure 4">
+<h4 id="case-1-y_1-neq-y_2">Case 1: <span
+class="math inline">\(y_1\)</span> <span
+class="math inline">\(\neq\)</span> <span
+class="math inline">\(y_2\)</span></h4>
+<p><span class="math display">\[
+L = \max(0, \alpha_2 - \alpha_1)
+\]</span></p>
+<p><span class="math display">\[
+H = \min(C, C + \alpha_2 - \alpha_1)
+\]</span></p>
+<h4 id="case-2-y_1-y_2">Case 2: <span class="math inline">\(y_1 =
+y_2\)</span></h4>
+<p><span class="math display">\[
+L = \max(0, \alpha_2 + \alpha_1 - C)
+\]</span></p>
+<p><span class="math display">\[
+H = \min(C, \alpha_2 + \alpha_1)
+\]</span></p>
+<p>The <span class="math inline">\(\alpha^{new}_2\)</span> should be
+bounded by <span class="math inline">\(L\)</span> and <span
+class="math inline">\(H\)</span>.</p>
+
+$$
+  \alpha^{new}_2=\begin{cases}
+    L, & \text{if $\alpha^{new}_2 \lt L$}.\\
+    \alpha^{new}_2, & \text{if $L \le \alpha^{new}_2 \le H$}.\\
+    H, & \text{if $\alpha^{new}_2 \gt H$}
+  \end{cases}
+$$
+
+<p>We can then obtain <span
+class="math inline">\(\alpha^{new}_1\)</span> by multiplying <span
+class="math inline">\(y_1\)</span> on both sides in <span
+class="math inline">\((5)\)</span>,</p>
+<p><span class="math display">\[
+\alpha^{new}_1 = \alpha^{old}_1 + y_1 y_2 (\alpha^{old}_2 -
+\alpha^{new}_2) \tag{7}
+\]</span></p>
+<h4 id="abnormal-case-for-eta">Abnormal Case for <span
+class="math inline">\(\eta\)</span></h4>
+<p>Normally, <span class="math inline">\(\eta\)</span> should be greater
+than 0. However, if we encounter the abnormal case that <span
+class="math inline">\(\eta \le 0\)</span>, e.g. picking the same points
+or an incorrect kernel that does not obey Mercer's condition, the full
+version of SMO algorithm will move the Lagrangian multiplier to the end
+of the line segment that can maximise the objective function.<a
+href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a> <a href="#fn2" class="footnote-ref"
+id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
+<p>Another simple way to handle this is to treat the scenario as no
+progress being made for this pair of <span
+class="math inline">\(\alpha\)</span>.</p>
+<h3 id="comupting-the-threshold-b">Comupting the Threshold b</h3>
+<p>We can update the threshold <span class="math inline">\(b\)</span>
+after getting <span class="math inline">\(\alpha\)</span> at each
+step.</p>
+<p>When <span class="math inline">\(0 \lt \alpha_1 \lt C\)</span>, <span
+class="math inline">\(b_1\)</span> is a valid threshold because it makes
+the output <span class="math inline">\(\hat{y_1}\)</span> be the same as
+<span class="math inline">\(y_1\)</span> when the input is <span
+class="math inline">\(x_1\)</span></p>
+<p><span class="math display">\[
+E_1 = (y_1 \alpha^{old}_1 K_{11} + y_2 \alpha^{old}_2 K_{12} + b) - (y_1
+\alpha^{new}_1 K_{11} + y_2 \alpha^{new}_2 K_{12} + b_1)
+\]</span></p>
+<p><span class="math display">\[
+\Rightarrow b_1 = b - E_1 - y_1 (\alpha^{new}_1 - \alpha^{old}_1) K_{11}
+- y_2 (\alpha^{new}_2  - \alpha^{old}_2) K_{12}
+\]</span></p>
+<p>Similarly, when <span class="math inline">\(\alpha_2\)</span> is not
+at bounds, <span class="math inline">\(b_2\)</span> is a valid
+threshold</p>
+<p><span class="math display">\[
+b_2 = b - E_2 - y_1 (\alpha^{new}_1 - \alpha^{old}_1) K_{12} - y_2
+(\alpha^{new}_2  - \alpha^{old}_2) K_{22}
+\]</span></p>
+<p>When both <span class="math inline">\(b_1\)</span> and <span
+class="math inline">\(b_2\)</span> are valid, they will be equal because
+<span class="math inline">\(\hat{y_i} y_i = 1\)</span>, and the new
+<span class="math inline">\(E_1\)</span> and <span
+class="math inline">\(E_2\)</span> will be 0. This can be easily
+verified with <span class="math inline">\((6)\)</span> and <span
+class="math inline">\((7)\)</span>. Intuitively, when <span
+class="math inline">\(y_1 = y_2\)</span>, they are both at bounds and is
+trivial, whereas for <span class="math inline">\(y_1 \neq y_2\)</span>,
+they both try to maximise the margin width, and this results in <span
+class="math inline">\(b_1\)</span> and <span
+class="math inline">\(b_2\)</span> being equal.</p>
+<p>For other cases, we could choose the halfway between <span
+class="math inline">\(b_1\)</span> and <span
+class="math inline">\(b_2\)</span>.</p>
+
+$$
+  b=\begin{cases}
+    b_1, & \text{if $0 \lt \alpha^{new}_1 \lt C$}.\\
+    b_2, & \text{if $0 \lt \alpha^{new}_2 \lt C$}.\\
+    \frac{(b_1+b_2)}{2}, & \text{otherwise}.
+  \end{cases}
+$$
+
+<h3 id="choosing-the-multipliers-to-optimise">Choosing the Multipliers
+to Optimise</h3>
+<p>In order to speed up the training rate, the main idea of choosing the
+multipliers in SMO can be briefly summarised as the following.</p>
+<blockquote>
+<p>Firstly, choose the multiplier that are likely to violate the KKT
+conditions to optimise, i.e. <span class="math inline">\(0 &lt; \alpha_i
+&lt; C\)</span>. When one multiplier is chosen, another multiplier would
+be the one that can maximise the step size, <span
+class="math inline">\(\vert E_2 - E_1 \vert\)</span>.</p>
+</blockquote>
+<p>Then SMO will scan the entire data sets until the algorithm
+terminates.</p>
+<h3 id="other-tricks-to-make-the-training-process-faster">Other Tricks
+to Make the Training Process Faster</h3>
+<h4 id="error-cache-update">Error Cache Update</h4>
+<p>We can reduce the computational cost to compute the error cache,
+which stores <span class="math inline">\(E_i\)</span>, after Lagrangian
+multipliers update. From <span class="math inline">\((6)\)</span>,</p>
+<p><span class="math display">\[
+E^{old}_i = y_1 \alpha^{old}_1 K_{1i} + y_2 \alpha^{old} K_{2i} +
+\sum^N_{j=3} y_j \alpha_j K_{ij} + b - y_i
+\]</span></p>
+<p><span class="math display">\[
+E^{new}_i = y_1 \alpha^{new}_1 K_{1i} + y_2 \alpha^{new} K_{2i} +
+\sum^N_{j=3} y_j \alpha_j K_{ij} + b_{new} - y_i
+\]</span></p>
+<p><span class="math display">\[
+\Rightarrow E^{new}_i = E^{old}_i + y_1 (\alpha^{new}_1 -
+\alpha^{old}_1) K_{1i} + y_2 (\alpha^{new}_2 - \alpha^{old}_2) K_{2i} +
+(b_{new} - b)
+\]</span></p>
+<h4 id="linear-svm-optimisation">Linear SVM Optimisation</h4>
+<p>The linear SVM only needs to store a single weight vector, <span
+class="math inline">\(w\)</span>. It can also be updated using similar
+mechanism as error cache. From <span
+class="math inline">\((2)\)</span>,</p>
+<p><span class="math display">\[
+w^{old} = y_1 \alpha^{old}_1 x_1 + y_2 \alpha^{old}_2 x_2 + \sum^N_{j=3}
+\alpha_j x_j
+\]</span></p>
+<p><span class="math display">\[
+w^{new} = y_1 \alpha^{new}_1 x_1 + y_2 \alpha^{new}_2 x_2 + \sum^N_{j=3}
+\alpha_j x_j
+\]</span></p>
+<p><span class="math display">\[
+\Rightarrow w^{new} = w^{old} + y_1 (\alpha^{new}_1 - \alpha^{old}_1)
+x_1 + y_2 (\alpha^{new}_2 - \alpha^{old}_2) x_2
+\]</span></p>
+<h2 id="implementation">Implementation</h2>
+<h3 id="source-code">Source Code</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># File: MySVM.py</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SVM</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, X, y, C=<span class="number">1</span>, kernel=<span class="string">&#x27;linear&#x27;</span>, b=<span class="number">0</span>, max_iter=<span class="number">300</span>, tol=<span class="number">1e-5</span>, eps=<span class="number">1e-8</span></span>):</span></span><br><span class="line">        self.X = X</span><br><span class="line">        self.y = y</span><br><span class="line">        self.m, self.n = np.shape(self.X)</span><br><span class="line">        self.C = C</span><br><span class="line"></span><br><span class="line">        self.alphas = np.zeros(self.m)</span><br><span class="line">        self.b = b</span><br><span class="line"></span><br><span class="line">        self.kernel = kernel       <span class="comment"># &#x27;linear&#x27;, &#x27;rbf&#x27;</span></span><br><span class="line">        <span class="keyword">if</span> kernel == <span class="string">&#x27;linear&#x27;</span>:</span><br><span class="line">            self.kernel_func = self.linear_kernel</span><br><span class="line">        <span class="keyword">elif</span> kernel == <span class="string">&#x27;gaussian&#x27;</span> <span class="keyword">or</span> kernel == <span class="string">&#x27;rbf&#x27;</span>:</span><br><span class="line">            self.kernel_func = self.gaussian_kernel</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">raise</span> ValueError(<span class="string">&#x27;unknown kernel type&#x27;</span>)</span><br><span class="line"></span><br><span class="line">        self.error = np.zeros(self.m)</span><br><span class="line"></span><br><span class="line">        self.max_iter=max_iter</span><br><span class="line">        self.tol = tol</span><br><span class="line">        self.eps = eps</span><br><span class="line"></span><br><span class="line">        self.is_linear_kernel = <span class="literal">True</span> <span class="keyword">if</span> self.kernel == <span class="string">&#x27;linear&#x27;</span> <span class="keyword">else</span> <span class="literal">False</span></span><br><span class="line">        self.w = np.zeros(self.n)  <span class="comment"># used by linear kernel</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">linear_kernel</span>(<span class="params">self, x1, x2, b=<span class="number">0</span></span>):</span></span><br><span class="line">        <span class="keyword">return</span> x1 @ x2.T + b</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">gaussian_kernel</span>(<span class="params">self, x1, x2, sigma=<span class="number">1</span></span>):</span></span><br><span class="line">        <span class="keyword">if</span> np.ndim(x1) == <span class="number">1</span> <span class="keyword">and</span> np.ndim(x2) == <span class="number">1</span>:</span><br><span class="line">            <span class="keyword">return</span> np.exp(-(np.linalg.norm(x1-x2,<span class="number">2</span>))**<span class="number">2</span>/(<span class="number">2</span>*sigma**<span class="number">2</span>))</span><br><span class="line">        <span class="keyword">elif</span>(np.ndim(x1)&gt;<span class="number">1</span> <span class="keyword">and</span> np.ndim(x2) == <span class="number">1</span>) <span class="keyword">or</span> (np.ndim(x1) == <span class="number">1</span> <span class="keyword">and</span> np.ndim(x2)&gt;<span class="number">1</span>):</span><br><span class="line">            <span class="keyword">return</span> np.exp(-(np.linalg.norm(x1-x2, <span class="number">2</span>, axis=<span class="number">1</span>)**<span class="number">2</span>)/(<span class="number">2</span>*sigma**<span class="number">2</span>))</span><br><span class="line">        <span class="keyword">elif</span> np.ndim(x1) &gt; <span class="number">1</span> <span class="keyword">and</span> np.ndim(x2) &gt; <span class="number">1</span> :</span><br><span class="line">            <span class="keyword">return</span> np.exp(-(np.linalg.norm(x1[:, np.newaxis] \</span><br><span class="line">                             - x2[np.newaxis, :], <span class="number">2</span>, axis = <span class="number">2</span>) ** <span class="number">2</span>)/(<span class="number">2</span>*sigma**<span class="number">2</span>))</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0.</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">predict</span>(<span class="params">self, x</span>):</span></span><br><span class="line">        result = (self.alphas * self.y) @ self.kernel_func(self.X, x) + self.b</span><br><span class="line">        <span class="keyword">return</span> result</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_error</span>(<span class="params">self, i</span>):</span></span><br><span class="line">        <span class="keyword">return</span> self.predict(self.X[i,:]) - self.y[i]</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">take_step</span>(<span class="params">self, i1, i2</span>):</span></span><br><span class="line">        <span class="keyword">if</span> (i1 == i2):</span><br><span class="line">            <span class="keyword">return</span> <span class="number">0</span></span><br><span class="line"></span><br><span class="line">        x1 = self.X[i1, :]</span><br><span class="line">        x2 = self.X[i2, :]</span><br><span class="line"></span><br><span class="line">        y1 = self.y[i1]</span><br><span class="line">        y2 = self.y[i2]</span><br><span class="line"></span><br><span class="line">        alpha1 = self.alphas[i1]</span><br><span class="line">        alpha2 = self.alphas[i2]</span><br><span class="line"></span><br><span class="line">        b = self.b</span><br><span class="line"></span><br><span class="line">        E1 = self.get_error(i1)</span><br><span class="line">        E2 = self.get_error(i2)</span><br><span class="line"></span><br><span class="line">        s = y1 * y2</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> y1 != y2:</span><br><span class="line">            L = <span class="built_in">max</span>(<span class="number">0</span>, alpha2 - alpha1)</span><br><span class="line">            H = <span class="built_in">min</span>(self.C, self.C + alpha2 - alpha1)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            L = <span class="built_in">max</span>(<span class="number">0</span>, alpha2 + alpha1 - self.C)</span><br><span class="line">            H = <span class="built_in">min</span>(self.C, alpha2 + alpha1)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> L == H:</span><br><span class="line">            <span class="keyword">return</span> <span class="number">0</span></span><br><span class="line"></span><br><span class="line">        k11 = self.kernel_func(x1, x1)</span><br><span class="line">        k12 = self.kernel_func(x1, x2)</span><br><span class="line">        k22 = self.kernel_func(x2, x2)</span><br><span class="line"></span><br><span class="line">        eta = k11 + k22 - <span class="number">2</span> * k12</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> eta &gt; <span class="number">0</span>:</span><br><span class="line">            alpha2_new = alpha2 + y2 * (E1 - E2) / eta</span><br><span class="line">            <span class="keyword">if</span> alpha2_new &gt;= H:</span><br><span class="line">                alpha2_new = H</span><br><span class="line">            <span class="keyword">elif</span> alpha2_new &lt;= L:</span><br><span class="line">                alpha2_new = L</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="comment"># Abnormal case for eta &lt;= 0, treat this scenario as no progress</span></span><br><span class="line">            <span class="keyword">return</span> <span class="number">0</span></span><br><span class="line"></span><br><span class="line">        <span class="comment"># Numerical tolerance</span></span><br><span class="line">        <span class="comment"># if abs(alpha2_new - alpha2) &lt; self.eps:   # this is slower</span></span><br><span class="line">        <span class="comment"># below is faster, not degrade the SVM performance</span></span><br><span class="line">        <span class="keyword">if</span> <span class="built_in">abs</span>(alpha2_new - alpha2) &lt; self.eps * (alpha2 + alpha2_new + self.eps):</span><br><span class="line">            <span class="keyword">return</span> <span class="number">0</span></span><br><span class="line"></span><br><span class="line">        alpha1_new = alpha1 + s * (alpha2 - alpha2_new)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Numerical tolerance</span></span><br><span class="line">        <span class="keyword">if</span> alpha1_new &lt; self.eps:</span><br><span class="line">            alpha1_new = <span class="number">0</span></span><br><span class="line">        <span class="keyword">elif</span> alpha1_new &gt; (self.C - self.eps):</span><br><span class="line">            alpha1_new = self.C</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Update threshold</span></span><br><span class="line">        b1 = b - E1 - y1 * (alpha1_new - alpha1) * k11 - y2 * (alpha2_new - alpha2) * k12</span><br><span class="line">        b2 = b - E2 - y1 * (alpha1_new - alpha1) * k12 - y2 * (alpha2_new - alpha2) * k22</span><br><span class="line">        <span class="keyword">if</span> <span class="number">0</span> &lt; alpha1_new &lt; self.C:</span><br><span class="line">            self.b = b1</span><br><span class="line">        <span class="keyword">elif</span> <span class="number">0</span> &lt; alpha2_new &lt; self.C:</span><br><span class="line">            self.b = b2</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            self.b = <span class="number">0.5</span> * (b1 + b2)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Update weight vector for linear SVM</span></span><br><span class="line">        <span class="keyword">if</span> self.is_linear_kernel:</span><br><span class="line">            self.w = self.w + y1 * (alpha1_new - alpha1) * x1 \</span><br><span class="line">                            + y2 * (alpha2_new - alpha2) * x2</span><br><span class="line"></span><br><span class="line">        self.alphas[i1] = alpha1_new</span><br><span class="line">        self.alphas[i2] = alpha2_new</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Error cache update</span></span><br><span class="line">        <span class="comment">## if alpha1 &amp; alpha2 are not at bounds, the error will be 0</span></span><br><span class="line">        self.error[i1] = <span class="number">0</span></span><br><span class="line">        self.error[i2] = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">        i_list = [idx <span class="keyword">for</span> idx, alpha <span class="keyword">in</span> <span class="built_in">enumerate</span>(self.alphas) \</span><br><span class="line">                      <span class="keyword">if</span> <span class="number">0</span> &lt; alpha <span class="keyword">and</span> alpha &lt; self.C]</span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> i_list:</span><br><span class="line">            self.error[i] += \</span><br><span class="line">                  y1 * (alpha1_new - alpha1) * self.kernel_func(x1, self.X[i,:]) \</span><br><span class="line">                + y2 * (alpha2_new - alpha2) * self.kernel_func(x2, self.X[i,:]) \</span><br><span class="line">                + (self.b - b)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">examine_example</span>(<span class="params">self, i2</span>):</span></span><br><span class="line">        y2 = self.y[i2]</span><br><span class="line">        alpha2 = self.alphas[i2]</span><br><span class="line">        E2 = self.get_error(i2)</span><br><span class="line">        r2 = E2 * y2</span><br><span class="line"></span><br><span class="line">        <span class="comment"># Choose the one that is likely to violiate KKT</span></span><br><span class="line">        <span class="comment"># if (0 &lt; alpha2 &lt; self.C) or (abs(r2) &gt; self.tol):  # this is slow</span></span><br><span class="line">        <span class="comment"># below is faster, not degrade the SVM performance</span></span><br><span class="line">        <span class="keyword">if</span> ((r2 &lt; -self.tol <span class="keyword">and</span> alpha2 &lt; self.C) <span class="keyword">or</span> (r2 &gt; self.tol <span class="keyword">and</span> alpha2 &gt; <span class="number">0</span>)):</span><br><span class="line">            <span class="keyword">if</span> <span class="built_in">len</span>(self.alphas[(<span class="number">0</span> &lt; self.alphas) &amp; (self.alphas &lt; self.C)]) &gt; <span class="number">1</span>:</span><br><span class="line">                <span class="keyword">if</span> E2 &gt; <span class="number">0</span>:</span><br><span class="line">                    i1 = np.argmin(self.error)</span><br><span class="line">                <span class="keyword">else</span>:</span><br><span class="line">                    i1 = np.argmax(self.error)</span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span> self.take_step(i1, i2):</span><br><span class="line">                    <span class="keyword">return</span> <span class="number">1</span></span><br><span class="line"></span><br><span class="line">            <span class="comment"># loop over all non-zero and non-C alpha, starting at a random point</span></span><br><span class="line">            i1_list = [idx <span class="keyword">for</span> idx, alpha <span class="keyword">in</span> <span class="built_in">enumerate</span>(self.alphas) \</span><br><span class="line">                           <span class="keyword">if</span> <span class="number">0</span> &lt; alpha <span class="keyword">and</span> alpha &lt; self.C]</span><br><span class="line">            i1_list = np.roll(i1_list, np.random.choice(np.arange(self.m)))</span><br><span class="line">            <span class="keyword">for</span> i1 <span class="keyword">in</span> i1_list:</span><br><span class="line">                <span class="keyword">if</span> self.take_step(i1, i2):</span><br><span class="line">                    <span class="keyword">return</span> <span class="number">1</span></span><br><span class="line"></span><br><span class="line">            <span class="comment"># loop over all possible i1, starting at a random point</span></span><br><span class="line">            i1_list = np.roll(np.arange(self.m), np.random.choice(np.arange(self.m)))</span><br><span class="line">            <span class="keyword">for</span> i1 <span class="keyword">in</span> i1_list:</span><br><span class="line">                <span class="keyword">if</span> self.take_step(i1, i2):</span><br><span class="line">                    <span class="keyword">return</span> <span class="number">1</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">fit</span>(<span class="params">self</span>):</span></span><br><span class="line">        loop_num = <span class="number">0</span></span><br><span class="line">        numChanged = <span class="number">0</span></span><br><span class="line">        examineAll = <span class="literal">True</span></span><br><span class="line">        <span class="keyword">while</span> numChanged &gt; <span class="number">0</span> <span class="keyword">or</span> examineAll:</span><br><span class="line">            <span class="keyword">if</span> loop_num &gt;= self.max_iter:</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">            numChanged = <span class="number">0</span></span><br><span class="line">            <span class="keyword">if</span> examineAll:</span><br><span class="line">                <span class="keyword">for</span> i2 <span class="keyword">in</span> <span class="built_in">range</span>(self.m):</span><br><span class="line">                    numChanged += self.examine_example(i2)</span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                i2_list = [idx <span class="keyword">for</span> idx, alpha <span class="keyword">in</span> <span class="built_in">enumerate</span>(self.alphas) \</span><br><span class="line">                                <span class="keyword">if</span> <span class="number">0</span> &lt; alpha <span class="keyword">and</span> alpha &lt; self.C]</span><br><span class="line">                <span class="keyword">for</span> i2 <span class="keyword">in</span> i2_list:</span><br><span class="line">                    numChanged += self.examine_example(i2)</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> examineAll:</span><br><span class="line">                examineAll = <span class="literal">False</span></span><br><span class="line">            <span class="keyword">elif</span> numChanged == <span class="number">0</span>:</span><br><span class="line">                examineAll = <span class="literal">True</span></span><br><span class="line"></span><br><span class="line">            loop_num += <span class="number">1</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="demo">Demo</h3>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># File: SVM_test.py</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"><span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> MySVM</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">gen_circle</span>(<span class="params">n=<span class="number">50</span>, center_x=<span class="number">0</span>, center_y=<span class="number">0</span>, radius=<span class="number">1</span>, label=<span class="number">0</span></span>):</span></span><br><span class="line">    </span><br><span class="line">    <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">    A simple function that generates circular distribution</span></span><br><span class="line"><span class="string">    n: number of points (default=50)</span></span><br><span class="line"><span class="string">    center_x: the center for X (default=0)</span></span><br><span class="line"><span class="string">    center_y: the center for Y (default=0)</span></span><br><span class="line"><span class="string">    radius: the radius of circle (default=1)</span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># random angle</span></span><br><span class="line">    alpha = <span class="number">2</span> * np.pi * np.random.rand(n)</span><br><span class="line">    <span class="comment"># random radius</span></span><br><span class="line">    r = radius * np.sqrt(np.random.rand(n))</span><br><span class="line">    <span class="comment"># calculating coordinates</span></span><br><span class="line">    x = r * np.cos(alpha) + center_x</span><br><span class="line">    y = r * np.sin(alpha) + center_y</span><br><span class="line"></span><br><span class="line">    label = np.ones(n) * label</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> [x, y, label]</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    np.random.seed(<span class="number">5</span>)   <span class="comment"># to reproduce</span></span><br><span class="line"></span><br><span class="line">    n = <span class="number">100</span></span><br><span class="line">    C0 = gen_circle(n, center_x=<span class="number">1</span>, center_y=<span class="number">1</span>, radius=<span class="number">1.05</span>, label=<span class="number">1</span>)</span><br><span class="line">    C1 = gen_circle(n, center_x=-<span class="number">1</span>, center_y=-<span class="number">1</span>, radius=<span class="number">1.05</span>, label=-<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line">    x0 = np.append(C0[<span class="number">0</span>], C1[<span class="number">0</span>])</span><br><span class="line">    x1 = np.append(C0[<span class="number">1</span>], C1[<span class="number">1</span>])</span><br><span class="line"></span><br><span class="line">    X = np.c_[x0, x1]</span><br><span class="line">    Y = np.append(C0[<span class="number">2</span>], C1[<span class="number">2</span>])</span><br><span class="line"></span><br><span class="line">    scaler = StandardScaler()</span><br><span class="line">    train_x = scaler.fit_transform(X)</span><br><span class="line"></span><br><span class="line">    model = MySVM.SVM(train_x, Y, C=<span class="number">1</span>, kernel=<span class="string">&#x27;linear&#x27;</span>, max_iter=<span class="number">600</span>, tol=<span class="number">1e-5</span>, eps=<span class="number">1e-5</span>)</span><br><span class="line">    <span class="comment"># model = MySVM.SVM(train_x, Y, C=1, kernel=&#x27;rbf&#x27;, max_iter=600, tol=1e-5, eps=1e-5)</span></span><br><span class="line">    model.fit()</span><br><span class="line"></span><br><span class="line">    train_y = model.predict(train_x)</span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;support vector: &#123;&#125; / &#123;&#125;&#x27;</span>\</span><br><span class="line">        .<span class="built_in">format</span>(<span class="built_in">len</span>(model.alphas[model.alphas != <span class="number">0</span>]), <span class="built_in">len</span>(model.alphas)))</span><br><span class="line">    sv_idx = []</span><br><span class="line">    <span class="keyword">for</span> idx, alpha <span class="keyword">in</span> <span class="built_in">enumerate</span>(model.alphas):</span><br><span class="line">        <span class="keyword">if</span> alpha != <span class="number">0</span>:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&#x27;index = &#123;&#125;, alpha = &#123;:.3f&#125;, predict y=&#123;:.3f&#125;&#x27;</span>\</span><br><span class="line">                .<span class="built_in">format</span>(idx, alpha, train_y[idx]))</span><br><span class="line">            sv_idx.append(idx)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&#x27;bias = <span class="subst">&#123;model.b&#125;</span>&#x27;</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;training data error rate = &#123;&#125;&#x27;</span>.<span class="built_in">format</span>(<span class="built_in">len</span>(Y[Y * train_y &lt; <span class="number">0</span>])/<span class="built_in">len</span>(Y)))</span><br><span class="line"></span><br><span class="line">    <span class="comment">## Draw the Plot</span></span><br><span class="line">    plt.plot(C0[<span class="number">0</span>], C0[<span class="number">1</span>], <span class="string">&#x27;o&#x27;</span>, markerfacecolor=<span class="string">&#x27;r&#x27;</span>, markeredgecolor=<span class="string">&#x27;None&#x27;</span>, alpha=<span class="number">0.55</span>)</span><br><span class="line">    plt.plot(C1[<span class="number">0</span>], C1[<span class="number">1</span>], <span class="string">&#x27;o&#x27;</span>, markerfacecolor=<span class="string">&#x27;b&#x27;</span>, markeredgecolor=<span class="string">&#x27;None&#x27;</span>, alpha=<span class="number">0.55</span>)</span><br><span class="line"></span><br><span class="line">    resolution = <span class="number">50</span></span><br><span class="line">    dx = np.linspace(X[:, <span class="number">0</span>].<span class="built_in">min</span>(), X[:, <span class="number">0</span>].<span class="built_in">max</span>(), resolution)</span><br><span class="line">    dy = np.linspace(X[:, <span class="number">1</span>].<span class="built_in">min</span>(), X[:, <span class="number">1</span>].<span class="built_in">max</span>(), resolution)</span><br><span class="line">    dx, dy = np.meshgrid(dx, dy)</span><br><span class="line">    plot_x = np.c_[dx.flatten(), dy.flatten()]</span><br><span class="line"></span><br><span class="line">    dz = model.predict(scaler.transform(plot_x))</span><br><span class="line">    dz = dz.reshape(dx.shape)</span><br><span class="line"></span><br><span class="line">    plt.contour(dx, dy, dz, alpha=<span class="number">1</span>, colors=(<span class="string">&#x27;b&#x27;</span>, <span class="string">&#x27;k&#x27;</span>, <span class="string">&#x27;r&#x27;</span>), \</span><br><span class="line">                levels=(-<span class="number">1</span>, <span class="number">0</span>, <span class="number">1</span>), linestyles = (<span class="string">&#x27;--&#x27;</span>, <span class="string">&#x27;-&#x27;</span>, <span class="string">&#x27;--&#x27;</span>))</span><br><span class="line"></span><br><span class="line">    label_cnt = <span class="number">0</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> sv_idx:</span><br><span class="line">        <span class="keyword">if</span> label_cnt == <span class="number">0</span>:</span><br><span class="line">            plt.scatter(X[i, <span class="number">0</span>], X[i, <span class="number">1</span>], marker=<span class="string">&#x27;*&#x27;</span>, color=<span class="string">&#x27;k&#x27;</span>, \</span><br><span class="line">                        s=<span class="number">120</span>, label=<span class="string">&#x27;Support vector&#x27;</span>)</span><br><span class="line">            label_cnt += <span class="number">1</span></span><br><span class="line">            <span class="keyword">continue</span></span><br><span class="line"></span><br><span class="line">        plt.scatter(X[i, <span class="number">0</span>], X[i, <span class="number">1</span>], marker=<span class="string">&#x27;*&#x27;</span>, color=<span class="string">&#x27;k&#x27;</span>, s=<span class="number">120</span>)</span><br><span class="line"></span><br><span class="line">    plt.legend()</span><br><span class="line">    plt.show()</span><br></pre></td></tr></table></figure>
+<img src="/2022/07/30/Implement-SVM-with-SMO-from-scratch/svm_5.png" class="" title="Figure 5">
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p><a
+target="_blank" rel="noopener" href="https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-98-14.pdf">Sequential
+Minimal Optimization: A Fast Algorithm for Training Support Vector
+Machines</a><a href="#fnref1" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p><a
+target="_blank" rel="noopener" href="https://www.cs.mcgill.ca/~hv/publications/99.04.McGill.thesis.gmak.pdf">The
+implementation of Support Vector Machines using the sequential minimal
+optimization algorithm</a><a href="#fnref2" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Optimisation/" rel="tag"># Optimisation</a>
+              <a href="/tags/Python/" rel="tag"># Python</a>
+              <a href="/tags/Kernel-Method/" rel="tag"># Kernel Method</a>
+              <a href="/tags/SVM/" rel="tag"># SVM</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/09/11/Inverse-Transform-Method/" rel="prev" title="Sampling - Inverse Transformation Method">
+      <i class="fa fa-chevron-left"></i> Sampling - Inverse Transformation Method
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#recall-the-objective-function-of-svm"><span class="nav-number">1.</span> <span class="nav-text">Recall the Objective
+Function of SVM</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#sequential-minimal-optimisation"><span class="nav-number">2.</span> <span class="nav-text">Sequential Minimal
+Optimisation</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#solving-lagrangian-multipliers"><span class="nav-number">2.1.</span> <span class="nav-text">Solving Lagrangian
+Multipliers</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#case-1-y_1-neq-y_2"><span class="nav-number">2.1.1.</span> <span class="nav-text">Case 1: \(y_1\) \(\neq\) \(y_2\)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#case-2-y_1-y_2"><span class="nav-number">2.1.2.</span> <span class="nav-text">Case 2: \(y_1 &#x3D;
+y_2\)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#abnormal-case-for-eta"><span class="nav-number">2.1.3.</span> <span class="nav-text">Abnormal Case for \(\eta\)</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#comupting-the-threshold-b"><span class="nav-number">2.2.</span> <span class="nav-text">Comupting the Threshold b</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#choosing-the-multipliers-to-optimise"><span class="nav-number">2.3.</span> <span class="nav-text">Choosing the Multipliers
+to Optimise</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#other-tricks-to-make-the-training-process-faster"><span class="nav-number">2.4.</span> <span class="nav-text">Other Tricks
+to Make the Training Process Faster</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#error-cache-update"><span class="nav-number">2.4.1.</span> <span class="nav-text">Error Cache Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#linear-svm-optimisation"><span class="nav-number">2.4.2.</span> <span class="nav-text">Linear SVM Optimisation</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#implementation"><span class="nav-number">3.</span> <span class="nav-text">Implementation</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#source-code"><span class="nav-number">3.1.</span> <span class="nav-text">Source Code</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#demo"><span class="nav-number">3.2.</span> <span class="nav-text">Demo</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">East</p>
+  <div class="site-description" itemprop="description">Let the light settle your heart</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="mailto:lucien.omni@gmail.com" title="E-Mail → mailto:lucien.omni@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">East</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+</body>
+</html>

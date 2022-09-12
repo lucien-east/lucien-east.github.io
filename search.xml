@@ -1,6 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>fcitx 行列輸入法無法使用標點符號</title>
+    <url>/2021/07/24/Chinese-Input-Method-on-Manjaro-II/</url>
+    <content><![CDATA[<p>設定好 fcitx 的行列輸入法時，會發現有無法正常使用標點符號的問題 (i.e.
+<code>W</code> + <code>2</code> 沒反應)</p>
+<p>這部份需要更新 fcitx 的字碼表，來修改 <code>W</code> + <code>1</code>
+~ <code>9</code> 的行為</p>
+<span id="more"></span>
+<h2 id="下載行列輸入法30字碼表">下載行列輸入法30字碼表</h2>
+<p>下載更新後的 array30.mb (<a
+href="https://drive.google.com/file/d/1fDcoUeD4uBa7KtgWA8f_Ayl3nQZzud6r/view?usp=sharing">GoogleDrive</a>
+by <a
+href="http://hyperrate.com/thread.php?tid=33369#33369">老刀</a>)</p>
+<blockquote>
+<p>若希望手動製作字碼表，可至官方下載字碼表原始檔 (<a
+href="http://array30.sourceforge.net/files/ar30.cin">gcin字碼表</a>)，並將其修改成
+fcitx 的字碼表，再使用 fcitx 工具 <code>fcitx-tools</code>
+轉為需要的格式: <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo pacman -S fcitx-tools</span><br><span class="line">txt2mb array30.txt array30.mb  <span class="comment"># Generate the table manually</span></span><br></pre></td></tr></table></figure></p>
+</blockquote>
+<h2 id="更新字碼表">更新字碼表</h2>
+<p>建議先將原來的字碼表做備份後，再將準備好的字碼表搬入</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo mv /usr/share/fcitx/table/array30.mb /usr/share/fcitx/table/array30.mb.bak  <span class="comment"># Backup</span></span><br><span class="line">sudo mv array30.mb /usr/share/fcitx/table/array30.mb</span><br></pre></td></tr></table></figure>
+<h2 id="修改-fcitx-裡候選字數的設定">修改 fcitx 裡候選字數的設定</h2>
+<p>這一步是為了讓配置和 Windows 一樣，將 fcitx 針對候選字數的設定變更為
+10</p>
+<ol type="1">
+<li>進入 fcitx 的設定 (Configure)</li>
+<li>切至全域設定 (Global Config)</li>
+<li>更新候選字數 (Candidate Word Number) 為 10</li>
+</ol>
+<p>重新啟動 fcitx
+或重新登入系統以載入新的字碼表就可以使用標點符號了，預設是使用
+<code>↑</code> 和 <code>↓</code> 來切換上下頁</p>
+]]></content>
+      <categories>
+        <category>Environment SetUp</category>
+      </categories>
+      <tags>
+        <tag>Manjaro</tag>
+        <tag>InputMethod</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Manjaro上安裝行列或其他中文輸入法 (fcitx + rime)</title>
     <url>/2021/07/22/Chinese-Input-Method-on-Manjaro/</url>
     <content><![CDATA[<p>每一次重新安裝好用來開發的Linux環境時，總會因為自己是使用較小眾的行列輸入法，常得在過程中的安裝和設定上掙扎許久...</p>
@@ -53,45 +95,121 @@ Show Current Language 的勾勾點掉)</p></li>
       </tags>
   </entry>
   <entry>
-    <title>fcitx 行列輸入法無法使用標點符號</title>
-    <url>/2021/07/24/Chinese-Input-Method-on-Manjaro-II/</url>
-    <content><![CDATA[<p>設定好 fcitx 的行列輸入法時，會發現有無法正常使用標點符號的問題 (i.e.
-<code>W</code> + <code>2</code> 沒反應)</p>
-<p>這部份需要更新 fcitx 的字碼表，來修改 <code>W</code> + <code>1</code>
-~ <code>9</code> 的行為</p>
+    <title>[C++] Optimise the Efficiency when Using STL Containers - taking vector emplace_back as an example</title>
+    <url>/2021/07/29/cpp-vector-emplace/</url>
+    <content><![CDATA[<p>C++ provides a plethora of containers that allow us to dynamically
+allocate our elements in run time. Take <code>vector</code> as an
+example. It is widely used in many applications. However, for some
+extreme cases, we may still want to avoid the overhead of reallocation
+or copy operations when those operations are quite expensive.</p>
+<p>Since C++11, with the advent of <code>emplace</code> methods,
+developers are able to pursue more efficiency via them.</p>
 <span id="more"></span>
-<h2 id="下載行列輸入法30字碼表">下載行列輸入法30字碼表</h2>
-<p>下載更新後的 array30.mb (<a
-href="https://drive.google.com/file/d/1fDcoUeD4uBa7KtgWA8f_Ayl3nQZzud6r/view?usp=sharing">GoogleDrive</a>
-by <a
-href="http://hyperrate.com/thread.php?tid=33369#33369">老刀</a>)</p>
+<h2 id="a-toy-example">A Toy Example</h2>
+<p>To get a grasp of the usage of <code>emplace</code> , let's firstly
+look at a simple object. Say we have a class containing the information
+of a stock:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Stock</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Stock</span>(string date, <span class="keyword">double</span> price, <span class="keyword">int</span> volume) :</span><br><span class="line">        <span class="built_in">date</span>(date), <span class="built_in">price</span>(price), <span class="built_in">volume</span>(volume)</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Contruct: &quot;</span> &lt;&lt; date &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">Stock</span>(<span class="keyword">const</span> Stock&amp; obj) :</span><br><span class="line">        <span class="built_in">date</span>(obj.date), <span class="built_in">price</span>(obj.price), <span class="built_in">volume</span>(obj.volume)</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Copied: &quot;</span> &lt;&lt; date &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    string date;</span><br><span class="line">    <span class="keyword">double</span> price;</span><br><span class="line">    <span class="keyword">int</span> volume;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>For the convenience of observation, when the object is created or
+copied, the corresponded message will be printed.</p>
+<h2 id="the-behavior-of-copy-between-push_back-and-emplace_back">The
+Behavior of Copy between <code>push_back</code> and
+<code>emplace_back</code></h2>
+<p>We now use a vector - <code>portfolio</code> - to maintain our stock
+objects.</p>
+<p>First, we add the object <code>2021-08-01</code> into it via
+<code>push_back()</code>:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    vector&lt;Stock&gt; portfolio;</span><br><span class="line">    portfolio.<span class="built_in">push_back</span>(&#123;<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>&#125;);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>When executing the program, we get the output:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Contruct: 2021-08-01</span><br><span class="line">Copied: 2021-08-01</span><br></pre></td></tr></table></figure>
+<p>It shows that this object is created and copied into the vector
+afterwards. The copy occurs for the reason that our object is not
+allocated on the space where our vector <code>portfolio</code> is
+located. The system still has to copy it onto the vector space.</p>
+<p>This copy operation can be spared if our system can simply construct
+our object onto <code>portfolio</code>'s space. The method
+<code>emplace_back()</code> can come into play:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">vector&lt;Stock&gt; portfolio;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>);</span><br></pre></td></tr></table></figure>
+<p>When executing the program, the copy operation has disappeared. The
+object now is constructed in place:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Contruct: 2021-08-01</span><br></pre></td></tr></table></figure>
+<p>Note the syntax sugar only needs us to specify our arguments: <a
+href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a> <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;class... Args&gt;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">emplace_back</span> <span class="params">(Args&amp;&amp;... args)</span></span>;</span><br></pre></td></tr></table></figure></p>
+<h2 id="another-unexpected-copy-behind-the-background">Another
+Unexpected Copy behind the Background</h2>
+<p>Cautious readers would find that if we add more items, there might be
+still copy occurring:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">vector&lt;Stock&gt; portfolio;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>);</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-02&quot;</span>, <span class="number">12.5</span>, <span class="number">5</span>);</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-03&quot;</span>, <span class="number">15.7</span>, <span class="number">1</span>);</span><br></pre></td></tr></table></figure>
+<p>Its output:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Contruct: 2021-08-01</span><br><span class="line">Contruct: 2021-08-02</span><br><span class="line">Copied: 2021-08-01</span><br><span class="line">Contruct: 2021-08-03</span><br><span class="line">Copied: 2021-08-01</span><br><span class="line">Copied: 2021-08-02</span><br></pre></td></tr></table></figure>
+<p>To understand this, we have to know that the <strong>storage
+space</strong> of a vector ought to be allocated in advance. Do not
+confuse this storage space with the <strong>actual size</strong> used by
+the user (indicated by <code>size()</code>). The storage space is always
+equal or greater than the atual size of a vector, so that our system
+need not reallocate on each insertion. The size of the storage space can
+be obtained by the method <code>capacity()</code>.</p>
+<p>Now we are able to analyse this behavior with the help of it:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">vector&lt;Stock&gt; portfolio;</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-01 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>);</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-02 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-02&quot;</span>, <span class="number">12.5</span>, <span class="number">5</span>);</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-03 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-03&quot;</span>, <span class="number">15.7</span>, <span class="number">1</span>);</span><br></pre></td></tr></table></figure>
+<p>Output:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Capacity before inserting 2021-08-01 = 0</span><br><span class="line">Contruct: 2021-08-01</span><br><span class="line"></span><br><span class="line">Capacity before inserting 2021-08-02 = 1</span><br><span class="line">Contruct: 2021-08-02</span><br><span class="line">Copied: 2021-08-01</span><br><span class="line"></span><br><span class="line">Capacity before inserting 2021-08-03 = 2</span><br><span class="line">Contruct: 2021-08-03</span><br><span class="line">Copied: 2021-08-01</span><br><span class="line">Copied: 2021-08-02</span><br></pre></td></tr></table></figure>
+<p>When <code>2021-08-01</code> is constructed, it just allocates in
+place, no copy is needed as aforementioned.</p>
+<p>However, when adding <code>2021-08-02</code>, the acutual size of a
+vector now grows to 2, the storage space is not enough to accomodate.
+Thus, the system has to reallocate its storage space in advance, then
+<strong>constructing</strong> <code>2021-08-02</code> on it, followed by
+<strong>copying</strong> the <code>2021-08-01</code> objects into the
+newly allocated space.</p>
+<p>Similarly, <code>2021-08-03</code> is <strong>constructed in
+place</strong> before the system allocates enough storage space.
+Then,<code>2021-08-01</code> and <code>2021-08-02</code> will be
+<strong>copied</strong> into the reallocated space afterwards.</p>
 <blockquote>
-<p>若希望手動製作字碼表，可至官方下載字碼表原始檔 (<a
-href="http://array30.sourceforge.net/files/ar30.cin">gcin字碼表</a>)，並將其修改成
-fcitx 的字碼表，再使用 fcitx 工具 <code>fcitx-tools</code>
-轉為需要的格式: <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo pacman -S fcitx-tools</span><br><span class="line">txt2mb array30.txt array30.mb  <span class="comment"># Generate the table manually</span></span><br></pre></td></tr></table></figure></p>
+<p>Note the elements in a vector are stored in a <strong>contiguous
+memory block</strong>.<a href="#fn2" class="footnote-ref" id="fnref2"
+role="doc-noteref"><sup>2</sup></a> This is the reason that when there
+is no enough storage space for insertion, the system has to reallocate a
+memory block to arrange its elements. The behavior of how capacity will
+grow may vary by different system.</p>
 </blockquote>
-<h2 id="更新字碼表">更新字碼表</h2>
-<p>建議先將原來的字碼表做備份後，再將準備好的字碼表搬入</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo mv /usr/share/fcitx/table/array30.mb /usr/share/fcitx/table/array30.mb.bak  <span class="comment"># Backup</span></span><br><span class="line">sudo mv array30.mb /usr/share/fcitx/table/array30.mb</span><br></pre></td></tr></table></figure>
-<h2 id="修改-fcitx-裡候選字數的設定">修改 fcitx 裡候選字數的設定</h2>
-<p>這一步是為了讓配置和 Windows 一樣，將 fcitx 針對候選字數的設定變更為
-10</p>
-<ol type="1">
-<li>進入 fcitx 的設定 (Configure)</li>
-<li>切至全域設定 (Global Config)</li>
-<li>更新候選字數 (Candidate Word Number) 為 10</li>
+<h2 id="the-usage-of-reserve">The Usage of <code>reserve</code></h2>
+<p>To optimise this, we could have our vector contain enough storage
+space in advance. This is the moment when the method
+<code>reserve()</code> can take advantage:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">vector&lt;Stock&gt; portfolio;</span><br><span class="line"></span><br><span class="line">portfolio.<span class="built_in">reserve</span>(<span class="number">5</span>);   <span class="comment">// Request enough storage space</span></span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-01 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>);</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-02 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-02&quot;</span>, <span class="number">12.5</span>, <span class="number">5</span>);</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-03 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-03&quot;</span>, <span class="number">15.7</span>, <span class="number">1</span>);</span><br></pre></td></tr></table></figure>
+<p>Output:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Capacity before inserting 2021-08-01 = 5</span><br><span class="line">Contruct: 2021-08-01</span><br><span class="line"></span><br><span class="line">Capacity before inserting 2021-08-02 = 5</span><br><span class="line">Contruct: 2021-08-02</span><br><span class="line"></span><br><span class="line">Capacity before inserting 2021-08-03 = 5</span><br><span class="line">Contruct: 2021-08-03</span><br></pre></td></tr></table></figure>
+<p>The copy operations has disappeared if the storage size are large
+enough. Remember that <code>reserve()</code> does not cause any effect
+on the vector size.</p>
+<blockquote>
+<p>The maximum capacity of a vector is restricted by
+<code>vector::max_size</code>.</p>
+</blockquote>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p><a
+href="https://www.cplusplus.com/reference/vector/vector/emplace_back/">C++
+Reference - std::vector::emplace_back</a><a href="#fnref1"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p><a
+href="https://timsong-cpp.github.io/cppwp/n4140/vector.overview#1">C++
+Standard n4140: Class template vector overview</a><a href="#fnref2"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
-<p>重新啟動 fcitx
-或重新登入系統以載入新的字碼表就可以使用標點符號了，預設是使用
-<code>↑</code> 和 <code>↓</code> 來切換上下頁</p>
+</section>
 ]]></content>
       <categories>
-        <category>Environment SetUp</category>
+        <category>Programming Language</category>
+        <category>C++</category>
       </categories>
       <tags>
-        <tag>Manjaro</tag>
-        <tag>InputMethod</tag>
+        <tag>C++</tag>
+        <tag>Optimisation</tag>
       </tags>
   </entry>
   <entry>
@@ -250,124 +368,6 @@ in a year, with its initial at $10.</p>
         <tag>Brownian Motion</tag>
         <tag>Simulation</tag>
         <tag>Python</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>[C++] Optimise the Efficiency when Using STL Containers - taking vector emplace_back as an example</title>
-    <url>/2021/07/29/cpp-vector-emplace/</url>
-    <content><![CDATA[<p>C++ provides a plethora of containers that allow us to dynamically
-allocate our elements in run time. Take <code>vector</code> as an
-example. It is widely used in many applications. However, for some
-extreme cases, we may still want to avoid the overhead of reallocation
-or copy operations when those operations are quite expensive.</p>
-<p>Since C++11, with the advent of <code>emplace</code> methods,
-developers are able to pursue more efficiency via them.</p>
-<span id="more"></span>
-<h2 id="a-toy-example">A Toy Example</h2>
-<p>To get a grasp of the usage of <code>emplace</code> , let's firstly
-look at a simple object. Say we have a class containing the information
-of a stock:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Stock</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Stock</span>(string date, <span class="keyword">double</span> price, <span class="keyword">int</span> volume) :</span><br><span class="line">        <span class="built_in">date</span>(date), <span class="built_in">price</span>(price), <span class="built_in">volume</span>(volume)</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Contruct: &quot;</span> &lt;&lt; date &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">Stock</span>(<span class="keyword">const</span> Stock&amp; obj) :</span><br><span class="line">        <span class="built_in">date</span>(obj.date), <span class="built_in">price</span>(obj.price), <span class="built_in">volume</span>(obj.volume)</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Copied: &quot;</span> &lt;&lt; date &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    string date;</span><br><span class="line">    <span class="keyword">double</span> price;</span><br><span class="line">    <span class="keyword">int</span> volume;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>For the convenience of observation, when the object is created or
-copied, the corresponded message will be printed.</p>
-<h2 id="the-behavior-of-copy-between-push_back-and-emplace_back">The
-Behavior of Copy between <code>push_back</code> and
-<code>emplace_back</code></h2>
-<p>We now use a vector - <code>portfolio</code> - to maintain our stock
-objects.</p>
-<p>First, we add the object <code>2021-08-01</code> into it via
-<code>push_back()</code>:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    vector&lt;Stock&gt; portfolio;</span><br><span class="line">    portfolio.<span class="built_in">push_back</span>(&#123;<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>&#125;);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>When executing the program, we get the output:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Contruct: 2021-08-01</span><br><span class="line">Copied: 2021-08-01</span><br></pre></td></tr></table></figure>
-<p>It shows that this object is created and copied into the vector
-afterwards. The copy occurs for the reason that our object is not
-allocated on the space where our vector <code>portfolio</code> is
-located. The system still has to copy it onto the vector space.</p>
-<p>This copy operation can be spared if our system can simply construct
-our object onto <code>portfolio</code>'s space. The method
-<code>emplace_back()</code> can come into play:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">vector&lt;Stock&gt; portfolio;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>);</span><br></pre></td></tr></table></figure>
-<p>When executing the program, the copy operation has disappeared. The
-object now is constructed in place:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Contruct: 2021-08-01</span><br></pre></td></tr></table></figure>
-<p>Note the syntax sugar only needs us to specify our arguments: <a
-href="#fn1" class="footnote-ref" id="fnref1"
-role="doc-noteref"><sup>1</sup></a> <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;class... Args&gt;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">emplace_back</span> <span class="params">(Args&amp;&amp;... args)</span></span>;</span><br></pre></td></tr></table></figure></p>
-<h2 id="another-unexpected-copy-behind-the-background">Another
-Unexpected Copy behind the Background</h2>
-<p>Cautious readers would find that if we add more items, there might be
-still copy occurring:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">vector&lt;Stock&gt; portfolio;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>);</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-02&quot;</span>, <span class="number">12.5</span>, <span class="number">5</span>);</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-03&quot;</span>, <span class="number">15.7</span>, <span class="number">1</span>);</span><br></pre></td></tr></table></figure>
-<p>Its output:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Contruct: 2021-08-01</span><br><span class="line">Contruct: 2021-08-02</span><br><span class="line">Copied: 2021-08-01</span><br><span class="line">Contruct: 2021-08-03</span><br><span class="line">Copied: 2021-08-01</span><br><span class="line">Copied: 2021-08-02</span><br></pre></td></tr></table></figure>
-<p>To understand this, we have to know that the <strong>storage
-space</strong> of a vector ought to be allocated in advance. Do not
-confuse this storage space with the <strong>actual size</strong> used by
-the user (indicated by <code>size()</code>). The storage space is always
-equal or greater than the atual size of a vector, so that our system
-need not reallocate on each insertion. The size of the storage space can
-be obtained by the method <code>capacity()</code>.</p>
-<p>Now we are able to analyse this behavior with the help of it:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">vector&lt;Stock&gt; portfolio;</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-01 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>);</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-02 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-02&quot;</span>, <span class="number">12.5</span>, <span class="number">5</span>);</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-03 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-03&quot;</span>, <span class="number">15.7</span>, <span class="number">1</span>);</span><br></pre></td></tr></table></figure>
-<p>Output:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Capacity before inserting 2021-08-01 = 0</span><br><span class="line">Contruct: 2021-08-01</span><br><span class="line"></span><br><span class="line">Capacity before inserting 2021-08-02 = 1</span><br><span class="line">Contruct: 2021-08-02</span><br><span class="line">Copied: 2021-08-01</span><br><span class="line"></span><br><span class="line">Capacity before inserting 2021-08-03 = 2</span><br><span class="line">Contruct: 2021-08-03</span><br><span class="line">Copied: 2021-08-01</span><br><span class="line">Copied: 2021-08-02</span><br></pre></td></tr></table></figure>
-<p>When <code>2021-08-01</code> is constructed, it just allocates in
-place, no copy is needed as aforementioned.</p>
-<p>However, when adding <code>2021-08-02</code>, the acutual size of a
-vector now grows to 2, the storage space is not enough to accomodate.
-Thus, the system has to reallocate its storage space in advance, then
-<strong>constructing</strong> <code>2021-08-02</code> on it, followed by
-<strong>copying</strong> the <code>2021-08-01</code> objects into the
-newly allocated space.</p>
-<p>Similarly, <code>2021-08-03</code> is <strong>constructed in
-place</strong> before the system allocates enough storage space.
-Then,<code>2021-08-01</code> and <code>2021-08-02</code> will be
-<strong>copied</strong> into the reallocated space afterwards.</p>
-<blockquote>
-<p>Note the elements in a vector are stored in a <strong>contiguous
-memory block</strong>.<a href="#fn2" class="footnote-ref" id="fnref2"
-role="doc-noteref"><sup>2</sup></a> This is the reason that when there
-is no enough storage space for insertion, the system has to reallocate a
-memory block to arrange its elements. The behavior of how capacity will
-grow may vary by different system.</p>
-</blockquote>
-<h2 id="the-usage-of-reserve">The Usage of <code>reserve</code></h2>
-<p>To optimise this, we could have our vector contain enough storage
-space in advance. This is the moment when the method
-<code>reserve()</code> can take advantage:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">vector&lt;Stock&gt; portfolio;</span><br><span class="line"></span><br><span class="line">portfolio.<span class="built_in">reserve</span>(<span class="number">5</span>);   <span class="comment">// Request enough storage space</span></span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-01 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>);</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-02 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-02&quot;</span>, <span class="number">12.5</span>, <span class="number">5</span>);</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-03 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-03&quot;</span>, <span class="number">15.7</span>, <span class="number">1</span>);</span><br></pre></td></tr></table></figure>
-<p>Output:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Capacity before inserting 2021-08-01 = 5</span><br><span class="line">Contruct: 2021-08-01</span><br><span class="line"></span><br><span class="line">Capacity before inserting 2021-08-02 = 5</span><br><span class="line">Contruct: 2021-08-02</span><br><span class="line"></span><br><span class="line">Capacity before inserting 2021-08-03 = 5</span><br><span class="line">Contruct: 2021-08-03</span><br></pre></td></tr></table></figure>
-<p>The copy operations has disappeared if the storage size are large
-enough. Remember that <code>reserve()</code> does not cause any effect
-on the vector size.</p>
-<blockquote>
-<p>The maximum capacity of a vector is restricted by
-<code>vector::max_size</code>.</p>
-</blockquote>
-<section id="footnotes" class="footnotes footnotes-end-of-document"
-role="doc-endnotes">
-<hr />
-<ol>
-<li id="fn1"><p><a
-href="https://www.cplusplus.com/reference/vector/vector/emplace_back/">C++
-Reference - std::vector::emplace_back</a><a href="#fnref1"
-class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn2"><p><a
-href="https://timsong-cpp.github.io/cppwp/n4140/vector.overview#1">C++
-Standard n4140: Class template vector overview</a><a href="#fnref2"
-class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-</ol>
-</section>
-]]></content>
-      <categories>
-        <category>Programming Language</category>
-        <category>C++</category>
-      </categories>
-      <tags>
-        <tag>C++</tag>
-        <tag>Optimisation</tag>
       </tags>
   </entry>
   <entry>
@@ -726,186 +726,6 @@ class="footnote-back" role="doc-backlink">↩︎</a></p></li>
       </tags>
   </entry>
   <entry>
-    <title>Sampling - Inverse Transformation Method</title>
-    <url>/2021/09/11/Inverse-Transform-Method/</url>
-    <content><![CDATA[<p>Sometimes, we may wanna simulate certain random variable to get the
-desired approximation. Yet, if the scenario is rather complicated, the
-computation cost can be exorbitant. With the help of <strong>inverse
-transformation method</strong>, we are able to generate many special
-random variables efficienctly.</p>
-<span id="more"></span>
-<h2 id="a-toy-example">A Toy Example</h2>
-<blockquote>
-<p>With replacement, we draw cards at random from an ordinary deck of 52
-cards, and successively until an ACE is drawn. What is the probability
-of exactly 10 draws?</p>
-</blockquote>
-<p>Apparently, let <span class="math inline">\(X\)</span> be the number
-of draws until the first ace. The random variable <span
-class="math inline">\(X\)</span> is of <strong>geometric
-distribution</strong> with the parameter <span class="math inline">\(p =
-\frac{1}{13}\)</span>. The answer of the desired probability is</p>
-<p><span class="math display">\[
-P(x) = (1-p)^{x-1} * p = (\frac{12}{13})^9 * (\frac{1}{13})
-\]</span></p>
-<h2 id="simulating-x">Simulating <span
-class="math inline">\(X\)</span></h2>
-<p>Now, if we wanna approximate the desired probability by simulating
-<span class="math inline">\(X\)</span>, an intuitive way might look like
-as below:</p>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment">### Pseudo-code of Simulation</span></span><br><span class="line"></span><br><span class="line">i = <span class="number">0</span>    <span class="comment"># iterator</span></span><br><span class="line">k = <span class="number">0</span>    <span class="comment"># Record the desired events</span></span><br><span class="line"><span class="keyword">while</span> i &lt; N:      <span class="comment"># Repeat N trials</span></span><br><span class="line">    draws = <span class="number">0</span>     <span class="comment"># Count how many draws when the first ACE appears</span></span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:   <span class="comment"># Draw the card with replacement until it is an ACE</span></span><br><span class="line">        draws +=<span class="number">1</span></span><br><span class="line">        Generate a random sample x <span class="keyword">from</span> [A,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,..<span class="number">.9</span>,<span class="number">10</span>,J,Q,K]</span><br><span class="line">        <span class="keyword">if</span> x <span class="keyword">is</span> ACE:   <span class="comment"># Let 1 represent the ACE</span></span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> draws <span class="keyword">is</span> <span class="number">10</span>:  <span class="comment"># Number of draws is exactly 10</span></span><br><span class="line">        k +=<span class="number">1</span></span><br><span class="line">    </span><br><span class="line">    i +=<span class="number">1</span></span><br><span class="line"></span><br><span class="line">prob = k/N   <span class="comment"># The approximate value</span></span><br></pre></td></tr></table></figure>
-<p>From the experiment, it can be observed that <span
-class="math inline">\(N\)</span> has to be quite large (&gt;10000) if we
-would like to get enough accuracy:</p>
-<img src="/2021/09/11/Inverse-Transform-Method/geomtric_sim.png" class="" title="This is an image">
-<p>Below is the source code:</p>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"></span><br><span class="line"><span class="comment"># N trials</span></span><br><span class="line"><span class="comment"># k: Count the desired events obtained in N trials</span></span><br><span class="line"></span><br><span class="line">N = [<span class="number">100</span>, <span class="number">250</span>, <span class="number">500</span>, <span class="number">750</span>, </span><br><span class="line">     <span class="number">1000</span>, <span class="number">1500</span>, <span class="number">2000</span>, <span class="number">2500</span>, <span class="number">3000</span>, <span class="number">3500</span>, <span class="number">4000</span>, <span class="number">4500</span>, <span class="number">5000</span>,</span><br><span class="line">     <span class="number">5500</span>, <span class="number">6000</span>, <span class="number">6500</span>, <span class="number">7000</span>, <span class="number">7500</span>, <span class="number">8000</span>, <span class="number">8500</span>, <span class="number">9000</span>, <span class="number">9500</span>,</span><br><span class="line">     <span class="number">10000</span>, <span class="number">12500</span>, <span class="number">15000</span>, <span class="number">17500</span>, <span class="number">20000</span>]</span><br><span class="line">approx = []</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> n <span class="keyword">in</span> N:</span><br><span class="line">    i = <span class="number">0</span></span><br><span class="line">    k = <span class="number">0</span></span><br><span class="line">    <span class="keyword">while</span> i &lt; n:</span><br><span class="line">        <span class="comment"># draw the card with replacement until it is ACE</span></span><br><span class="line">        j = <span class="number">0</span></span><br><span class="line">        <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">            j +=<span class="number">1</span></span><br><span class="line">            draw = np.random.randint(<span class="number">1</span>, <span class="number">13</span>)</span><br><span class="line">            <span class="keyword">if</span> draw == <span class="number">1</span>:</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> j == <span class="number">10</span>:  <span class="comment"># draw number is 10</span></span><br><span class="line">            k +=<span class="number">1</span></span><br><span class="line">        </span><br><span class="line">        i +=<span class="number">1</span></span><br><span class="line"></span><br><span class="line">    approx.append(k/n)</span><br><span class="line"></span><br><span class="line">ans = (<span class="number">12</span>/<span class="number">13</span>)**<span class="number">9</span> * (<span class="number">1</span>/<span class="number">13</span>)</span><br><span class="line"></span><br><span class="line">plt.scatter(x=N, y=approx)</span><br><span class="line">plt.xlabel(<span class="string">&#x27;Number of trials&#x27;</span>)</span><br><span class="line">plt.ylabel(<span class="string">&#x27;Approximate probability&#x27;</span>)</span><br><span class="line">plt.axhline(y=ans, color=<span class="string">&#x27;r&#x27;</span>, linestyle=<span class="string">&#x27;-&#x27;</span>, label=<span class="string">&#x27;Answer&#x27;</span>)</span><br><span class="line">plt.legend()</span><br><span class="line">plt.title(<span class="string">&#x27;Simulation to get the Ace at exactly 10 draws&#x27;</span>)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
-<p>However, this approach is not efficient because the time complexity
-is proportional to the draw number. Thus, let's introduce the inverse
-transformation method. By this method, we are able to get the same
-result as well but only need to choose one random point in (0,1),
-significantly reducing the time cost.</p>
-<h2 id="inverse-transformation-method">Inverse Transformation
-Method</h2>
-<p>Let <span class="math inline">\(F(X) = P(X \leq x)\)</span> be the
-probability distribution function of the random variable <span
-class="math inline">\(X\)</span>. Remember that for uniform random
-variable <span class="math inline">\(U\)</span> over <span
-class="math inline">\((0,1)\)</span>,</p>
-<p><span class="math display">\[
-F(U) = P(U \leq x) = x, x \in (0,1) \tag{1}
-\]</span></p>
-<p>Imagine that our objective is to simulate a random variable <span
-class="math inline">\(X\)</span> from a uniform random variable <span
-class="math inline">\(U\)</span>, i.e., <span class="math inline">\(P(X
-\leq x) = P(T(U) \leq x)\)</span>. We hope to find a transformation
-<span class="math inline">\(T\)</span> that is able to convert the
-random variable <span class="math inline">\(U\)</span> into our desired
-<span class="math inline">\(X\)</span>.</p>
-
-$$
-\displaylines {
-P(X \leq x) \\
-= P(T(U) \leq x) \\
-= P(U \leq T^{-1}(x)) \\
-}
-$$
-
-<p>Remember that <span class="math inline">\(F(X) = P(X \leq x)\)</span>
-and from <span class="math inline">\((1)\)</span>:</p>
-
-$$
-\displaylines {
-P(U \leq T^{-1}(x)) \\
-= P(U \leq F(x)) \\
-= P(F^{-1}(U) \leq x)
-}
-$$
-
-<p><span class="math display">\[
-\longrightarrow X = F^{-1}(U) \tag{2}
-\]</span></p>
-<p>From <span class="math inline">\((2)\)</span>, we know the
-transformation <span class="math inline">\(T\)</span> we are looking for
-is just <span class="math inline">\(F^{-1}\)</span>. Therefore, after
-solving <span class="math inline">\(F^{-1}\)</span>, we are able to
-generate the desired <span class="math inline">\(X\)</span> from uniform
-random variable <span class="math inline">\(U\)</span> directly without
-complications.<a href="#fn1" class="footnote-ref" id="fnref1"
-role="doc-noteref"><sup>1</sup></a></p>
-<h2
-id="simulating-geometric-distribution-via-inverse-transformation-method">Simulating
-Geometric Distribution via Inverse Transformation Method</h2>
-<p>Back to our original problem, we wanna simulate <span
-class="math inline">\(X\)</span> in the toy example, and we know that
-the <span class="math inline">\(F(x)\)</span> of geometric distribution
-with parameter <span class="math inline">\(p\)</span> is</p>
-<p><span class="math display">\[
-F(x) = 1 - (1-p)^{x-1}
-\]</span></p>
-<p>Solve <span class="math inline">\(u = F(x)\)</span>:</p>
-
-$$
-\displaylines {
-u = 1 - (1-p)^{x-1} \\
-x = 1 + \frac{\log{(1-u)}}{\log{(1-p)}}
-}
-$$
-
-<p><span class="math display">\[
-\equiv 1 + \frac{\log{u}}{\log{(1-p)}}  \tag{3}
-\]</span></p>
-<p>If <span class="math inline">\(u\)</span> is a random number variable
-from (0,1), then <span class="math inline">\((1-u)\)</span> is a random
-number variable from (0,1) as well.</p>
-<p>Now, from <span class="math inline">\((3)\)</span>, we are able to
-generate <span class="math inline">\(X\)</span> from <span
-class="math inline">\(U\)</span> efficiently. Because <span
-class="math inline">\(X\)</span> is an integer, we use the <em>floor
-operation</em> (with the <em>ceiling</em> is also equivalent):</p>
-<p><span class="math display">\[
-X = \lfloor 1 + \frac{\log{u}}{\log{(1-p)}} \rfloor
-\]</span></p>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment">### Pseudo-code of Geometric Distribution Simulation with Inverse Transform method</span></span><br><span class="line"></span><br><span class="line">i = <span class="number">0</span>    <span class="comment"># iterator</span></span><br><span class="line">k = <span class="number">0</span>    <span class="comment"># Record the desired events</span></span><br><span class="line"><span class="keyword">while</span> i &lt; N:      <span class="comment"># Repeat N trials</span></span><br><span class="line">    Generate a uniform random variable u <span class="keyword">from</span> (<span class="number">0</span>,<span class="number">1</span>)</span><br><span class="line">    <span class="comment"># p is the parameter of geometric distribution</span></span><br><span class="line">    X = floor(<span class="number">1</span> + log(u)/log(<span class="number">1</span>-p))   <span class="comment"># inverse transform</span></span><br><span class="line">    <span class="keyword">if</span> X <span class="keyword">is</span> <span class="number">10</span>:</span><br><span class="line">        k +=<span class="number">1</span></span><br><span class="line"></span><br><span class="line">    i +=<span class="number">1</span></span><br><span class="line"></span><br><span class="line">prob = k/N   <span class="comment"># The approximate value</span></span><br></pre></td></tr></table></figure>
-<p>Below is the experimental result and the related source code:</p>
-<img src="/2021/09/11/Inverse-Transform-Method/geomtric_sim_with_inv.png" class="" title="This is an image">
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"><span class="keyword">from</span> math <span class="keyword">import</span> log, floor</span><br><span class="line"></span><br><span class="line"><span class="comment"># N trials</span></span><br><span class="line"><span class="comment"># k: Count the desired events obtained in N trials</span></span><br><span class="line"></span><br><span class="line">N = [<span class="number">100</span>, <span class="number">250</span>, <span class="number">500</span>, <span class="number">750</span>, </span><br><span class="line">     <span class="number">1000</span>, <span class="number">1500</span>, <span class="number">2000</span>, <span class="number">2500</span>, <span class="number">3000</span>, <span class="number">3500</span>, <span class="number">4000</span>, <span class="number">4500</span>, <span class="number">5000</span>,</span><br><span class="line">     <span class="number">5500</span>, <span class="number">6000</span>, <span class="number">6500</span>, <span class="number">7000</span>, <span class="number">7500</span>, <span class="number">8000</span>, <span class="number">8500</span>, <span class="number">9000</span>, <span class="number">9500</span>,</span><br><span class="line">     <span class="number">10000</span>, <span class="number">12500</span>, <span class="number">15000</span>, <span class="number">17500</span>, <span class="number">20000</span>]</span><br><span class="line">approx = []</span><br><span class="line">p = <span class="number">1</span>/<span class="number">13</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> n <span class="keyword">in</span> N:</span><br><span class="line">    i = <span class="number">0</span></span><br><span class="line">    k = <span class="number">0</span></span><br><span class="line">    <span class="keyword">while</span> i &lt; n:</span><br><span class="line">        <span class="comment"># inverse transformation method</span></span><br><span class="line">        u = np.random.rand()</span><br><span class="line">        X = floor(<span class="number">1</span> + log(u)/log(<span class="number">1</span>-p))</span><br><span class="line">        <span class="keyword">if</span> X == <span class="number">10</span>:</span><br><span class="line">            k +=<span class="number">1</span></span><br><span class="line">        </span><br><span class="line">        i +=<span class="number">1</span></span><br><span class="line"></span><br><span class="line">    approx.append(k/n)</span><br><span class="line"></span><br><span class="line">ans = (<span class="number">12</span>/<span class="number">13</span>)**<span class="number">9</span> * (<span class="number">1</span>/<span class="number">13</span>)</span><br><span class="line"></span><br><span class="line">plt.scatter(x=N, y=approx)</span><br><span class="line">plt.xlabel(<span class="string">&#x27;Number of trials&#x27;</span>)</span><br><span class="line">plt.ylabel(<span class="string">&#x27;Approximate probability&#x27;</span>)</span><br><span class="line">plt.axhline(y=ans, color=<span class="string">&#x27;r&#x27;</span>, linestyle=<span class="string">&#x27;-&#x27;</span>, label=<span class="string">&#x27;Answer&#x27;</span>)</span><br><span class="line">plt.legend()</span><br><span class="line">plt.title(<span class="string">&#x27;Simulation with Inverse Tranformation Method&#x27;</span>)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
-<h2 id="performance-comparison">Performance Comparison</h2>
-<p>Let N be 500000 trials.</p>
-<p>Original method:</p>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment">### Original Method</span></span><br><span class="line"><span class="keyword">from</span> time <span class="keyword">import</span> perf_counter</span><br><span class="line"></span><br><span class="line">i = <span class="number">0</span></span><br><span class="line">k = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">t1_start = perf_counter()</span><br><span class="line"><span class="keyword">while</span> i &lt; <span class="number">500000</span>:</span><br><span class="line">    <span class="comment"># draw the card with replacement until it is ACE</span></span><br><span class="line">    j = <span class="number">0</span></span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        j +=<span class="number">1</span></span><br><span class="line">        draw = np.random.randint(<span class="number">1</span>, <span class="number">13</span>)</span><br><span class="line">        <span class="keyword">if</span> draw == <span class="number">1</span>:</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> j == <span class="number">10</span>:  <span class="comment"># draw number is 10</span></span><br><span class="line">        k +=<span class="number">1</span></span><br><span class="line"></span><br><span class="line">    i +=<span class="number">1</span></span><br><span class="line">t1_stop = perf_counter()</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;Elapsed time (sec):&quot;</span>, t1_stop-t1_start) </span><br></pre></td></tr></table></figure>
-<p>Inverse transformation method:</p>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> time <span class="keyword">import</span> perf_counter</span><br><span class="line"></span><br><span class="line">i = <span class="number">0</span></span><br><span class="line">k = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">t1_start = perf_counter()  </span><br><span class="line"><span class="keyword">while</span> i &lt; <span class="number">500000</span>:</span><br><span class="line">    <span class="comment"># inverse transformation method</span></span><br><span class="line">    u = np.random.rand()</span><br><span class="line">    X = floor(<span class="number">1</span> + log(u)/log(<span class="number">1</span>-p))</span><br><span class="line">    <span class="keyword">if</span> X == <span class="number">10</span>:</span><br><span class="line">        k +=<span class="number">1</span></span><br><span class="line">    </span><br><span class="line">    i +=<span class="number">1</span></span><br><span class="line">t1_stop = perf_counter()</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;Elapsed time (sec):&quot;</span>, t1_stop-t1_start) </span><br></pre></td></tr></table></figure>
-<p>Results:</p>
-<table>
-<thead>
-<tr class="header">
-<th>N = 500000 (trials)</th>
-<th>Elapsed Time (sec)</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Original Method</td>
-<td>10.832</td>
-</tr>
-<tr class="even">
-<td>Inverse Transformation Method</td>
-<td>0.363</td>
-</tr>
-</tbody>
-</table>
-<p>We can observe that the elapsed time has been substantially reduced
-after applying inverse transformation method.</p>
-<blockquote>
-<p>Note that the inverse transformation method is to mainly improve the
-computation cost. It does <strong>not</strong> increase the convergence
-rate. From the previous experimental results, you can see that the N
-trials required to converge are roughly the same for both methods.</p>
-</blockquote>
-<section id="footnotes" class="footnotes footnotes-end-of-document"
-role="doc-endnotes">
-<hr />
-<ol>
-<li id="fn1"><p>For rigorous proof, you can refer to <a
-href="https://en.wikipedia.org/wiki/Inverse_transform_sampling">Inverse
-transform sampling</a>. The aim here is to grasp the idea intuitively.<a
-href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-</ol>
-</section>
-]]></content>
-      <categories>
-        <category>Mathematics</category>
-        <category>Probability and Statistics</category>
-      </categories>
-      <tags>
-        <tag>Simulation</tag>
-        <tag>Python</tag>
-        <tag>Sampling</tag>
-        <tag>Inverse Transformation Method</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Implement SVM with SMO from scratch in Python</title>
     <url>/2022/07/30/Implement-SVM-with-SMO-from-scratch/</url>
     <content><![CDATA[<p><strong>Support vector machine</strong> (SVM) plays an important role
@@ -1211,10 +1031,190 @@ role="doc-backlink">↩︎</a></p></li>
         <category>Machine Learning</category>
       </categories>
       <tags>
-        <tag>Python</tag>
         <tag>Optimisation</tag>
+        <tag>Python</tag>
         <tag>Kernel Method</tag>
         <tag>SVM</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Sampling - Inverse Transformation Method</title>
+    <url>/2021/09/11/Inverse-Transform-Method/</url>
+    <content><![CDATA[<p>Sometimes, we may wanna simulate certain random variable to get the
+desired approximation. Yet, if the scenario is rather complicated, the
+computation cost can be exorbitant. With the help of <strong>inverse
+transformation method</strong>, we are able to generate many special
+random variables efficienctly.</p>
+<span id="more"></span>
+<h2 id="a-toy-example">A Toy Example</h2>
+<blockquote>
+<p>With replacement, we draw cards at random from an ordinary deck of 52
+cards, and successively until an ACE is drawn. What is the probability
+of exactly 10 draws?</p>
+</blockquote>
+<p>Apparently, let <span class="math inline">\(X\)</span> be the number
+of draws until the first ace. The random variable <span
+class="math inline">\(X\)</span> is of <strong>geometric
+distribution</strong> with the parameter <span class="math inline">\(p =
+\frac{1}{13}\)</span>. The answer of the desired probability is</p>
+<p><span class="math display">\[
+P(x) = (1-p)^{x-1} * p = (\frac{12}{13})^9 * (\frac{1}{13})
+\]</span></p>
+<h2 id="simulating-x">Simulating <span
+class="math inline">\(X\)</span></h2>
+<p>Now, if we wanna approximate the desired probability by simulating
+<span class="math inline">\(X\)</span>, an intuitive way might look like
+as below:</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment">### Pseudo-code of Simulation</span></span><br><span class="line"></span><br><span class="line">i = <span class="number">0</span>    <span class="comment"># iterator</span></span><br><span class="line">k = <span class="number">0</span>    <span class="comment"># Record the desired events</span></span><br><span class="line"><span class="keyword">while</span> i &lt; N:      <span class="comment"># Repeat N trials</span></span><br><span class="line">    draws = <span class="number">0</span>     <span class="comment"># Count how many draws when the first ACE appears</span></span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:   <span class="comment"># Draw the card with replacement until it is an ACE</span></span><br><span class="line">        draws +=<span class="number">1</span></span><br><span class="line">        Generate a random sample x <span class="keyword">from</span> [A,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,..<span class="number">.9</span>,<span class="number">10</span>,J,Q,K]</span><br><span class="line">        <span class="keyword">if</span> x <span class="keyword">is</span> ACE:   <span class="comment"># Let 1 represent the ACE</span></span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> draws <span class="keyword">is</span> <span class="number">10</span>:  <span class="comment"># Number of draws is exactly 10</span></span><br><span class="line">        k +=<span class="number">1</span></span><br><span class="line">    </span><br><span class="line">    i +=<span class="number">1</span></span><br><span class="line"></span><br><span class="line">prob = k/N   <span class="comment"># The approximate value</span></span><br></pre></td></tr></table></figure>
+<p>From the experiment, it can be observed that <span
+class="math inline">\(N\)</span> has to be quite large (&gt;10000) if we
+would like to get enough accuracy:</p>
+<img src="/2021/09/11/Inverse-Transform-Method/geomtric_sim.png" class="" title="This is an image">
+<p>Below is the source code:</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"></span><br><span class="line"><span class="comment"># N trials</span></span><br><span class="line"><span class="comment"># k: Count the desired events obtained in N trials</span></span><br><span class="line"></span><br><span class="line">N = [<span class="number">100</span>, <span class="number">250</span>, <span class="number">500</span>, <span class="number">750</span>, </span><br><span class="line">     <span class="number">1000</span>, <span class="number">1500</span>, <span class="number">2000</span>, <span class="number">2500</span>, <span class="number">3000</span>, <span class="number">3500</span>, <span class="number">4000</span>, <span class="number">4500</span>, <span class="number">5000</span>,</span><br><span class="line">     <span class="number">5500</span>, <span class="number">6000</span>, <span class="number">6500</span>, <span class="number">7000</span>, <span class="number">7500</span>, <span class="number">8000</span>, <span class="number">8500</span>, <span class="number">9000</span>, <span class="number">9500</span>,</span><br><span class="line">     <span class="number">10000</span>, <span class="number">12500</span>, <span class="number">15000</span>, <span class="number">17500</span>, <span class="number">20000</span>]</span><br><span class="line">approx = []</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> n <span class="keyword">in</span> N:</span><br><span class="line">    i = <span class="number">0</span></span><br><span class="line">    k = <span class="number">0</span></span><br><span class="line">    <span class="keyword">while</span> i &lt; n:</span><br><span class="line">        <span class="comment"># draw the card with replacement until it is ACE</span></span><br><span class="line">        j = <span class="number">0</span></span><br><span class="line">        <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">            j +=<span class="number">1</span></span><br><span class="line">            draw = np.random.randint(<span class="number">1</span>, <span class="number">13</span>)</span><br><span class="line">            <span class="keyword">if</span> draw == <span class="number">1</span>:</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> j == <span class="number">10</span>:  <span class="comment"># draw number is 10</span></span><br><span class="line">            k +=<span class="number">1</span></span><br><span class="line">        </span><br><span class="line">        i +=<span class="number">1</span></span><br><span class="line"></span><br><span class="line">    approx.append(k/n)</span><br><span class="line"></span><br><span class="line">ans = (<span class="number">12</span>/<span class="number">13</span>)**<span class="number">9</span> * (<span class="number">1</span>/<span class="number">13</span>)</span><br><span class="line"></span><br><span class="line">plt.scatter(x=N, y=approx)</span><br><span class="line">plt.xlabel(<span class="string">&#x27;Number of trials&#x27;</span>)</span><br><span class="line">plt.ylabel(<span class="string">&#x27;Approximate probability&#x27;</span>)</span><br><span class="line">plt.axhline(y=ans, color=<span class="string">&#x27;r&#x27;</span>, linestyle=<span class="string">&#x27;-&#x27;</span>, label=<span class="string">&#x27;Answer&#x27;</span>)</span><br><span class="line">plt.legend()</span><br><span class="line">plt.title(<span class="string">&#x27;Simulation to get the Ace at exactly 10 draws&#x27;</span>)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
+<p>However, this approach is not efficient because the time complexity
+is proportional to the draw number. Thus, let's introduce the inverse
+transformation method. By this method, we are able to get the same
+result as well but only need to choose one random point in (0,1),
+significantly reducing the time cost.</p>
+<h2 id="inverse-transformation-method">Inverse Transformation
+Method</h2>
+<p>Let <span class="math inline">\(F(X) = P(X \leq x)\)</span> be the
+probability distribution function of the random variable <span
+class="math inline">\(X\)</span>. Remember that for uniform random
+variable <span class="math inline">\(U\)</span> over <span
+class="math inline">\((0,1)\)</span>,</p>
+<p><span class="math display">\[
+F(U) = P(U \leq x) = x, x \in (0,1) \tag{1}
+\]</span></p>
+<p>Imagine that our objective is to simulate a random variable <span
+class="math inline">\(X\)</span> from a uniform random variable <span
+class="math inline">\(U\)</span>, i.e., <span class="math inline">\(P(X
+\leq x) = P(T(U) \leq x)\)</span>. We hope to find a transformation
+<span class="math inline">\(T\)</span> that is able to convert the
+random variable <span class="math inline">\(U\)</span> into our desired
+<span class="math inline">\(X\)</span>.</p>
+
+$$
+\displaylines {
+P(X \leq x) \\
+= P(T(U) \leq x) \\
+= P(U \leq T^{-1}(x)) \\
+}
+$$
+
+<p>Remember that <span class="math inline">\(F(X) = P(X \leq x)\)</span>
+and from <span class="math inline">\((1)\)</span>:</p>
+
+$$
+\displaylines {
+P(U \leq T^{-1}(x)) \\
+= P(U \leq F(x)) \\
+= P(F^{-1}(U) \leq x)
+}
+$$
+
+<p><span class="math display">\[
+\longrightarrow X = F^{-1}(U) \tag{2}
+\]</span></p>
+<p>From <span class="math inline">\((2)\)</span>, we know the
+transformation <span class="math inline">\(T\)</span> we are looking for
+is just <span class="math inline">\(F^{-1}\)</span>. Therefore, after
+solving <span class="math inline">\(F^{-1}\)</span>, we are able to
+generate the desired <span class="math inline">\(X\)</span> from uniform
+random variable <span class="math inline">\(U\)</span> directly without
+complications.<a href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a></p>
+<h2
+id="simulating-geometric-distribution-via-inverse-transformation-method">Simulating
+Geometric Distribution via Inverse Transformation Method</h2>
+<p>Back to our original problem, we wanna simulate <span
+class="math inline">\(X\)</span> in the toy example, and we know that
+the <span class="math inline">\(F(x)\)</span> of geometric distribution
+with parameter <span class="math inline">\(p\)</span> is</p>
+<p><span class="math display">\[
+F(x) = 1 - (1-p)^{x-1}
+\]</span></p>
+<p>Solve <span class="math inline">\(u = F(x)\)</span>:</p>
+
+$$
+\displaylines {
+u = 1 - (1-p)^{x-1} \\
+x = 1 + \frac{\log{(1-u)}}{\log{(1-p)}}
+}
+$$
+
+<p><span class="math display">\[
+\equiv 1 + \frac{\log{u}}{\log{(1-p)}}  \tag{3}
+\]</span></p>
+<p>If <span class="math inline">\(u\)</span> is a random number variable
+from (0,1), then <span class="math inline">\((1-u)\)</span> is a random
+number variable from (0,1) as well.</p>
+<p>Now, from <span class="math inline">\((3)\)</span>, we are able to
+generate <span class="math inline">\(X\)</span> from <span
+class="math inline">\(U\)</span> efficiently. Because <span
+class="math inline">\(X\)</span> is an integer, we use the <em>floor
+operation</em> (with the <em>ceiling</em> is also equivalent):</p>
+<p><span class="math display">\[
+X = \lfloor 1 + \frac{\log{u}}{\log{(1-p)}} \rfloor
+\]</span></p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment">### Pseudo-code of Geometric Distribution Simulation with Inverse Transform method</span></span><br><span class="line"></span><br><span class="line">i = <span class="number">0</span>    <span class="comment"># iterator</span></span><br><span class="line">k = <span class="number">0</span>    <span class="comment"># Record the desired events</span></span><br><span class="line"><span class="keyword">while</span> i &lt; N:      <span class="comment"># Repeat N trials</span></span><br><span class="line">    Generate a uniform random variable u <span class="keyword">from</span> (<span class="number">0</span>,<span class="number">1</span>)</span><br><span class="line">    <span class="comment"># p is the parameter of geometric distribution</span></span><br><span class="line">    X = floor(<span class="number">1</span> + log(u)/log(<span class="number">1</span>-p))   <span class="comment"># inverse transform</span></span><br><span class="line">    <span class="keyword">if</span> X <span class="keyword">is</span> <span class="number">10</span>:</span><br><span class="line">        k +=<span class="number">1</span></span><br><span class="line"></span><br><span class="line">    i +=<span class="number">1</span></span><br><span class="line"></span><br><span class="line">prob = k/N   <span class="comment"># The approximate value</span></span><br></pre></td></tr></table></figure>
+<p>Below is the experimental result and the related source code:</p>
+<img src="/2021/09/11/Inverse-Transform-Method/geomtric_sim_with_inv.png" class="" title="This is an image">
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"><span class="keyword">from</span> math <span class="keyword">import</span> log, floor</span><br><span class="line"></span><br><span class="line"><span class="comment"># N trials</span></span><br><span class="line"><span class="comment"># k: Count the desired events obtained in N trials</span></span><br><span class="line"></span><br><span class="line">N = [<span class="number">100</span>, <span class="number">250</span>, <span class="number">500</span>, <span class="number">750</span>, </span><br><span class="line">     <span class="number">1000</span>, <span class="number">1500</span>, <span class="number">2000</span>, <span class="number">2500</span>, <span class="number">3000</span>, <span class="number">3500</span>, <span class="number">4000</span>, <span class="number">4500</span>, <span class="number">5000</span>,</span><br><span class="line">     <span class="number">5500</span>, <span class="number">6000</span>, <span class="number">6500</span>, <span class="number">7000</span>, <span class="number">7500</span>, <span class="number">8000</span>, <span class="number">8500</span>, <span class="number">9000</span>, <span class="number">9500</span>,</span><br><span class="line">     <span class="number">10000</span>, <span class="number">12500</span>, <span class="number">15000</span>, <span class="number">17500</span>, <span class="number">20000</span>]</span><br><span class="line">approx = []</span><br><span class="line">p = <span class="number">1</span>/<span class="number">13</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> n <span class="keyword">in</span> N:</span><br><span class="line">    i = <span class="number">0</span></span><br><span class="line">    k = <span class="number">0</span></span><br><span class="line">    <span class="keyword">while</span> i &lt; n:</span><br><span class="line">        <span class="comment"># inverse transformation method</span></span><br><span class="line">        u = np.random.rand()</span><br><span class="line">        X = floor(<span class="number">1</span> + log(u)/log(<span class="number">1</span>-p))</span><br><span class="line">        <span class="keyword">if</span> X == <span class="number">10</span>:</span><br><span class="line">            k +=<span class="number">1</span></span><br><span class="line">        </span><br><span class="line">        i +=<span class="number">1</span></span><br><span class="line"></span><br><span class="line">    approx.append(k/n)</span><br><span class="line"></span><br><span class="line">ans = (<span class="number">12</span>/<span class="number">13</span>)**<span class="number">9</span> * (<span class="number">1</span>/<span class="number">13</span>)</span><br><span class="line"></span><br><span class="line">plt.scatter(x=N, y=approx)</span><br><span class="line">plt.xlabel(<span class="string">&#x27;Number of trials&#x27;</span>)</span><br><span class="line">plt.ylabel(<span class="string">&#x27;Approximate probability&#x27;</span>)</span><br><span class="line">plt.axhline(y=ans, color=<span class="string">&#x27;r&#x27;</span>, linestyle=<span class="string">&#x27;-&#x27;</span>, label=<span class="string">&#x27;Answer&#x27;</span>)</span><br><span class="line">plt.legend()</span><br><span class="line">plt.title(<span class="string">&#x27;Simulation with Inverse Tranformation Method&#x27;</span>)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
+<h2 id="performance-comparison">Performance Comparison</h2>
+<p>Let N be 500000 trials.</p>
+<p>Original method:</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment">### Original Method</span></span><br><span class="line"><span class="keyword">from</span> time <span class="keyword">import</span> perf_counter</span><br><span class="line"></span><br><span class="line">i = <span class="number">0</span></span><br><span class="line">k = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">t1_start = perf_counter()</span><br><span class="line"><span class="keyword">while</span> i &lt; <span class="number">500000</span>:</span><br><span class="line">    <span class="comment"># draw the card with replacement until it is ACE</span></span><br><span class="line">    j = <span class="number">0</span></span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        j +=<span class="number">1</span></span><br><span class="line">        draw = np.random.randint(<span class="number">1</span>, <span class="number">13</span>)</span><br><span class="line">        <span class="keyword">if</span> draw == <span class="number">1</span>:</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> j == <span class="number">10</span>:  <span class="comment"># draw number is 10</span></span><br><span class="line">        k +=<span class="number">1</span></span><br><span class="line"></span><br><span class="line">    i +=<span class="number">1</span></span><br><span class="line">t1_stop = perf_counter()</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;Elapsed time (sec):&quot;</span>, t1_stop-t1_start) </span><br></pre></td></tr></table></figure>
+<p>Inverse transformation method:</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> time <span class="keyword">import</span> perf_counter</span><br><span class="line"></span><br><span class="line">i = <span class="number">0</span></span><br><span class="line">k = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">t1_start = perf_counter()  </span><br><span class="line"><span class="keyword">while</span> i &lt; <span class="number">500000</span>:</span><br><span class="line">    <span class="comment"># inverse transformation method</span></span><br><span class="line">    u = np.random.rand()</span><br><span class="line">    X = floor(<span class="number">1</span> + log(u)/log(<span class="number">1</span>-p))</span><br><span class="line">    <span class="keyword">if</span> X == <span class="number">10</span>:</span><br><span class="line">        k +=<span class="number">1</span></span><br><span class="line">    </span><br><span class="line">    i +=<span class="number">1</span></span><br><span class="line">t1_stop = perf_counter()</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;Elapsed time (sec):&quot;</span>, t1_stop-t1_start) </span><br></pre></td></tr></table></figure>
+<p>Results:</p>
+<table>
+<thead>
+<tr class="header">
+<th>N = 500000 (trials)</th>
+<th>Elapsed Time (sec)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Original Method</td>
+<td>10.832</td>
+</tr>
+<tr class="even">
+<td>Inverse Transformation Method</td>
+<td>0.363</td>
+</tr>
+</tbody>
+</table>
+<p>We can observe that the elapsed time has been substantially reduced
+after applying inverse transformation method.</p>
+<blockquote>
+<p>Note that the inverse transformation method is to mainly improve the
+computation cost. It does <strong>not</strong> increase the convergence
+rate. From the previous experimental results, you can see that the N
+trials required to converge are roughly the same for both methods.</p>
+</blockquote>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>For rigorous proof, you can refer to <a
+href="https://en.wikipedia.org/wiki/Inverse_transform_sampling">Inverse
+transform sampling</a>. The aim here is to grasp the idea intuitively.<a
+href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+]]></content>
+      <categories>
+        <category>Mathematics</category>
+        <category>Probability and Statistics</category>
+      </categories>
+      <tags>
+        <tag>Simulation</tag>
+        <tag>Python</tag>
+        <tag>Sampling</tag>
+        <tag>Inverse Transformation Method</tag>
       </tags>
   </entry>
 </search>

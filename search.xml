@@ -95,6 +95,479 @@ fcitx 的字碼表，再使用 fcitx 工具 <code>fcitx-tools</code>
       </tags>
   </entry>
   <entry>
+    <title>[C++] Optimise the Efficiency when Using STL Containers - taking vector emplace_back as an example</title>
+    <url>/2021/07/29/cpp-vector-emplace/</url>
+    <content><![CDATA[<p>C++ provides a plethora of containers that allow us to dynamically
+allocate our elements in run time. Take <code>vector</code> as an
+example. It is widely used in many applications. However, for some
+extreme cases, we may still want to avoid the overhead of reallocation
+or copy operations when those operations are quite expensive.</p>
+<p>Since C++11, with the advent of <code>emplace</code> methods,
+developers are able to pursue more efficiency via them.</p>
+<span id="more"></span>
+<h2 id="a-toy-example">A Toy Example</h2>
+<p>To get a grasp of the usage of <code>emplace</code> , let's firstly
+look at a simple object. Say we have a class containing the information
+of a stock:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Stock</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Stock</span>(string date, <span class="keyword">double</span> price, <span class="keyword">int</span> volume) :</span><br><span class="line">        <span class="built_in">date</span>(date), <span class="built_in">price</span>(price), <span class="built_in">volume</span>(volume)</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Contruct: &quot;</span> &lt;&lt; date &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">Stock</span>(<span class="keyword">const</span> Stock&amp; obj) :</span><br><span class="line">        <span class="built_in">date</span>(obj.date), <span class="built_in">price</span>(obj.price), <span class="built_in">volume</span>(obj.volume)</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Copied: &quot;</span> &lt;&lt; date &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    string date;</span><br><span class="line">    <span class="keyword">double</span> price;</span><br><span class="line">    <span class="keyword">int</span> volume;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>For the convenience of observation, when the object is created or
+copied, the corresponded message will be printed.</p>
+<h2 id="the-behavior-of-copy-between-push_back-and-emplace_back">The
+Behavior of Copy between <code>push_back</code> and
+<code>emplace_back</code></h2>
+<p>We now use a vector - <code>portfolio</code> - to maintain our stock
+objects.</p>
+<p>First, we add the object <code>2021-08-01</code> into it via
+<code>push_back()</code>:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    vector&lt;Stock&gt; portfolio;</span><br><span class="line">    portfolio.<span class="built_in">push_back</span>(&#123;<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>&#125;);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>When executing the program, we get the output:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Contruct: 2021-08-01</span><br><span class="line">Copied: 2021-08-01</span><br></pre></td></tr></table></figure>
+<p>It shows that this object is created and copied into the vector
+afterwards. The copy occurs for the reason that our object is not
+allocated on the space where our vector <code>portfolio</code> is
+located. The system still has to copy it onto the vector space.</p>
+<p>This copy operation can be spared if our system can simply construct
+our object onto <code>portfolio</code>'s space. The method
+<code>emplace_back()</code> can come into play:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">vector&lt;Stock&gt; portfolio;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>);</span><br></pre></td></tr></table></figure>
+<p>When executing the program, the copy operation has disappeared. The
+object now is constructed in place:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Contruct: 2021-08-01</span><br></pre></td></tr></table></figure>
+<p>Note the syntax sugar only needs us to specify our arguments: <a
+href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a> <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;class... Args&gt;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">emplace_back</span> <span class="params">(Args&amp;&amp;... args)</span></span>;</span><br></pre></td></tr></table></figure></p>
+<h2 id="another-unexpected-copy-behind-the-background">Another
+Unexpected Copy behind the Background</h2>
+<p>Cautious readers would find that if we add more items, there might be
+still copy occurring:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">vector&lt;Stock&gt; portfolio;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>);</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-02&quot;</span>, <span class="number">12.5</span>, <span class="number">5</span>);</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-03&quot;</span>, <span class="number">15.7</span>, <span class="number">1</span>);</span><br></pre></td></tr></table></figure>
+<p>Its output:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Contruct: 2021-08-01</span><br><span class="line">Contruct: 2021-08-02</span><br><span class="line">Copied: 2021-08-01</span><br><span class="line">Contruct: 2021-08-03</span><br><span class="line">Copied: 2021-08-01</span><br><span class="line">Copied: 2021-08-02</span><br></pre></td></tr></table></figure>
+<p>To understand this, we have to know that the <strong>storage
+space</strong> of a vector ought to be allocated in advance. Do not
+confuse this storage space with the <strong>actual size</strong> used by
+the user (indicated by <code>size()</code>). The storage space is always
+equal or greater than the atual size of a vector, so that our system
+need not reallocate on each insertion. The size of the storage space can
+be obtained by the method <code>capacity()</code>.</p>
+<p>Now we are able to analyse this behavior with the help of it:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">vector&lt;Stock&gt; portfolio;</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-01 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>);</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-02 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-02&quot;</span>, <span class="number">12.5</span>, <span class="number">5</span>);</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-03 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-03&quot;</span>, <span class="number">15.7</span>, <span class="number">1</span>);</span><br></pre></td></tr></table></figure>
+<p>Output:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Capacity before inserting 2021-08-01 = 0</span><br><span class="line">Contruct: 2021-08-01</span><br><span class="line"></span><br><span class="line">Capacity before inserting 2021-08-02 = 1</span><br><span class="line">Contruct: 2021-08-02</span><br><span class="line">Copied: 2021-08-01</span><br><span class="line"></span><br><span class="line">Capacity before inserting 2021-08-03 = 2</span><br><span class="line">Contruct: 2021-08-03</span><br><span class="line">Copied: 2021-08-01</span><br><span class="line">Copied: 2021-08-02</span><br></pre></td></tr></table></figure>
+<p>When <code>2021-08-01</code> is constructed, it just allocates in
+place, no copy is needed as aforementioned.</p>
+<p>However, when adding <code>2021-08-02</code>, the acutual size of a
+vector now grows to 2, the storage space is not enough to accomodate.
+Thus, the system has to reallocate its storage space in advance, then
+<strong>constructing</strong> <code>2021-08-02</code> on it, followed by
+<strong>copying</strong> the <code>2021-08-01</code> objects into the
+newly allocated space.</p>
+<p>Similarly, <code>2021-08-03</code> is <strong>constructed in
+place</strong> before the system allocates enough storage space.
+Then,<code>2021-08-01</code> and <code>2021-08-02</code> will be
+<strong>copied</strong> into the reallocated space afterwards.</p>
+<blockquote>
+<p>Note the elements in a vector are stored in a <strong>contiguous
+memory block</strong>.<a href="#fn2" class="footnote-ref" id="fnref2"
+role="doc-noteref"><sup>2</sup></a> This is the reason that when there
+is no enough storage space for insertion, the system has to reallocate a
+memory block to arrange its elements. The behavior of how capacity will
+grow may vary by different system.</p>
+</blockquote>
+<h2 id="the-usage-of-reserve">The Usage of <code>reserve</code></h2>
+<p>To optimise this, we could have our vector contain enough storage
+space in advance. This is the moment when the method
+<code>reserve()</code> can take advantage:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">vector&lt;Stock&gt; portfolio;</span><br><span class="line"></span><br><span class="line">portfolio.<span class="built_in">reserve</span>(<span class="number">5</span>);   <span class="comment">// Request enough storage space</span></span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-01 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>);</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-02 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-02&quot;</span>, <span class="number">12.5</span>, <span class="number">5</span>);</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-03 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-03&quot;</span>, <span class="number">15.7</span>, <span class="number">1</span>);</span><br></pre></td></tr></table></figure>
+<p>Output:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Capacity before inserting 2021-08-01 = 5</span><br><span class="line">Contruct: 2021-08-01</span><br><span class="line"></span><br><span class="line">Capacity before inserting 2021-08-02 = 5</span><br><span class="line">Contruct: 2021-08-02</span><br><span class="line"></span><br><span class="line">Capacity before inserting 2021-08-03 = 5</span><br><span class="line">Contruct: 2021-08-03</span><br></pre></td></tr></table></figure>
+<p>The copy operations has disappeared if the storage size are large
+enough. Remember that <code>reserve()</code> does not cause any effect
+on the vector size.</p>
+<blockquote>
+<p>The maximum capacity of a vector is restricted by
+<code>vector::max_size</code>.</p>
+</blockquote>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p><a
+href="https://www.cplusplus.com/reference/vector/vector/emplace_back/">C++
+Reference - std::vector::emplace_back</a><a href="#fnref1"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p><a
+href="https://timsong-cpp.github.io/cppwp/n4140/vector.overview#1">C++
+Standard n4140: Class template vector overview</a><a href="#fnref2"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+]]></content>
+      <categories>
+        <category>Programming Language</category>
+        <category>C++</category>
+      </categories>
+      <tags>
+        <tag>C++</tag>
+        <tag>Optimisation</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>[C++] Smart Pointers - unique_ptr, shared_ptr, weak_ptr - from the implementation to their usage</title>
+    <url>/2021/08/07/cpp-smart-pointers/</url>
+    <content><![CDATA[<p>When we develop our program or the system continues to grow as time
+goes by, <strong>memory leakage</strong> is usually a pain we suffer
+most. To militate against this problem, C++ has introduced smart pointer
+family - <code>unique_ptr</code>, <code>shared_ptr</code>,
+<code>weak_ptr</code>, defined in header <code>&lt;memory&gt;</code>,
+since C++11.</p>
+<blockquote>
+<p>Precisely, <code>unique_ptr</code> inherits most of characteristics
+from <code>auto_ptr</code>, which has been implemented since C++03. Yet,
+due to the lack of <code>move</code> semantics, it encounters
+significant limitation: <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function">auto_ptr&lt;<span class="keyword">int</span>&gt; <span class="title">p</span> <span class="params">(<span class="keyword">new</span> <span class="keyword">int</span>(<span class="number">1</span>))</span></span>;</span><br><span class="line">vector&lt;auto_ptr&lt;<span class="keyword">int</span>&gt;&gt; vec;</span><br><span class="line"></span><br><span class="line">vec.<span class="built_in">push_back</span>(p);            <span class="comment">// !!! error, because of Copy constructor</span></span><br><span class="line">vec.<span class="built_in">push_back</span>(std::<span class="built_in">move</span>(p))  <span class="comment">// Okay, with move semantics since C++11</span></span><br></pre></td></tr></table></figure> Note that <code>auto_ptr</code> is
+<strong>deprecated</strong> now and should not be used any more for
+safety.</p>
+</blockquote>
+<span id="more"></span>
+<h2 id="a-toy-example">A Toy Example</h2>
+<p>Let's use a simple example to illustrate how these smart pointers
+work:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Obj</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Obj</span> () : <span class="built_in">name</span>(<span class="string">&quot;DEFAULT&quot;</span>)  &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Construct &quot;</span> &lt;&lt; name &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">Obj</span> (string name) : <span class="built_in">name</span>(name) &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Construct &quot;</span> &lt;&lt; name &lt;&lt; <span class="string">&quot;\n&quot;</span>;        </span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ~<span class="built_in">Obj</span>() &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Destroy &quot;</span> &lt;&lt; name &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">SayHi</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Hi &quot;</span> &lt;&lt; name &lt;&lt; <span class="string">&quot;!\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    string name;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>When the object is created or released, the corresponded message will
+be printed.</p>
+<h2 id="original-way-with-new-and-delete">Original Way with
+<code>new</code> and <code>delete</code></h2>
+<p>Before utilising smart pointers, developers who want to allocate a
+new object might write the below code:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">Obj* p0 = <span class="keyword">new</span> <span class="built_in">Obj</span>(<span class="string">&quot;0&quot;</span>);</span><br><span class="line"><span class="comment">// ...</span></span><br><span class="line"><span class="keyword">delete</span> p0;  <span class="comment">// forgetting this would lead to memory leak</span></span><br></pre></td></tr></table></figure>
+<p>We have to carefully ensure the created object will be released
+before leaving the procedure; otherwise leading to memory leakage.
+However, relying on smart pointers, the system is able to automatically
+destroy the allocated object based upon whether it is owned by any
+pointer.</p>
+<h2 id="unique_ptr"><code>unique_ptr</code></h2>
+<p><code>unique_ptr</code>, as its name suggests, owns an object
+uniquely. That means you cannot have the same memory owned by two or
+more <code>unique_ptr</code> objects; thus, it is also <strong>not
+copyable</strong>. When the <code>unique_ptr</code> goes out of scope,
+its holding object will be destroyed immediately.</p>
+<h3 id="code-snippet-from-stdunique_ptr">Code Snippet from
+<code>std::unique_ptr</code></h3>
+<p>The implementation of <code>unique_ptr</code> in libstdc++ is worth
+mentioning for clarity (I have omitted the detail):<a href="#fn1"
+class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> _Tp, <span class="keyword">typename</span> _Dp = default_delete&lt;_Tp&gt;&gt;</span><br><span class="line">class unique_ptr</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Before move from rvalue,</span></span><br><span class="line">    <span class="comment">// releasing the ownership of the managed object if it owns a pointer</span></span><br><span class="line">    unique_ptr&amp; <span class="keyword">operator</span>=(unique_ptr&amp;&amp; __u) <span class="keyword">noexcept</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">reset</span>(__u.<span class="built_in">release</span>());</span><br><span class="line">        <span class="built_in">get_deleter</span>() = std::forward&lt;_Ep&gt;(__u.<span class="built_in">get_deleter</span>());</span><br><span class="line">        <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Destroy the object if necessary, equivalent to reset()</span></span><br><span class="line">    unique_ptr&amp; <span class="keyword">operator</span>=(<span class="keyword">nullptr_t</span>) <span class="keyword">noexcept</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// _M_t stores the data of this unique_ptr object</span></span><br><span class="line">        <span class="built_in">reset</span>();</span><br><span class="line">        <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Release the ownership of any stored pointer,</span></span><br><span class="line">    <span class="comment">// and return the pointer to the managed object</span></span><br><span class="line">    <span class="function">pointer <span class="title">release</span><span class="params">()</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="comment">// _M_t stores the data of the managed object</span></span><br><span class="line">        <span class="keyword">return</span> _M_t.<span class="built_in">release</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Destroy the object if necessary</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">reset</span><span class="params">(pointer __p = pointer())</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="comment">// _M_t stores the data of the managed object</span></span><br><span class="line">        _M_t.<span class="built_in">reset</span>(std::<span class="built_in">move</span>(__p));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Disable copy from lvalue.</span></span><br><span class="line">    <span class="built_in">unique_ptr</span>(<span class="keyword">const</span> unique_ptr&amp;) = <span class="keyword">delete</span>;</span><br><span class="line">    unique_ptr&amp; <span class="keyword">operator</span>=(<span class="keyword">const</span> unique_ptr&amp;) = <span class="keyword">delete</span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>Briefly, <code>unique_ptr</code> will release the current holding
+memory if necessary. Moreover, its copy constructor and copy assignment
+are disabled.</p>
+<h3 id="example-1-unique_ptr-is-unique-and-not-copyable">Example 1:
+<code>unique_ptr</code> is unique and not copyable</h3>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// unique_ptr&lt;Obj&gt; p1 (new Obj(&quot;1&quot;));           // This is okay</span></span><br><span class="line">    <span class="function">unique_ptr&lt;Obj&gt; <span class="title">p1</span> <span class="params">(make_unique&lt;Obj&gt;(<span class="string">&quot;1&quot;</span>))</span></span>;     <span class="comment">// Recommend since C++14</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// unique_ptr&lt;Obj&gt; p2 = p1;    // ! error, not copyable</span></span><br><span class="line">    p1-&gt;<span class="built_in">SayHi</span>();</span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;\n\n&lt;&lt;... END ...&gt;&gt;\n\n&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>Output:</strong> <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Construct 1</span><br><span class="line">Hi 1!</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;&lt;... END ...&gt;&gt;</span><br><span class="line"></span><br><span class="line">Destroy 1</span><br></pre></td></tr></table></figure></p>
+<p>The allocated space held by <code>p1</code> is released automatically
+when its lifetime ends.</p>
+<blockquote>
+<p><a href="#The-advantages-of-make_unique">It is recommended to use
+<code>make_unique</code> to create <code>unique_ptr</code>
+objects.</a></p>
+</blockquote>
+<h3
+id="example-2-original-holding-object-will-be-destroyed-before-setting-to-null">Example
+2: original holding object will be destroyed before setting to null</h3>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="function">unique_ptr&lt;Obj&gt; <span class="title">p1</span> <span class="params">(make_unique&lt;Obj&gt;(<span class="string">&quot;1&quot;</span>))</span></span>;</span><br><span class="line"></span><br><span class="line">    p1-&gt;<span class="built_in">SayHi</span>();</span><br><span class="line"></span><br><span class="line">    p1 = <span class="literal">nullptr</span>;           <span class="comment">// Okay, destroy 1 before setting to null</span></span><br><span class="line">    <span class="comment">// p1.reset(nullptr);   // Same result</span></span><br><span class="line">    <span class="comment">// p1.reset();          // Same result</span></span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;\n\n&lt;&lt;... END ...&gt;&gt;\n\n&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>Output:</strong> <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Construct 1</span><br><span class="line">Hi 1!</span><br><span class="line">Destroy 1</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;&lt;... END ...&gt;&gt;</span><br></pre></td></tr></table></figure></p>
+<p><code>p1</code> has been destroyed before setting it as null. Using
+the method <code>reset()</code> can achieve the same result as well.</p>
+<h3
+id="example-3-original-holding-object-will-be-destroyed-before-move-assignment">Example
+3: original holding object will be destroyed before move assignment</h3>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="function">unique_ptr&lt;Obj&gt; <span class="title">p1</span> <span class="params">(make_unique&lt;Obj&gt;(<span class="string">&quot;1&quot;</span>))</span></span>;</span><br><span class="line">    <span class="function">unique_ptr&lt;Obj&gt; <span class="title">p2</span> <span class="params">(make_unique&lt;Obj&gt;(<span class="string">&quot;2&quot;</span>))</span></span>;</span><br><span class="line"></span><br><span class="line">    p2 = std::<span class="built_in">move</span>(p1);          <span class="comment">// Okay, destroy 2 before move</span></span><br><span class="line">    <span class="comment">// p2.reset(p1.release());   // Same result, release the p1 ownership, then move to p2</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// p1-&gt;SayHi();     // ! error, p1 no longer valid</span></span><br><span class="line">    p2-&gt;<span class="built_in">SayHi</span>();</span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;\n\n&lt;&lt;... END ...&gt;&gt;\n\n&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>Output:</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Construct 1</span><br><span class="line">Construct 2</span><br><span class="line">Destroy 2</span><br><span class="line">Hi 1!</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;&lt;... END ...&gt;&gt;</span><br><span class="line"></span><br><span class="line">Destroy 1</span><br></pre></td></tr></table></figure>
+<p>Object <code>2</code> has been destroyed while moving object
+<code>1</code> into <code>p2</code>. Note that you have to release the
+ownership of object <code>1</code> with <code>release()</code> firstly
+before assigning it to the next owner.</p>
+<h2 id="The-advantages-of-make_unique">The Advantages of
+<code>make_unique</code> over <code>new</code> operator</h2>
+<p><code>make_unique</code> has been introduced since C++14, and its
+implementation can be briefly rewritten as:<a href="#fn2"
+class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T, <span class="keyword">typename</span>... Args&gt;</span><br><span class="line"><span class="comment">// for single objects</span></span><br><span class="line"><span class="keyword">typename</span> std::enable_if&lt;!std::is_array&lt;T&gt;::value, std::unique_ptr&lt;T&gt;&gt;::<span class="function">type</span></span><br><span class="line"><span class="function"><span class="title">make_unique</span><span class="params">(Args&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123; </span><br><span class="line">    <span class="keyword">return</span> unique_ptr&lt;T&gt;(<span class="keyword">new</span> <span class="built_in">T</span>(std::forward&lt;Args&gt;(args)...)); </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>For the most part, it makes no difference between either
+<code>new</code> or <code>make_unique</code>:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">unique_ptr&lt;<span class="keyword">int</span>&gt;(<span class="keyword">new</span> <span class="built_in"><span class="keyword">int</span></span>(<span class="number">1</span>));</span><br><span class="line">make_unique&lt;<span class="keyword">int</span>&gt;(<span class="number">1</span>);   <span class="comment">// no difference</span></span><br></pre></td></tr></table></figure>
+<p>However, the former may go awry if it involves several arguments
+evaluation in a function call:<a href="#fn3" class="footnote-ref"
+id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="built_in">func</span>(unique_ptr&lt;<span class="keyword">int</span>&gt;(<span class="keyword">new</span> <span class="built_in"><span class="keyword">int</span></span>(<span class="number">1</span>)), <span class="built_in">Foo</span>());  <span class="comment">// unsafe</span></span><br><span class="line"><span class="built_in">func</span>(make_unique&lt;<span class="keyword">int</span>&gt;(<span class="number">1</span>), <span class="built_in">Foo</span>());          <span class="comment">// exception safe</span></span><br></pre></td></tr></table></figure>
+<p>Before C++17, the order of function arguments evaluation is not
+defined.<a href="#fn4" class="footnote-ref" id="fnref4"
+role="doc-noteref"><sup>4</sup></a></p>
+<p>Consider the evaluation sequence below:</p>
+<ol type="1">
+<li>Create <code>int (1)</code> object   <strong><em>--- Success !
+</em></strong></li>
+<li>Execute <code>Foo()</code>   <strong><em>--- Exception !
+</em></strong></li>
+<li>Assign the created <code>int (1)</code> to a <code>unique_ptr</code>
+object   <strong><em>--- Cannot be performed ! </em></strong></li>
+</ol>
+<p>If <code>new</code> has been processed without assigning the newly
+created object to <code>unique_ptr</code>, and exception happens in
+<code>Foo()</code>, then memory leakage occurs because there is no way
+for <code>unique_ptr</code> object to access the newly created object to
+destroy it.</p>
+<p>Therefore, when you would like to create <code>unique_ptr</code>
+objects, <code>make_unique</code> is a better choice for exception
+safety. Even though it is not introduced in C++11, defining it manually
+is quite simple as aforementioned.</p>
+<h2 id="construct-an-array-of-unique_ptr-objects">Construct an Array of
+<code>unique_ptr</code> Objects</h2>
+<p>There are two ways to construct an array of <code>unique_ptr</code>
+objects as well.</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// unique_ptr&lt;Obj []&gt; pArray (new Obj[3]());        // This is okay. Its size is 3</span></span><br><span class="line">    <span class="function">unique_ptr&lt;Obj[]&gt; <span class="title">pArray</span> <span class="params">(make_unique&lt;Obj[]&gt;(<span class="number">3</span>))</span></span>;   <span class="comment">// Recommend</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;<span class="number">3</span>; ++i)</span><br><span class="line">        pArray[i].<span class="built_in">SayHi</span>();</span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;\n\n&lt;&lt;... END ...&gt;&gt;\n\n&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p><strong>Output:</strong> <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Construct DEFAULT</span><br><span class="line">Construct DEFAULT</span><br><span class="line">Construct DEFAULT</span><br><span class="line">Hi DEFAULT!</span><br><span class="line">Hi DEFAULT!</span><br><span class="line">Hi DEFAULT!</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;&lt;... END ...&gt;&gt;</span><br><span class="line"></span><br><span class="line">Destroy DEFAULT</span><br><span class="line">Destroy DEFAULT</span><br><span class="line">Destroy DEFAULT</span><br></pre></td></tr></table></figure></p>
+<p>Compared to a single object, the parameter in
+<code>make_unique</code> is <strong>the array size</strong> instead of
+an initialiser.</p>
+<p>Similar to the single object, its array version can be briefly
+rewritten as:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="comment">// for array objects</span></span><br><span class="line"><span class="keyword">typename</span> std::enable_if&lt;std::is_array&lt;T&gt;::value, std::unique_ptr&lt;T&gt;&gt;::<span class="function">type</span></span><br><span class="line"><span class="function"><span class="title">make_unique</span><span class="params">(<span class="keyword">size_t</span> num)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> unique_ptr&lt;T&gt;(<span class="keyword">new</span> <span class="keyword">typename</span> std::remove_extent&lt;T&gt;::type[num]());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Note the subtle difference against a single object is the judgement
+of <code>is_array&lt;T&gt;::value</code>.</p>
+<h2 id="shared_ptr"><code>shared_ptr</code></h2>
+<p>Unlike <code>unique_ptr</code>, the ownership of an object can be
+shared by multiple <code>shared_ptr</code> objects. The object will be
+destroyed once it is not owned by any <code>shared_ptr</code> objects.
+This information can be obtained by the method
+<code>use_count()</code></p>
+<h3 id="code-snippet-from-stdshared_ptr">Code Snippet from
+<code>std::shared_ptr</code></h3>
+<p>The implementation of <code>shared_ptr</code> in libstdc++ is worth
+mentioning for clarity (I have omitted the detail):<a href="#fn5"
+class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a></p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Tp&gt;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">shared_ptr</span> :</span> <span class="keyword">public</span> __shared_ptr&lt;_Tp&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="keyword">friend</span> <span class="class"><span class="keyword">class</span> <span class="title">weak_ptr</span>&lt;</span>_Tp&gt;;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p><code>shared_ptr</code> inherits from <code>__shared_ptr</code>
+class<a href="#fn6" class="footnote-ref" id="fnref6"
+role="doc-noteref"><sup>6</sup></a>, and you could observe
+<code>weak_ptr</code> is able to access the private members in
+<code>shared_ptr</code> objects. Actually, <code>shared_ptr</code> and
+<code>weak_ptr</code> indeed cooperate together from time to time which
+will be elaborated later.</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Tp, _Lock_policy _Lp&gt;</span><br><span class="line"><span class="class"><span class="keyword">class</span> __<span class="title">shared_ptr</span> :</span> <span class="keyword">public</span> __shared_ptr_access&lt;_Tp, _Lp&gt;</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Default constructor where its initial value of pointer </span></span><br><span class="line">    <span class="comment">// and reference count are null and 0</span></span><br><span class="line">    <span class="keyword">constexpr</span> __shared_ptr() <span class="keyword">noexcept</span></span><br><span class="line">    : _M_ptr(<span class="number">0</span>), _M_refcount()</span><br><span class="line">    &#123; &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// If an exception is thrown this constructor has no effect.</span></span><br><span class="line">    <span class="comment">// _M_refcount will be assigned as a newly created object - __shared_count.</span></span><br><span class="line">    <span class="comment">// The count in __shared_count will be incremented</span></span><br><span class="line">    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Yp, <span class="keyword">typename</span> _Del, <span class="keyword">typename</span> = _UniqCompatible&lt;_Yp, _Del&gt;&gt;</span><br><span class="line">    __shared_ptr(unique_ptr&lt;_Yp, _Del&gt;&amp;&amp; __r) : _M_ptr(__r.<span class="built_in">get</span>()), _M_refcount()</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">auto</span> __raw = __to_address(__r.<span class="built_in">get</span>());</span><br><span class="line">        _M_refcount = __shared_count&lt;_Lp&gt;(std::<span class="built_in">move</span>(__r));</span><br><span class="line">        _M_enable_shared_from_this_with(__raw);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Similar to the constructor, the count in __shared_count will be incremented</span></span><br><span class="line">    <span class="comment">// and the current object will be replaced with the new one</span></span><br><span class="line">    __shared_ptr&amp; <span class="keyword">operator</span>=(__shared_ptr&amp;&amp; __r) <span class="keyword">noexcept</span></span><br><span class="line">    &#123;</span><br><span class="line">        __shared_ptr(std::<span class="built_in">move</span>(__r)).<span class="built_in">swap</span>(*<span class="keyword">this</span>);</span><br><span class="line">        <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/// Return the number of owners</span></span><br><span class="line">    <span class="function"><span class="keyword">long</span> <span class="title">use_count</span><span class="params">()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="comment">// _M_refcount is an object storing the reference counter information</span></span><br><span class="line">        <span class="keyword">return</span> _M_refcount._M_get_use_count();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Construct a null shared ptr and and the current object will be replaced with it</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">reset</span><span class="params">()</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        __shared_ptr().<span class="built_in">swap</span>(*<span class="keyword">this</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Yp&gt;</span></span><br><span class="line"><span class="function">	_SafeConv&lt;_Yp&gt; <span class="title">reset</span><span class="params">(_Yp* __p)</span> <span class="comment">// _Yp must be complete.</span></span></span><br><span class="line"><span class="function">	</span>&#123;</span><br><span class="line">	  <span class="comment">// Catch self-reset errors.</span></span><br><span class="line">	  __glibcxx_assert(__p == <span class="number">0</span> || __p != _M_ptr);</span><br><span class="line">	  __shared_ptr(__p).<span class="built_in">swap</span>(*<span class="keyword">this</span>);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    element_type*        _M_ptr;         <span class="comment">// Contained pointer.</span></span><br><span class="line">    __shared_count&lt;_Lp&gt;  _M_refcount;    <span class="comment">// Reference counter.</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>Briefly, <code>shared_ptr</code> object records the number of owners
+(<code>__shared_count</code>) as well as the pointer of the managed
+object. Besides, <code>__shared_ptr_access</code>, the parent class,
+defines whether this object should be accessed by array operators or
+not.</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;_Lock_policy _Lp&gt;</span><br><span class="line"><span class="class"><span class="keyword">class</span> __<span class="title">shared_count</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Increase the reference counter</span></span><br><span class="line">    __shared_count(<span class="keyword">const</span> __shared_count&amp; __r) <span class="keyword">noexcept</span></span><br><span class="line">    : _M_pi(__r._M_pi)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (_M_pi != <span class="number">0</span>)</span><br><span class="line">            _M_pi-&gt;_M_add_ref_copy();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Increase the reference counter</span></span><br><span class="line">    __shared_count&amp; <span class="keyword">operator</span>=(<span class="keyword">const</span> __shared_count&amp; __r) <span class="keyword">noexcept</span></span><br><span class="line">    &#123;</span><br><span class="line">        _Sp_counted_base&lt;_Lp&gt;* __tmp = __r._M_pi;</span><br><span class="line">        <span class="keyword">if</span> (__tmp != _M_pi)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">if</span> (__tmp != <span class="number">0</span>)</span><br><span class="line">                __tmp-&gt;_M_add_ref_copy();</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (_M_pi != <span class="number">0</span>)</span><br><span class="line">                _M_pi-&gt;_M_release();</span><br><span class="line"></span><br><span class="line">            _M_pi = __tmp;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="keyword">friend</span> <span class="class"><span class="keyword">class</span> __<span class="title">weak_count</span>&lt;</span>_Lp&gt;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Define the operations of the stored pointer</span></span><br><span class="line">    _Sp_counted_base&lt;_Lp&gt;*  _M_pi;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>The <code>__shared_count</code> object is to manage the information
+of reference count. Here, <code>__weak_count</code> class is able to
+access the private members of <code>__shared_count</code>. Most of
+operations on the pointer itself are specified in
+<code>_Sp_counted_base</code>.</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;_Lock_policy _Lp = __default_lock_policy&gt;</span><br><span class="line">class _Sp_counted_base : <span class="keyword">public</span> _Mutex_base&lt;_Lp&gt;&#123;  <span class="comment">/* ... */</span>  &#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="keyword">inline</span> <span class="keyword">void</span> _Sp_counted_base&lt;_S_single&gt;::_M_release() <span class="keyword">noexcept</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (--_M_use_count == <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// the managed object will be destroyed once it is not held by any shared_ptr</span></span><br><span class="line">        _M_dispose();</span><br><span class="line">        <span class="keyword">if</span> (--_M_weak_count == <span class="number">0</span>)</span><br><span class="line">            <span class="comment">// the control block is not released until its weak_ptr count reaches zero</span></span><br><span class="line">            _M_destroy();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Note that while a <code>shared_ptr</code> object is created, the
+lifetime of the managed object and its <strong>control block</strong>
+might not be the same. The former is based upon whether it is shared by
+any <code>shared_ptr</code> objects, whereas the later is
+<code>weak_ptr</code>.</p>
+<blockquote>
+<p>Control block contains the information about how to allocate or
+deallocate the managed object, e.g. its allocator and deleter.</p>
+</blockquote>
+<h3 id="example-1-several-shared_ptr-can-share-the-same-object">Example
+1: several <code>shared_ptr</code> can share the same object</h3>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// shared_ptr&lt;Obj&gt; sp0 (new Obj(&quot;1&quot;));           // Okay</span></span><br><span class="line">    shared_ptr&lt;Obj&gt; sp0 = make_shared&lt;Obj&gt;(<span class="string">&quot;1&quot;</span>);     <span class="comment">// Recommend</span></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;count = &quot;</span> &lt;&lt; sp0.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    shared_ptr&lt;Obj&gt; sp1 = sp0;</span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;count = &quot;</span> &lt;&lt; sp0.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;\n\n&lt;&lt;... END ...&gt;&gt;\n\n&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>Output:</strong> <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Construct 1</span><br><span class="line">count = 1</span><br><span class="line">count = 2</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;&lt;... END ...&gt;&gt;</span><br><span class="line"></span><br><span class="line">Destroy 1</span><br></pre></td></tr></table></figure></p>
+<p>Object <code>1</code> can be held by both <code>sp0</code> and
+<code>sp1</code>. It is recommended to use <code>make_shared</code> to
+create the smart pointer due to <a
+href="#The-advantages-of-make_unique">the same reason explained in
+<code>make_unique</code></a>.</p>
+<h3
+id="example-2-the-managed-object-will-be-destroyed-when-it-is-not-held-by-any-shared_ptr">Example
+2: the managed object will be destroyed when it is not held by any
+<code>shared_ptr</code></h3>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    shared_ptr&lt;Obj&gt; sp2 = make_shared&lt;Obj&gt;(<span class="string">&quot;2&quot;</span>);</span><br><span class="line">    shared_ptr&lt;Obj&gt; sp3 = sp2;</span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;count = &quot;</span> &lt;&lt; sp2.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    sp3.<span class="built_in">reset</span>();        <span class="comment">// release the ownership from sp3</span></span><br><span class="line">    <span class="comment">//sp3 = nullptr;    // Same effect</span></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;count = &quot;</span> &lt;&lt; sp2.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    sp2.<span class="built_in">reset</span>();        <span class="comment">// the reference count of object 2 becomes 0, destroyed</span></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;count = &quot;</span> &lt;&lt; sp2.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;\n\n&lt;&lt;... END ...&gt;&gt;\n\n&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>Output:</strong> <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Construct 2</span><br><span class="line">count = 2</span><br><span class="line">count = 1</span><br><span class="line">Destroy 2</span><br><span class="line">count = 0</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;&lt;... END ...&gt;&gt;</span><br></pre></td></tr></table></figure></p>
+<p>Object <code>2</code> is destroyed while its reference count becomes
+0.</p>
+<h2 id="construct-an-array-of-shared_ptr-objects">Construct an Array of
+<code>shared_ptr</code> Objects</h2>
+<p>Unlike <code>unique_ptr</code> objects, <code>shared_ptr</code>
+cannot dynamically allocate an array via <code>make_shared</code> until
+C++20. Moreover, prior to C++17, developers ought to specify the deleter
+to manage dynamically allocated arrays.<a href="#fn7"
+class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a></p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// suggest to provide a deleter for array</span></span><br><span class="line">    <span class="comment">// so it uses delete[] to free the resoure instead of delete</span></span><br><span class="line">    <span class="function">shared_ptr&lt;Obj[]&gt; <span class="title">spArray</span> <span class="params">(<span class="keyword">new</span> Obj[<span class="number">3</span>], std::default_delete&lt;Obj[]&gt;())</span></span>;  <span class="comment">// Okay, </span></span><br><span class="line">    <span class="comment">//shared_ptr&lt;Obj[]&gt; spArray (make_shared&lt;Obj[]&gt;(3));  // Not available until C++20</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;<span class="number">3</span>; ++i)</span><br><span class="line">        spArray[i].<span class="built_in">SayHi</span>();</span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;\n\n&lt;&lt;... END ...&gt;&gt;\n\n&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>Output:</strong> <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Construct DEFAULT</span><br><span class="line">Construct DEFAULT</span><br><span class="line">Construct DEFAULT</span><br><span class="line">Hi DEFAULT!</span><br><span class="line">Hi DEFAULT!</span><br><span class="line">Hi DEFAULT!</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;&lt;... END ...&gt;&gt;</span><br><span class="line"></span><br><span class="line">Destroy DEFAULT</span><br><span class="line">Destroy DEFAULT</span><br><span class="line">Destroy DEFAULT</span><br></pre></td></tr></table></figure></p>
+<blockquote>
+<p>Actually, it is worth mentioning that since GCC 7.5, a default
+deleter to handle the dynamically allocated array has been provided by
+<code>struct __sp_array_delete</code>:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="comment">// The default deleter for shared_ptr&lt;T[]&gt; and shared_ptr&lt;T[N]&gt;.</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> __<span class="title">sp_array_delete</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    <span class="function"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Yp&gt;</span></span><br><span class="line"><span class="function">    <span class="keyword">void</span> <span class="title">operator</span><span class="params">()</span><span class="params">(_Yp* __p)</span> <span class="keyword">const</span> </span>&#123; <span class="keyword">delete</span>[] __p; &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>It works as follows:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Tp, _Lock_policy _Lp&gt;</span><br><span class="line"><span class="class"><span class="keyword">class</span> __<span class="title">shared_ptr</span> :</span> <span class="keyword">public</span> __shared_ptr_access&lt;_Tp, _Lp&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Constructor will check whether it is an array</span></span><br><span class="line">    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Yp, <span class="keyword">typename</span> = _SafeConv&lt;_Yp&gt;&gt;</span><br><span class="line">    <span class="keyword">explicit</span></span><br><span class="line">    __shared_ptr(_Yp* __p)</span><br><span class="line">    : _M_ptr(__p), _M_refcount(__p, <span class="keyword">typename</span> is_array&lt;_Tp&gt;::<span class="built_in">type</span>())</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// ...</span></span><br><span class="line">        _M_enable_shared_from_this_with(__p);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>The <code>__shared_ptr</code> constructor checks whether the managed
+object is an array.</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;_Lock_policy _Lp&gt;</span><br><span class="line"><span class="class"><span class="keyword">class</span> __<span class="title">shared_count</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Ptr&gt;</span><br><span class="line">    __shared_count(_Ptr __p, <span class="comment">/* is_array = */</span> true_type)</span><br><span class="line">    : __shared_count(__p, __sp_array_delete&#123;&#125;, allocator&lt;<span class="keyword">void</span>&gt;())</span><br><span class="line">    &#123; &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>If the pointer is an array, the default deleter will be designated as
+<code>__sp_array_delete</code>.</p>
+<p>Thus, the below code should work fine even if we do not provide a
+deleter:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="function">shared_ptr&lt;Obj[]&gt; <span class="title">spArray</span> <span class="params">(<span class="keyword">new</span> Obj[<span class="number">3</span>])</span></span>;  <span class="comment">// Okay if deleter is not provided</span></span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>However, prior to C++17, we still suggest developers follow the rule
+to avoid undefined behavior resulted from compiler dependency.</p>
+</blockquote>
+<h2 id="leakage-caused-by-circular-reference">Leakage caused by Circular
+Reference within <code>shared_ptr</code></h2>
+<p>Consider the case when you would like to implement list data
+structure, the code might look like as follows:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">List</span> &#123;</span></span><br><span class="line">    <span class="keyword">int</span> val;</span><br><span class="line">    shared_ptr&lt;List&gt; next;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">List</span>(<span class="keyword">int</span> val) : <span class="built_in">val</span>(val) &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Construct node &quot;</span> &lt;&lt; val &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ~<span class="built_in">List</span>()</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Destroy node &quot;</span> &lt;&lt; val &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>And the list might form a cycle:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="function">shared_ptr&lt;List&gt; <span class="title">node_1</span> <span class="params">(make_shared&lt;List&gt;(<span class="number">1</span>))</span></span>;</span><br><span class="line">    <span class="function">shared_ptr&lt;List&gt; <span class="title">node_2</span> <span class="params">(make_shared&lt;List&gt;(<span class="number">2</span>))</span></span>;</span><br><span class="line"></span><br><span class="line">    node_1-&gt;next = node_2;</span><br><span class="line">    node_2-&gt;next = node_1;      <span class="comment">// A cycle is formed</span></span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;count = &quot;</span> &lt;&lt; node_1.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;\n\n&lt;&lt;... END ...&gt;&gt;\n\n&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>Output:</strong> <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Construct node 1</span><br><span class="line">Construct node 2</span><br><span class="line">count = 2</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;&lt;... END ...&gt;&gt;</span><br></pre></td></tr></table></figure></p>
+<p>Under this circumstance, both <code>node 1</code> and
+<code>node 2</code> are referenced to one another, the user count never
+degrades to zero even when the program terminates, leading to memory
+leakage. This problem is called <strong>circular reference</strong> or
+<strong>cyclic dependency</strong> issue.</p>
+<p>To solve this problem, <code>weak_ptr</code> could come into play,
+which won't affect the reference count of an object. We may simply
+modify our list structure as follows:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">List</span> &#123;</span></span><br><span class="line">    <span class="keyword">int</span> val;</span><br><span class="line">    weak_ptr&lt;List&gt; next;      <span class="comment">// weak reference</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">List</span>(<span class="keyword">int</span> val) : <span class="built_in">val</span>(val) &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Construct node &quot;</span> &lt;&lt; val &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ~<span class="built_in">List</span>()</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Destroy node &quot;</span> &lt;&lt; val &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p><strong>Output:</strong> <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Construct node 1</span><br><span class="line">Construct node 2</span><br><span class="line">count = 1</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;&lt;... END ...&gt;&gt;</span><br><span class="line"></span><br><span class="line">Destroy node 2</span><br><span class="line">Destroy node 1</span><br></pre></td></tr></table></figure></p>
+<p>Now, with the help of <code>weak_ptr</code>, the reference count does
+not increase for the reason that it is not considered an owner for this
+object. The memory leakage issue can be prevented.</p>
+<h2 id="weak_ptr"><code>weak_ptr</code></h2>
+<p><code>weak_ptr</code> can hold a "weak" reference to an object, which
+won't affect the reference count managed by <code>shared_ptr</code>. The
+main aim of <code>weak_ptr</code> is to own a temporary ownership so we
+can track this object. It is also an effective way to prevent <a
+href="#leakage-caused-by-circular-reference">the memory leakage problem
+caused by a cycle within <code>shared_ptr</code> objects</a>. In
+addition to that, we should be aware that even when the object held by
+<code>shared_ptr</code> is destroyed, the lifetime of its control block
+might be extended. To access the referenced object of
+<code>weak_ptr</code>, users should use the method <code>lock()</code>
+to get its original <code>shared_ptr</code> object first.</p>
+<h3 id="code-snippet-from-stdweak_ptr">Code Snippet from
+<code>std::weak_ptr</code></h3>
+<p>Let's take a look at the implementation in libstdc++ (detail is
+omitted):<a href="#fn8" class="footnote-ref" id="fnref8"
+role="doc-noteref"><sup>8</sup></a></p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Tp&gt;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">weak_ptr</span> :</span> <span class="keyword">public</span> __weak_ptr&lt;_Tp&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Get the shared_ptr object</span></span><br><span class="line">    <span class="function">shared_ptr&lt;_Tp&gt; <span class="title">lock</span><span class="params">()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123; </span><br><span class="line">        <span class="keyword">return</span> shared_ptr&lt;_Tp&gt;(*<span class="keyword">this</span>, std::nothrow);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p><code>weak_ptr</code> inherits from <code>__weak_ptr</code> and using
+<code>lock()</code> would help the user get a converted
+<code>shared_ptr</code> object.</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Tp, _Lock_policy _Lp&gt;</span><br><span class="line"><span class="class"><span class="keyword">class</span> __<span class="title">weak_ptr</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// The default constructor would assign the pointer</span></span><br><span class="line">    <span class="comment">// and the reference count as null and 0 separately</span></span><br><span class="line">    <span class="keyword">constexpr</span> __weak_ptr() <span class="keyword">noexcept</span></span><br><span class="line">    : _M_ptr(<span class="literal">nullptr</span>), _M_refcount()</span><br><span class="line">    &#123; &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// assign the reference count managed by the shared_ptr object</span></span><br><span class="line">    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Yp&gt;</span><br><span class="line">    _Assignable&lt;_Yp&gt; <span class="keyword">operator</span>=(<span class="keyword">const</span> __shared_ptr&lt;_Yp, _Lp&gt;&amp; __r) <span class="keyword">noexcept</span></span><br><span class="line">    &#123;</span><br><span class="line">        _M_ptr = __r._M_ptr;</span><br><span class="line">        _M_refcount = __r._M_refcount;</span><br><span class="line">        <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Get the reference count held by the shared_ptr object</span></span><br><span class="line">    <span class="function"><span class="keyword">long</span> <span class="title">use_count</span><span class="params">()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123; </span><br><span class="line">        <span class="keyword">return</span> _M_refcount._M_get_use_count();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Equivelent to use_count() == 0,</span></span><br><span class="line">    <span class="comment">// meaning that the manged object has been deleted</span></span><br><span class="line">    <span class="function"><span class="keyword">bool</span> <span class="title">expired</span><span class="params">()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> _M_refcount._M_get_use_count() == <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Construct an empty weak_ptr and replace with it</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">reset</span><span class="params">()</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        __weak_ptr().<span class="built_in">swap</span>(*<span class="keyword">this</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">private</span>:</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    element_type*      _M_ptr;        <span class="comment">// Contained pointer.</span></span><br><span class="line">    __weak_count&lt;_Lp&gt;  _M_refcount;   <span class="comment">// Reference counter.</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>Briefly, <code>weak_ptr</code> can be used to track the managed
+object held by <code>shared_ptr</code>. It also has its own weak
+reference count.</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;_Lock_policy _Lp&gt;</span><br><span class="line"><span class="class"><span class="keyword">class</span> __<span class="title">weak_count</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Increase the &quot;weak&quot; reference counter</span></span><br><span class="line">    __weak_count&amp; <span class="keyword">operator</span>=(<span class="keyword">const</span> __shared_count&lt;_Lp&gt;&amp; __r) <span class="keyword">noexcept</span></span><br><span class="line">    &#123;</span><br><span class="line">        _Sp_counted_base&lt;_Lp&gt;* __tmp = __r._M_pi;</span><br><span class="line">        <span class="keyword">if</span> (__tmp != <span class="literal">nullptr</span>)</span><br><span class="line">            __tmp-&gt;_M_weak_add_ref();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (_M_pi != <span class="literal">nullptr</span>)</span><br><span class="line">            _M_pi-&gt;_M_weak_release();</span><br><span class="line"></span><br><span class="line">        _M_pi = __tmp;</span><br><span class="line">        <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Increase the &quot;weak&quot; reference counter</span></span><br><span class="line">    __weak_count&amp; <span class="keyword">operator</span>=(<span class="keyword">const</span> __weak_count&amp; __r) <span class="keyword">noexcept</span></span><br><span class="line">    &#123;</span><br><span class="line">        _Sp_counted_base&lt;_Lp&gt;* __tmp = __r._M_pi;</span><br><span class="line">        <span class="keyword">if</span> (__tmp != <span class="literal">nullptr</span>)</span><br><span class="line">            __tmp-&gt;_M_weak_add_ref();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (_M_pi != <span class="literal">nullptr</span>)</span><br><span class="line">            _M_pi-&gt;_M_weak_release();</span><br><span class="line"></span><br><span class="line">        _M_pi = __tmp;</span><br><span class="line">        <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="keyword">friend</span> <span class="class"><span class="keyword">class</span> __<span class="title">shared_count</span>&lt;</span>_Lp&gt;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Define the operations of the stored pointer</span></span><br><span class="line">    _Sp_counted_base&lt;_Lp&gt;*  _M_pi;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>The mechanism of the reference counter in <code>weak_ptr</code> is
+quite similar to <code>shared_ptr</code>. Yet, <code>weak_ptr</code>
+mainly operates upon weak reference.</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;_Lock_policy _Lp = __default_lock_policy&gt;</span><br><span class="line">class _Sp_counted_base : <span class="keyword">public</span> _Mutex_base&lt;_Lp&gt;</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Called when _M_use_count drops to zero, to release the resources</span></span><br><span class="line">    <span class="comment">// managed by *this. (Can be redefined by the deriving class)</span></span><br><span class="line">    <span class="keyword">virtual</span> <span class="keyword">void</span> _M_dispose() <span class="keyword">noexcept</span> = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Called when _M_weak_count drops to zero.</span></span><br><span class="line">    <span class="comment">// (Can be redefined by the deriving class)</span></span><br><span class="line">    <span class="keyword">virtual</span> <span class="keyword">void</span> _M_destroy() <span class="keyword">noexcept</span></span><br><span class="line">    &#123; <span class="keyword">delete</span> <span class="keyword">this</span>; &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    _Atomic_word  _M_use_count;     <span class="comment">// #shared</span></span><br><span class="line">    _Atomic_word  _M_weak_count;    <span class="comment">// #weak + (#shared != 0)</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p><code>_M_use_count</code> is used by <code>shared_ptr</code> to store
+the strong reference count, whereas <code>_M_weak_count</code> is used
+by <code>weak_ptr</code> to store the weak reference count.</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="keyword">inline</span> <span class="keyword">void</span> _Sp_counted_base&lt;_S_single&gt;::_M_release() <span class="keyword">noexcept</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (--_M_use_count == <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// the managed object will be destroyed once it is not held by any shared_ptr</span></span><br><span class="line">        _M_dispose();</span><br><span class="line">        <span class="keyword">if</span> (--_M_weak_count == <span class="number">0</span>)</span><br><span class="line">            <span class="comment">// the control block is not released until its weak_ptr count reaches zero</span></span><br><span class="line">            _M_destroy();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="keyword">inline</span> <span class="keyword">void</span> _Sp_counted_base&lt;_S_single&gt;::_M_weak_release() <span class="keyword">noexcept</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// the control block is not released until its weak_ptr count reaches zero</span></span><br><span class="line">    <span class="keyword">if</span> (--_M_weak_count == <span class="number">0</span>)</span><br><span class="line">        _M_destroy();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Once the weak reference count reaches zero, the control block will be
+deallocated.</p>
+<h3
+id="example-1-weak_ptr-does-not-increase-the-reference-count-held-by-shared_ptr">Example
+1: <code>weak_ptr</code> does not increase the reference count held by
+<code>shared_ptr</code></h3>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    shared_ptr&lt;Obj&gt; sp = make_shared&lt;Obj&gt;(<span class="string">&quot;1&quot;</span>);</span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;count = &quot;</span> &lt;&lt; sp.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    weak_ptr&lt;Obj&gt; wp = sp;</span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;count = &quot;</span> &lt;&lt; sp.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;\n\n&lt;&lt;... END ...&gt;&gt;\n\n&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>Output:</strong> <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">Construct <span class="number">1</span></span><br><span class="line">count = <span class="number">1</span></span><br><span class="line">count = <span class="number">1</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;&lt;... END ...&gt;&gt;</span><br><span class="line"></span><br><span class="line">Destroy <span class="number">1</span></span><br></pre></td></tr></table></figure></p>
+<p>Aside from this, <code>wp.use_count()</code> returns the number of
+<code>shared_ptr</code> that manages this object; thus the value should
+be the same as <code>sp.use_count()</code>.</p>
+<h3 id="example-2-access-the-object-through-lock">Example 2: access the
+object through <code>lock()</code></h3>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    shared_ptr&lt;Obj&gt; sp = make_shared&lt;Obj&gt;(<span class="string">&quot;1&quot;</span>);</span><br><span class="line">    weak_ptr&lt;Obj&gt; wp = sp;</span><br><span class="line"></span><br><span class="line">    wp.<span class="built_in">lock</span>()-&gt;<span class="built_in">SayHi</span>();</span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;\n\n&lt;&lt;... END ...&gt;&gt;\n\n&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>Output:</strong> <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">Construct <span class="number">1</span></span><br><span class="line">Hi <span class="number">1</span>!</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;&lt;... END ...&gt;&gt;</span><br><span class="line"></span><br><span class="line">Destroy <span class="number">1</span></span><br></pre></td></tr></table></figure></p>
+<p>Users should use <code>lock()</code> to get the
+<code>shared_ptr</code> pointer to access this object.</p>
+<h3
+id="example-3-use-expired-to-check-the-availability-of-an-object">Example
+3: use <code>expired()</code> to check the availability of an
+object</h3>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    weak_ptr&lt;Obj&gt; wp;</span><br><span class="line"></span><br><span class="line">    &#123;</span><br><span class="line">        shared_ptr&lt;Obj&gt; sp = make_shared&lt;Obj&gt;(<span class="string">&quot;1&quot;</span>);</span><br><span class="line">        wp = sp;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (wp.<span class="built_in">expired</span>())</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Object has been destroyed!&quot;</span> &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;\n\n&lt;&lt;... END ...&gt;&gt;\n\n&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>Output:</strong> <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">Construct <span class="number">1</span></span><br><span class="line">Destroy <span class="number">1</span></span><br><span class="line">Object has been destroyed!</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;&lt;... END ...&gt;&gt;</span><br></pre></td></tr></table></figure></p>
+<p><code>expired()</code> is equivelent to
+<code>use_count() == 0</code>.</p>
+<h3 id="example-4-release-the-reference-from-weak_ptr">Example 4:
+release the reference from <code>weak_ptr</code></h3>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    shared_ptr&lt;Obj&gt; sp = make_shared&lt;Obj&gt;(<span class="string">&quot;1&quot;</span>);</span><br><span class="line">    weak_ptr&lt;Obj&gt; wp = sp;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//wp = nullptr;         // error</span></span><br><span class="line">    wp.<span class="built_in">reset</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">//wp.lock()-&gt;SayHi();   // error, not available anymore</span></span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;\n\n&lt;&lt;... END ...&gt;&gt;\n\n&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>Output:</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Construct 1</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;&lt;... END ...&gt;&gt;</span><br><span class="line"></span><br><span class="line">Destroy 1</span><br></pre></td></tr></table></figure>
+<p>You cannot assign a <code>weak_ptr</code> object as null
+directly.</p>
+<h2 id="construct-an-array-of-weak_ptr-objects">Construct an Array of
+<code>weak_ptr</code> Objects</h2>
+<p>You cannot construct an array of <code>weak_ptr</code> objects as the
+approach in <code>unique_ptr</code> and <code>shared_ptr</code> because
+the operator <code>[]</code> to access the array elements is not
+defined.</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">weak_ptr&lt;Obj[]&gt; wpArray;    <span class="comment">// ??? wpArray[i] is not defined</span></span><br></pre></td></tr></table></figure>
+<p>A workaround is to declare it as a regular array, then tackle its
+elements separately:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">weak_ptr&lt;Obj&gt; wpArray[<span class="number">3</span>];</span><br><span class="line"></span><br><span class="line">shared_ptr&lt;Obj&gt; sp1 = make_shared&lt;Obj&gt;(<span class="string">&quot;1&quot;</span>);</span><br><span class="line">shared_ptr&lt;Obj&gt; sp2 = make_shared&lt;Obj&gt;(<span class="string">&quot;2&quot;</span>);</span><br><span class="line">shared_ptr&lt;Obj&gt; sp3 = make_shared&lt;Obj&gt;(<span class="string">&quot;3&quot;</span>);</span><br><span class="line"></span><br><span class="line">wpArray[<span class="number">0</span>] = sp1;</span><br><span class="line">wpArray[<span class="number">1</span>] = sp2;</span><br><span class="line">wpArray[<span class="number">2</span>] = sp3;</span><br></pre></td></tr></table></figure>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p><a
+href="https://gcc.gnu.org/onlinedocs/gcc-11.2.0/libstdc++/api/a00371_source.html">Source
+code of std::unique_ptr in GCC 11.2</a><a href="#fnref1"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p><a
+href="https://gcc.gnu.org/onlinedocs/gcc-11.2.0/libstdc++/api/a00371_source.html">Source
+code of std::make_unique in GCC 11.2</a><a href="#fnref2"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p><a
+href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3588.txt">A
+proposal to add make_unique for symmetry, simplicity, and safety</a><a
+href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p><a
+href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0400r0.html">C++17
+- Wording for Order of Evaluation of Function Arguments</a><a
+href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p><a
+href="https://gcc.gnu.org/onlinedocs/gcc-11.2.0/libstdc++/api/a17923_source.html">Source
+code of std::shared_ptr in GCC 11.2</a><a href="#fnref5"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p><a
+href="https://gcc.gnu.org/onlinedocs/gcc-11.2.0/libstdc++/api/a00494_source.html">Source
+code of __shared_ptr class in GCC 11.2</a><a href="#fnref6"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p><a
+href="https://stackoverflow.com/questions/13061979/shared-ptr-to-an-array-should-it-be-used/13062069#13062069">shared_ptr
+to an array : should it be used?</a><a href="#fnref7"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p><a
+href="https://gcc.gnu.org/onlinedocs/gcc-11.2.0/libstdc++/api/a00494_source.html">Source
+code of std::weak_ptr in GCC 11.2</a><a href="#fnref8"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+]]></content>
+      <categories>
+        <category>Programming Language</category>
+        <category>C++</category>
+      </categories>
+      <tags>
+        <tag>C++</tag>
+        <tag>Optimisation</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Using Python to Simulate Brownian Motion</title>
     <url>/2021/07/27/Brownian-motion/</url>
     <content><![CDATA[<p><strong>Brownian motion</strong> is a phenomenon that particles in
@@ -250,124 +723,6 @@ in a year, with its initial at $10.</p>
         <tag>Brownian Motion</tag>
         <tag>Simulation</tag>
         <tag>Python</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>[C++] Optimise the Efficiency when Using STL Containers - taking vector emplace_back as an example</title>
-    <url>/2021/07/29/cpp-vector-emplace/</url>
-    <content><![CDATA[<p>C++ provides a plethora of containers that allow us to dynamically
-allocate our elements in run time. Take <code>vector</code> as an
-example. It is widely used in many applications. However, for some
-extreme cases, we may still want to avoid the overhead of reallocation
-or copy operations when those operations are quite expensive.</p>
-<p>Since C++11, with the advent of <code>emplace</code> methods,
-developers are able to pursue more efficiency via them.</p>
-<span id="more"></span>
-<h2 id="a-toy-example">A Toy Example</h2>
-<p>To get a grasp of the usage of <code>emplace</code> , let's firstly
-look at a simple object. Say we have a class containing the information
-of a stock:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Stock</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Stock</span>(string date, <span class="keyword">double</span> price, <span class="keyword">int</span> volume) :</span><br><span class="line">        <span class="built_in">date</span>(date), <span class="built_in">price</span>(price), <span class="built_in">volume</span>(volume)</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Contruct: &quot;</span> &lt;&lt; date &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">Stock</span>(<span class="keyword">const</span> Stock&amp; obj) :</span><br><span class="line">        <span class="built_in">date</span>(obj.date), <span class="built_in">price</span>(obj.price), <span class="built_in">volume</span>(obj.volume)</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Copied: &quot;</span> &lt;&lt; date &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    string date;</span><br><span class="line">    <span class="keyword">double</span> price;</span><br><span class="line">    <span class="keyword">int</span> volume;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>For the convenience of observation, when the object is created or
-copied, the corresponded message will be printed.</p>
-<h2 id="the-behavior-of-copy-between-push_back-and-emplace_back">The
-Behavior of Copy between <code>push_back</code> and
-<code>emplace_back</code></h2>
-<p>We now use a vector - <code>portfolio</code> - to maintain our stock
-objects.</p>
-<p>First, we add the object <code>2021-08-01</code> into it via
-<code>push_back()</code>:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    vector&lt;Stock&gt; portfolio;</span><br><span class="line">    portfolio.<span class="built_in">push_back</span>(&#123;<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>&#125;);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>When executing the program, we get the output:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Contruct: 2021-08-01</span><br><span class="line">Copied: 2021-08-01</span><br></pre></td></tr></table></figure>
-<p>It shows that this object is created and copied into the vector
-afterwards. The copy occurs for the reason that our object is not
-allocated on the space where our vector <code>portfolio</code> is
-located. The system still has to copy it onto the vector space.</p>
-<p>This copy operation can be spared if our system can simply construct
-our object onto <code>portfolio</code>'s space. The method
-<code>emplace_back()</code> can come into play:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">vector&lt;Stock&gt; portfolio;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>);</span><br></pre></td></tr></table></figure>
-<p>When executing the program, the copy operation has disappeared. The
-object now is constructed in place:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Contruct: 2021-08-01</span><br></pre></td></tr></table></figure>
-<p>Note the syntax sugar only needs us to specify our arguments: <a
-href="#fn1" class="footnote-ref" id="fnref1"
-role="doc-noteref"><sup>1</sup></a> <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;class... Args&gt;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">emplace_back</span> <span class="params">(Args&amp;&amp;... args)</span></span>;</span><br></pre></td></tr></table></figure></p>
-<h2 id="another-unexpected-copy-behind-the-background">Another
-Unexpected Copy behind the Background</h2>
-<p>Cautious readers would find that if we add more items, there might be
-still copy occurring:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">vector&lt;Stock&gt; portfolio;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>);</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-02&quot;</span>, <span class="number">12.5</span>, <span class="number">5</span>);</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-03&quot;</span>, <span class="number">15.7</span>, <span class="number">1</span>);</span><br></pre></td></tr></table></figure>
-<p>Its output:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Contruct: 2021-08-01</span><br><span class="line">Contruct: 2021-08-02</span><br><span class="line">Copied: 2021-08-01</span><br><span class="line">Contruct: 2021-08-03</span><br><span class="line">Copied: 2021-08-01</span><br><span class="line">Copied: 2021-08-02</span><br></pre></td></tr></table></figure>
-<p>To understand this, we have to know that the <strong>storage
-space</strong> of a vector ought to be allocated in advance. Do not
-confuse this storage space with the <strong>actual size</strong> used by
-the user (indicated by <code>size()</code>). The storage space is always
-equal or greater than the atual size of a vector, so that our system
-need not reallocate on each insertion. The size of the storage space can
-be obtained by the method <code>capacity()</code>.</p>
-<p>Now we are able to analyse this behavior with the help of it:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">vector&lt;Stock&gt; portfolio;</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-01 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>);</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-02 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-02&quot;</span>, <span class="number">12.5</span>, <span class="number">5</span>);</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-03 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-03&quot;</span>, <span class="number">15.7</span>, <span class="number">1</span>);</span><br></pre></td></tr></table></figure>
-<p>Output:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Capacity before inserting 2021-08-01 = 0</span><br><span class="line">Contruct: 2021-08-01</span><br><span class="line"></span><br><span class="line">Capacity before inserting 2021-08-02 = 1</span><br><span class="line">Contruct: 2021-08-02</span><br><span class="line">Copied: 2021-08-01</span><br><span class="line"></span><br><span class="line">Capacity before inserting 2021-08-03 = 2</span><br><span class="line">Contruct: 2021-08-03</span><br><span class="line">Copied: 2021-08-01</span><br><span class="line">Copied: 2021-08-02</span><br></pre></td></tr></table></figure>
-<p>When <code>2021-08-01</code> is constructed, it just allocates in
-place, no copy is needed as aforementioned.</p>
-<p>However, when adding <code>2021-08-02</code>, the acutual size of a
-vector now grows to 2, the storage space is not enough to accomodate.
-Thus, the system has to reallocate its storage space in advance, then
-<strong>constructing</strong> <code>2021-08-02</code> on it, followed by
-<strong>copying</strong> the <code>2021-08-01</code> objects into the
-newly allocated space.</p>
-<p>Similarly, <code>2021-08-03</code> is <strong>constructed in
-place</strong> before the system allocates enough storage space.
-Then,<code>2021-08-01</code> and <code>2021-08-02</code> will be
-<strong>copied</strong> into the reallocated space afterwards.</p>
-<blockquote>
-<p>Note the elements in a vector are stored in a <strong>contiguous
-memory block</strong>.<a href="#fn2" class="footnote-ref" id="fnref2"
-role="doc-noteref"><sup>2</sup></a> This is the reason that when there
-is no enough storage space for insertion, the system has to reallocate a
-memory block to arrange its elements. The behavior of how capacity will
-grow may vary by different system.</p>
-</blockquote>
-<h2 id="the-usage-of-reserve">The Usage of <code>reserve</code></h2>
-<p>To optimise this, we could have our vector contain enough storage
-space in advance. This is the moment when the method
-<code>reserve()</code> can take advantage:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">vector&lt;Stock&gt; portfolio;</span><br><span class="line"></span><br><span class="line">portfolio.<span class="built_in">reserve</span>(<span class="number">5</span>);   <span class="comment">// Request enough storage space</span></span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-01 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-01&quot;</span>, <span class="number">10.0</span>, <span class="number">3</span>);</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-02 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-02&quot;</span>, <span class="number">12.5</span>, <span class="number">5</span>);</span><br><span class="line"></span><br><span class="line">cout &lt;&lt; <span class="string">&quot;Capacity before inserting 2021-08-03 = &quot;</span> &lt;&lt; portfolio.<span class="built_in">capacity</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">portfolio.<span class="built_in">emplace_back</span>(<span class="string">&quot;2021-08-03&quot;</span>, <span class="number">15.7</span>, <span class="number">1</span>);</span><br></pre></td></tr></table></figure>
-<p>Output:</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Capacity before inserting 2021-08-01 = 5</span><br><span class="line">Contruct: 2021-08-01</span><br><span class="line"></span><br><span class="line">Capacity before inserting 2021-08-02 = 5</span><br><span class="line">Contruct: 2021-08-02</span><br><span class="line"></span><br><span class="line">Capacity before inserting 2021-08-03 = 5</span><br><span class="line">Contruct: 2021-08-03</span><br></pre></td></tr></table></figure>
-<p>The copy operations has disappeared if the storage size are large
-enough. Remember that <code>reserve()</code> does not cause any effect
-on the vector size.</p>
-<blockquote>
-<p>The maximum capacity of a vector is restricted by
-<code>vector::max_size</code>.</p>
-</blockquote>
-<section id="footnotes" class="footnotes footnotes-end-of-document"
-role="doc-endnotes">
-<hr />
-<ol>
-<li id="fn1"><p><a
-href="https://www.cplusplus.com/reference/vector/vector/emplace_back/">C++
-Reference - std::vector::emplace_back</a><a href="#fnref1"
-class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn2"><p><a
-href="https://timsong-cpp.github.io/cppwp/n4140/vector.overview#1">C++
-Standard n4140: Class template vector overview</a><a href="#fnref2"
-class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-</ol>
-</section>
-]]></content>
-      <categories>
-        <category>Programming Language</category>
-        <category>C++</category>
-      </categories>
-      <tags>
-        <tag>C++</tag>
-        <tag>Optimisation</tag>
       </tags>
   </entry>
   <entry>
@@ -856,354 +1211,70 @@ role="doc-backlink">↩︎</a></p></li>
         <category>Machine Learning</category>
       </categories>
       <tags>
-        <tag>Python</tag>
         <tag>Optimisation</tag>
+        <tag>Python</tag>
         <tag>Kernel Method</tag>
         <tag>SVM</tag>
       </tags>
   </entry>
   <entry>
-    <title>[C++] Smart Pointers - unique_ptr, shared_ptr, weak_ptr - from the implementation to their usage</title>
-    <url>/2021/08/07/cpp-smart-pointers/</url>
-    <content><![CDATA[<p>When we develop our program or the system continues to grow as time
-goes by, <strong>memory leakage</strong> is usually a pain we suffer
-most. To militate against this problem, C++ has introduced smart pointer
-family - <code>unique_ptr</code>, <code>shared_ptr</code>,
-<code>weak_ptr</code>, defined in header <code>&lt;memory&gt;</code>,
-since C++11.</p>
-<blockquote>
-<p>Precisely, <code>unique_ptr</code> inherits most of characteristics
-from <code>auto_ptr</code>, which has been implemented since C++03. Yet,
-due to the lack of <code>move</code> semantics, it encounters
-significant limitation: <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function">auto_ptr&lt;<span class="keyword">int</span>&gt; <span class="title">p</span> <span class="params">(<span class="keyword">new</span> <span class="keyword">int</span>(<span class="number">1</span>))</span></span>;</span><br><span class="line">vector&lt;auto_ptr&lt;<span class="keyword">int</span>&gt;&gt; vec;</span><br><span class="line"></span><br><span class="line">vec.<span class="built_in">push_back</span>(p);            <span class="comment">// !!! error, because of Copy constructor</span></span><br><span class="line">vec.<span class="built_in">push_back</span>(std::<span class="built_in">move</span>(p))  <span class="comment">// Okay, with move semantics since C++11</span></span><br></pre></td></tr></table></figure> Note that <code>auto_ptr</code> is
-<strong>deprecated</strong> now and should not be used any more for
-safety.</p>
-</blockquote>
+    <title>[C++] A Note about Template Copy/Move Constructor</title>
+    <url>/2023/05/20/cpp-a-note-about-template-copy-move-constructor/</url>
+    <content><![CDATA[<p>In C++, even though a function generated from a function template has
+the same name and the same type as the ordinary function, they are
+<strong>never equivalent</strong>. Besides, the <a
+href="https://en.cppreference.com/w/cpp/language/overload_resolution#Best_viable_function">non-template
+function is more preferred</a>:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">foo</span><span class="params">(T)</span> </span>&#123; std::cout &lt;&lt; <span class="string">&quot;template foo()&quot;</span> &lt;&lt; std::endl; &#125;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">foo</span><span class="params">(<span class="keyword">int</span>)</span> </span>&#123; std::cout &lt;&lt; <span class="string">&quot;ordinary foo()&quot;</span> &lt;&lt; std::endl; &#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">foo</span>(<span class="number">5</span>);     <span class="comment">// print &quot;oridinary foo()&quot;</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>On top of that, it is not easy to templify a copy/move constructor
+because the compiler may implicitly define a copy/move constructor.</p>
 <span id="more"></span>
-<h2 id="a-toy-example">A Toy Example</h2>
-<p>Let's use a simple example to illustrate how these smart pointers
-work:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Obj</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Obj</span> () : <span class="built_in">name</span>(<span class="string">&quot;DEFAULT&quot;</span>)  &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Construct &quot;</span> &lt;&lt; name &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">Obj</span> (string name) : <span class="built_in">name</span>(name) &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Construct &quot;</span> &lt;&lt; name &lt;&lt; <span class="string">&quot;\n&quot;</span>;        </span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ~<span class="built_in">Obj</span>() &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Destroy &quot;</span> &lt;&lt; name &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">SayHi</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Hi &quot;</span> &lt;&lt; name &lt;&lt; <span class="string">&quot;!\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    string name;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>When the object is created or released, the corresponded message will
-be printed.</p>
-<h2 id="original-way-with-new-and-delete">Original Way with
-<code>new</code> and <code>delete</code></h2>
-<p>Before utilising smart pointers, developers who want to allocate a
-new object might write the below code:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">Obj* p0 = <span class="keyword">new</span> <span class="built_in">Obj</span>(<span class="string">&quot;0&quot;</span>);</span><br><span class="line"><span class="comment">// ...</span></span><br><span class="line"><span class="keyword">delete</span> p0;  <span class="comment">// forgetting this would lead to memory leak</span></span><br></pre></td></tr></table></figure>
-<p>We have to carefully ensure the created object will be released
-before leaving the procedure; otherwise leading to memory leakage.
-However, relying on smart pointers, the system is able to automatically
-destroy the allocated object based upon whether it is owned by any
-pointer.</p>
-<h2 id="unique_ptr"><code>unique_ptr</code></h2>
-<p><code>unique_ptr</code>, as its name suggests, owns an object
-uniquely. That means you cannot have the same memory owned by two or
-more <code>unique_ptr</code> objects; thus, it is also <strong>not
-copyable</strong>. When the <code>unique_ptr</code> goes out of scope,
-its holding object will be destroyed immediately.</p>
-<h3 id="code-snippet-from-stdunique_ptr">Code Snippet from
-<code>std::unique_ptr</code></h3>
-<p>The implementation of <code>unique_ptr</code> in libstdc++ is worth
-mentioning for clarity (I have omitted the detail):<a href="#fn1"
-class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> _Tp, <span class="keyword">typename</span> _Dp = default_delete&lt;_Tp&gt;&gt;</span><br><span class="line">class unique_ptr</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Before move from rvalue,</span></span><br><span class="line">    <span class="comment">// releasing the ownership of the managed object if it owns a pointer</span></span><br><span class="line">    unique_ptr&amp; <span class="keyword">operator</span>=(unique_ptr&amp;&amp; __u) <span class="keyword">noexcept</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">reset</span>(__u.<span class="built_in">release</span>());</span><br><span class="line">        <span class="built_in">get_deleter</span>() = std::forward&lt;_Ep&gt;(__u.<span class="built_in">get_deleter</span>());</span><br><span class="line">        <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Destroy the object if necessary, equivalent to reset()</span></span><br><span class="line">    unique_ptr&amp; <span class="keyword">operator</span>=(<span class="keyword">nullptr_t</span>) <span class="keyword">noexcept</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// _M_t stores the data of this unique_ptr object</span></span><br><span class="line">        <span class="built_in">reset</span>();</span><br><span class="line">        <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Release the ownership of any stored pointer,</span></span><br><span class="line">    <span class="comment">// and return the pointer to the managed object</span></span><br><span class="line">    <span class="function">pointer <span class="title">release</span><span class="params">()</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="comment">// _M_t stores the data of the managed object</span></span><br><span class="line">        <span class="keyword">return</span> _M_t.<span class="built_in">release</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Destroy the object if necessary</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">reset</span><span class="params">(pointer __p = pointer())</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="comment">// _M_t stores the data of the managed object</span></span><br><span class="line">        _M_t.<span class="built_in">reset</span>(std::<span class="built_in">move</span>(__p));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Disable copy from lvalue.</span></span><br><span class="line">    <span class="built_in">unique_ptr</span>(<span class="keyword">const</span> unique_ptr&amp;) = <span class="keyword">delete</span>;</span><br><span class="line">    unique_ptr&amp; <span class="keyword">operator</span>=(<span class="keyword">const</span> unique_ptr&amp;) = <span class="keyword">delete</span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>Briefly, <code>unique_ptr</code> will release the current holding
-memory if necessary. Moreover, its copy constructor and copy assignment
-are disabled.</p>
-<h3 id="example-1-unique_ptr-is-unique-and-not-copyable">Example 1:
-<code>unique_ptr</code> is unique and not copyable</h3>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// unique_ptr&lt;Obj&gt; p1 (new Obj(&quot;1&quot;));           // This is okay</span></span><br><span class="line">    <span class="function">unique_ptr&lt;Obj&gt; <span class="title">p1</span> <span class="params">(make_unique&lt;Obj&gt;(<span class="string">&quot;1&quot;</span>))</span></span>;     <span class="comment">// Recommend since C++14</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// unique_ptr&lt;Obj&gt; p2 = p1;    // ! error, not copyable</span></span><br><span class="line">    p1-&gt;<span class="built_in">SayHi</span>();</span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;\n\n&lt;&lt;... END ...&gt;&gt;\n\n&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><strong>Output:</strong> <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Construct 1</span><br><span class="line">Hi 1!</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;&lt;... END ...&gt;&gt;</span><br><span class="line"></span><br><span class="line">Destroy 1</span><br></pre></td></tr></table></figure></p>
-<p>The allocated space held by <code>p1</code> is released automatically
-when its lifetime ends.</p>
+<h2 id="example">Example</h2>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Obj</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Obj</span>() &#123;&#125;</span><br><span class="line">    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line">    <span class="built_in">Obj</span> (<span class="keyword">const</span> T&amp;) &#123; std::cout &lt;&lt; <span class="string">&quot;template copy ctor&quot;</span> &lt;&lt; std::endl; &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>It still uses the predefined copy constructor:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">Obj a;</span><br><span class="line">Obj b&#123;a&#125;;   <span class="comment">// use the predefined copy constructor rather than the template one</span></span><br></pre></td></tr></table></figure>
+<p><strong>The reason is that a member function template is never a <a
+href="https://en.cppreference.com/w/cpp/language/member_functions">special
+member function</a> and can be ignored when the latter is
+needed</strong>. Taking the above for an instance, the implicitly
+generated copy constructor is chosen.</p>
+<h2 id="deleting-predefined-copy-constructor">Deleting Predefined Copy
+Constructor</h2>
+<p>One may want to delete the the predefined copy constructor:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Obj</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Obj</span>() &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">Obj</span>(<span class="keyword">const</span> Obj&amp;) = <span class="keyword">delete</span>;   <span class="comment">// copying Obj results in an error</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line">    <span class="built_in">Obj</span> (<span class="keyword">const</span> T&amp;) &#123; std::cout &lt;&lt; <span class="string">&quot;template copy ctor&quot;</span> &lt;&lt; std::endl; &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>However, this would result in an error when trying to copy
+<code>Obj</code>:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">Obj a;</span><br><span class="line">Obj b&#123;a&#125;;   <span class="comment">// error: call to deleted constructor of &#x27;Obj&#x27;</span></span><br></pre></td></tr></table></figure>
+<h2 id="const-volatile-trick"><code>const volatile</code> Trick</h2>
+<p>There is a tricky solution for this: deleting the copy constructor
+with <code>const volatile</code> type. With this, it prevents another
+copy constructor from being implicitly generated<a href="#fn1"
+class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> and
+the template copy constuctor can be preferred over the deleted copy
+constructor for <strong>non-volatile</strong> types:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Obj</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Obj</span>() &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// the predefined copy constructor is deleted</span></span><br><span class="line">    <span class="comment">// with conversion to volatile to enable better match</span></span><br><span class="line">    <span class="built_in">Obj</span>(<span class="keyword">const</span> <span class="keyword">volatile</span> Obj&amp;) = <span class="keyword">delete</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line">    <span class="built_in">Obj</span> (<span class="keyword">const</span> T&amp;) &#123; std::cout &lt;&lt; <span class="string">&quot;template copy ctor&quot;</span> &lt;&lt; std::endl; &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>The overload resolution candidates now are
+<code>Obj(const volatile Obj&amp;)</code> and
+<code>Obj&lt;Obj&amp;&gt;(const Obj&amp;)</code>, and the latter is a
+better match:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">Obj a;</span><br><span class="line">Obj b&#123;a&#125;;   <span class="comment">// call to the templified version: print &quot;template copy ctor&quot;</span></span><br></pre></td></tr></table></figure>
+<hr />
+<p>Similarly, we can templify move constructor or other special member
+functions by deleting the predefined special member functions for
+<code>const volatile</code> type.</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Obj</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Obj</span>() &#123;&#125;</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">Obj</span> (<span class="keyword">const</span> <span class="keyword">volatile</span> Obj&amp;&amp;) = <span class="keyword">delete</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line">    <span class="built_in">Obj</span> (T&amp;&amp;) &#123; std::cout &lt;&lt; <span class="string">&quot;template move ctor&quot;</span> &lt;&lt; std::endl; &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    Obj a;</span><br><span class="line">    Obj c&#123;std::<span class="built_in">move</span>(a)&#125;;  <span class="comment">// print &quot;template move ctor&quot;</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <blockquote>
-<p><a href="#The-advantages-of-make_unique">It is recommended to use
-<code>make_unique</code> to create <code>unique_ptr</code>
-objects.</a></p>
+<p>Note that this still leads to error if we try to operate
+<code>Obj</code> with volatile type. Fortunately, it is rarely used.</p>
 </blockquote>
-<h3
-id="example-2-original-holding-object-will-be-destroyed-before-setting-to-null">Example
-2: original holding object will be destroyed before setting to null</h3>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="function">unique_ptr&lt;Obj&gt; <span class="title">p1</span> <span class="params">(make_unique&lt;Obj&gt;(<span class="string">&quot;1&quot;</span>))</span></span>;</span><br><span class="line"></span><br><span class="line">    p1-&gt;<span class="built_in">SayHi</span>();</span><br><span class="line"></span><br><span class="line">    p1 = <span class="literal">nullptr</span>;           <span class="comment">// Okay, destroy 1 before setting to null</span></span><br><span class="line">    <span class="comment">// p1.reset(nullptr);   // Same result</span></span><br><span class="line">    <span class="comment">// p1.reset();          // Same result</span></span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;\n\n&lt;&lt;... END ...&gt;&gt;\n\n&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><strong>Output:</strong> <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Construct 1</span><br><span class="line">Hi 1!</span><br><span class="line">Destroy 1</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;&lt;... END ...&gt;&gt;</span><br></pre></td></tr></table></figure></p>
-<p><code>p1</code> has been destroyed before setting it as null. Using
-the method <code>reset()</code> can achieve the same result as well.</p>
-<h3
-id="example-3-original-holding-object-will-be-destroyed-before-move-assignment">Example
-3: original holding object will be destroyed before move assignment</h3>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="function">unique_ptr&lt;Obj&gt; <span class="title">p1</span> <span class="params">(make_unique&lt;Obj&gt;(<span class="string">&quot;1&quot;</span>))</span></span>;</span><br><span class="line">    <span class="function">unique_ptr&lt;Obj&gt; <span class="title">p2</span> <span class="params">(make_unique&lt;Obj&gt;(<span class="string">&quot;2&quot;</span>))</span></span>;</span><br><span class="line"></span><br><span class="line">    p2 = std::<span class="built_in">move</span>(p1);          <span class="comment">// Okay, destroy 2 before move</span></span><br><span class="line">    <span class="comment">// p2.reset(p1.release());   // Same result, release the p1 ownership, then move to p2</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// p1-&gt;SayHi();     // ! error, p1 no longer valid</span></span><br><span class="line">    p2-&gt;<span class="built_in">SayHi</span>();</span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;\n\n&lt;&lt;... END ...&gt;&gt;\n\n&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><strong>Output:</strong></p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Construct 1</span><br><span class="line">Construct 2</span><br><span class="line">Destroy 2</span><br><span class="line">Hi 1!</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;&lt;... END ...&gt;&gt;</span><br><span class="line"></span><br><span class="line">Destroy 1</span><br></pre></td></tr></table></figure>
-<p>Object <code>2</code> has been destroyed while moving object
-<code>1</code> into <code>p2</code>. Note that you have to release the
-ownership of object <code>1</code> with <code>release()</code> firstly
-before assigning it to the next owner.</p>
-<h2 id="The-advantages-of-make_unique">The Advantages of
-<code>make_unique</code> over <code>new</code> operator</h2>
-<p><code>make_unique</code> has been introduced since C++14, and its
-implementation can be briefly rewritten as:<a href="#fn2"
-class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T, <span class="keyword">typename</span>... Args&gt;</span><br><span class="line"><span class="comment">// for single objects</span></span><br><span class="line"><span class="keyword">typename</span> std::enable_if&lt;!std::is_array&lt;T&gt;::value, std::unique_ptr&lt;T&gt;&gt;::<span class="function">type</span></span><br><span class="line"><span class="function"><span class="title">make_unique</span><span class="params">(Args&amp;&amp;... args)</span></span></span><br><span class="line"><span class="function"></span>&#123; </span><br><span class="line">    <span class="keyword">return</span> unique_ptr&lt;T&gt;(<span class="keyword">new</span> <span class="built_in">T</span>(std::forward&lt;Args&gt;(args)...)); </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>For the most part, it makes no difference between either
-<code>new</code> or <code>make_unique</code>:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">unique_ptr&lt;<span class="keyword">int</span>&gt;(<span class="keyword">new</span> <span class="built_in"><span class="keyword">int</span></span>(<span class="number">1</span>));</span><br><span class="line">make_unique&lt;<span class="keyword">int</span>&gt;(<span class="number">1</span>);   <span class="comment">// no difference</span></span><br></pre></td></tr></table></figure>
-<p>However, the former may go awry if it involves several arguments
-evaluation in a function call:<a href="#fn3" class="footnote-ref"
-id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="built_in">func</span>(unique_ptr&lt;<span class="keyword">int</span>&gt;(<span class="keyword">new</span> <span class="built_in"><span class="keyword">int</span></span>(<span class="number">1</span>)), <span class="built_in">Foo</span>());  <span class="comment">// unsafe</span></span><br><span class="line"><span class="built_in">func</span>(make_unique&lt;<span class="keyword">int</span>&gt;(<span class="number">1</span>), <span class="built_in">Foo</span>());          <span class="comment">// exception safe</span></span><br></pre></td></tr></table></figure>
-<p>Before C++17, the order of function arguments evaluation is not
-defined.<a href="#fn4" class="footnote-ref" id="fnref4"
-role="doc-noteref"><sup>4</sup></a></p>
-<p>Consider the evaluation sequence below:</p>
-<ol type="1">
-<li>Create <code>int (1)</code> object   <strong><em>--- Success !
-</em></strong></li>
-<li>Execute <code>Foo()</code>   <strong><em>--- Exception !
-</em></strong></li>
-<li>Assign the created <code>int (1)</code> to a <code>unique_ptr</code>
-object   <strong><em>--- Cannot be performed ! </em></strong></li>
-</ol>
-<p>If <code>new</code> has been processed without assigning the newly
-created object to <code>unique_ptr</code>, and exception happens in
-<code>Foo()</code>, then memory leakage occurs because there is no way
-for <code>unique_ptr</code> object to access the newly created object to
-destroy it.</p>
-<p>Therefore, when you would like to create <code>unique_ptr</code>
-objects, <code>make_unique</code> is a better choice for exception
-safety. Even though it is not introduced in C++11, defining it manually
-is quite simple as aforementioned.</p>
-<h2 id="construct-an-array-of-unique_ptr-objects">Construct an Array of
-<code>unique_ptr</code> Objects</h2>
-<p>There are two ways to construct an array of <code>unique_ptr</code>
-objects as well.</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// unique_ptr&lt;Obj []&gt; pArray (new Obj[3]());        // This is okay. Its size is 3</span></span><br><span class="line">    <span class="function">unique_ptr&lt;Obj[]&gt; <span class="title">pArray</span> <span class="params">(make_unique&lt;Obj[]&gt;(<span class="number">3</span>))</span></span>;   <span class="comment">// Recommend</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;<span class="number">3</span>; ++i)</span><br><span class="line">        pArray[i].<span class="built_in">SayHi</span>();</span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;\n\n&lt;&lt;... END ...&gt;&gt;\n\n&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p><strong>Output:</strong> <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Construct DEFAULT</span><br><span class="line">Construct DEFAULT</span><br><span class="line">Construct DEFAULT</span><br><span class="line">Hi DEFAULT!</span><br><span class="line">Hi DEFAULT!</span><br><span class="line">Hi DEFAULT!</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;&lt;... END ...&gt;&gt;</span><br><span class="line"></span><br><span class="line">Destroy DEFAULT</span><br><span class="line">Destroy DEFAULT</span><br><span class="line">Destroy DEFAULT</span><br></pre></td></tr></table></figure></p>
-<p>Compared to a single object, the parameter in
-<code>make_unique</code> is <strong>the array size</strong> instead of
-an initialiser.</p>
-<p>Similar to the single object, its array version can be briefly
-rewritten as:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="comment">// for array objects</span></span><br><span class="line"><span class="keyword">typename</span> std::enable_if&lt;std::is_array&lt;T&gt;::value, std::unique_ptr&lt;T&gt;&gt;::<span class="function">type</span></span><br><span class="line"><span class="function"><span class="title">make_unique</span><span class="params">(<span class="keyword">size_t</span> num)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> unique_ptr&lt;T&gt;(<span class="keyword">new</span> <span class="keyword">typename</span> std::remove_extent&lt;T&gt;::type[num]());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>Note the subtle difference against a single object is the judgement
-of <code>is_array&lt;T&gt;::value</code>.</p>
-<h2 id="shared_ptr"><code>shared_ptr</code></h2>
-<p>Unlike <code>unique_ptr</code>, the ownership of an object can be
-shared by multiple <code>shared_ptr</code> objects. The object will be
-destroyed once it is not owned by any <code>shared_ptr</code> objects.
-This information can be obtained by the method
-<code>use_count()</code></p>
-<h3 id="code-snippet-from-stdshared_ptr">Code Snippet from
-<code>std::shared_ptr</code></h3>
-<p>The implementation of <code>shared_ptr</code> in libstdc++ is worth
-mentioning for clarity (I have omitted the detail):<a href="#fn5"
-class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a></p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Tp&gt;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">shared_ptr</span> :</span> <span class="keyword">public</span> __shared_ptr&lt;_Tp&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="keyword">friend</span> <span class="class"><span class="keyword">class</span> <span class="title">weak_ptr</span>&lt;</span>_Tp&gt;;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p><code>shared_ptr</code> inherits from <code>__shared_ptr</code>
-class<a href="#fn6" class="footnote-ref" id="fnref6"
-role="doc-noteref"><sup>6</sup></a>, and you could observe
-<code>weak_ptr</code> is able to access the private members in
-<code>shared_ptr</code> objects. Actually, <code>shared_ptr</code> and
-<code>weak_ptr</code> indeed cooperate together from time to time which
-will be elaborated later.</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Tp, _Lock_policy _Lp&gt;</span><br><span class="line"><span class="class"><span class="keyword">class</span> __<span class="title">shared_ptr</span> :</span> <span class="keyword">public</span> __shared_ptr_access&lt;_Tp, _Lp&gt;</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Default constructor where its initial value of pointer </span></span><br><span class="line">    <span class="comment">// and reference count are null and 0</span></span><br><span class="line">    <span class="keyword">constexpr</span> __shared_ptr() <span class="keyword">noexcept</span></span><br><span class="line">    : _M_ptr(<span class="number">0</span>), _M_refcount()</span><br><span class="line">    &#123; &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// If an exception is thrown this constructor has no effect.</span></span><br><span class="line">    <span class="comment">// _M_refcount will be assigned as a newly created object - __shared_count.</span></span><br><span class="line">    <span class="comment">// The count in __shared_count will be incremented</span></span><br><span class="line">    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Yp, <span class="keyword">typename</span> _Del, <span class="keyword">typename</span> = _UniqCompatible&lt;_Yp, _Del&gt;&gt;</span><br><span class="line">    __shared_ptr(unique_ptr&lt;_Yp, _Del&gt;&amp;&amp; __r) : _M_ptr(__r.<span class="built_in">get</span>()), _M_refcount()</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">auto</span> __raw = __to_address(__r.<span class="built_in">get</span>());</span><br><span class="line">        _M_refcount = __shared_count&lt;_Lp&gt;(std::<span class="built_in">move</span>(__r));</span><br><span class="line">        _M_enable_shared_from_this_with(__raw);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Similar to the constructor, the count in __shared_count will be incremented</span></span><br><span class="line">    <span class="comment">// and the current object will be replaced with the new one</span></span><br><span class="line">    __shared_ptr&amp; <span class="keyword">operator</span>=(__shared_ptr&amp;&amp; __r) <span class="keyword">noexcept</span></span><br><span class="line">    &#123;</span><br><span class="line">        __shared_ptr(std::<span class="built_in">move</span>(__r)).<span class="built_in">swap</span>(*<span class="keyword">this</span>);</span><br><span class="line">        <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/// Return the number of owners</span></span><br><span class="line">    <span class="function"><span class="keyword">long</span> <span class="title">use_count</span><span class="params">()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="comment">// _M_refcount is an object storing the reference counter information</span></span><br><span class="line">        <span class="keyword">return</span> _M_refcount._M_get_use_count();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Construct a null shared ptr and and the current object will be replaced with it</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">reset</span><span class="params">()</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        __shared_ptr().<span class="built_in">swap</span>(*<span class="keyword">this</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Yp&gt;</span></span><br><span class="line"><span class="function">	_SafeConv&lt;_Yp&gt; <span class="title">reset</span><span class="params">(_Yp* __p)</span> <span class="comment">// _Yp must be complete.</span></span></span><br><span class="line"><span class="function">	</span>&#123;</span><br><span class="line">	  <span class="comment">// Catch self-reset errors.</span></span><br><span class="line">	  __glibcxx_assert(__p == <span class="number">0</span> || __p != _M_ptr);</span><br><span class="line">	  __shared_ptr(__p).<span class="built_in">swap</span>(*<span class="keyword">this</span>);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    element_type*        _M_ptr;         <span class="comment">// Contained pointer.</span></span><br><span class="line">    __shared_count&lt;_Lp&gt;  _M_refcount;    <span class="comment">// Reference counter.</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>Briefly, <code>shared_ptr</code> object records the number of owners
-(<code>__shared_count</code>) as well as the pointer of the managed
-object. Besides, <code>__shared_ptr_access</code>, the parent class,
-defines whether this object should be accessed by array operators or
-not.</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;_Lock_policy _Lp&gt;</span><br><span class="line"><span class="class"><span class="keyword">class</span> __<span class="title">shared_count</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Increase the reference counter</span></span><br><span class="line">    __shared_count(<span class="keyword">const</span> __shared_count&amp; __r) <span class="keyword">noexcept</span></span><br><span class="line">    : _M_pi(__r._M_pi)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (_M_pi != <span class="number">0</span>)</span><br><span class="line">            _M_pi-&gt;_M_add_ref_copy();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Increase the reference counter</span></span><br><span class="line">    __shared_count&amp; <span class="keyword">operator</span>=(<span class="keyword">const</span> __shared_count&amp; __r) <span class="keyword">noexcept</span></span><br><span class="line">    &#123;</span><br><span class="line">        _Sp_counted_base&lt;_Lp&gt;* __tmp = __r._M_pi;</span><br><span class="line">        <span class="keyword">if</span> (__tmp != _M_pi)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">if</span> (__tmp != <span class="number">0</span>)</span><br><span class="line">                __tmp-&gt;_M_add_ref_copy();</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (_M_pi != <span class="number">0</span>)</span><br><span class="line">                _M_pi-&gt;_M_release();</span><br><span class="line"></span><br><span class="line">            _M_pi = __tmp;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="keyword">friend</span> <span class="class"><span class="keyword">class</span> __<span class="title">weak_count</span>&lt;</span>_Lp&gt;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Define the operations of the stored pointer</span></span><br><span class="line">    _Sp_counted_base&lt;_Lp&gt;*  _M_pi;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>The <code>__shared_count</code> object is to manage the information
-of reference count. Here, <code>__weak_count</code> class is able to
-access the private members of <code>__shared_count</code>. Most of
-operations on the pointer itself are specified in
-<code>_Sp_counted_base</code>.</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;_Lock_policy _Lp = __default_lock_policy&gt;</span><br><span class="line">class _Sp_counted_base : <span class="keyword">public</span> _Mutex_base&lt;_Lp&gt;&#123;  <span class="comment">/* ... */</span>  &#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="keyword">inline</span> <span class="keyword">void</span> _Sp_counted_base&lt;_S_single&gt;::_M_release() <span class="keyword">noexcept</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (--_M_use_count == <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// the managed object will be destroyed once it is not held by any shared_ptr</span></span><br><span class="line">        _M_dispose();</span><br><span class="line">        <span class="keyword">if</span> (--_M_weak_count == <span class="number">0</span>)</span><br><span class="line">            <span class="comment">// the control block is not released until its weak_ptr count reaches zero</span></span><br><span class="line">            _M_destroy();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>Note that while a <code>shared_ptr</code> object is created, the
-lifetime of the managed object and its <strong>control block</strong>
-might not be the same. The former is based upon whether it is shared by
-any <code>shared_ptr</code> objects, whereas the later is
-<code>weak_ptr</code>.</p>
-<blockquote>
-<p>Control block contains the information about how to allocate or
-deallocate the managed object, e.g. its allocator and deleter.</p>
-</blockquote>
-<h3 id="example-1-several-shared_ptr-can-share-the-same-object">Example
-1: several <code>shared_ptr</code> can share the same object</h3>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// shared_ptr&lt;Obj&gt; sp0 (new Obj(&quot;1&quot;));           // Okay</span></span><br><span class="line">    shared_ptr&lt;Obj&gt; sp0 = make_shared&lt;Obj&gt;(<span class="string">&quot;1&quot;</span>);     <span class="comment">// Recommend</span></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;count = &quot;</span> &lt;&lt; sp0.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    shared_ptr&lt;Obj&gt; sp1 = sp0;</span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;count = &quot;</span> &lt;&lt; sp0.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;\n\n&lt;&lt;... END ...&gt;&gt;\n\n&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><strong>Output:</strong> <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Construct 1</span><br><span class="line">count = 1</span><br><span class="line">count = 2</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;&lt;... END ...&gt;&gt;</span><br><span class="line"></span><br><span class="line">Destroy 1</span><br></pre></td></tr></table></figure></p>
-<p>Object <code>1</code> can be held by both <code>sp0</code> and
-<code>sp1</code>. It is recommended to use <code>make_shared</code> to
-create the smart pointer due to <a
-href="#The-advantages-of-make_unique">the same reason explained in
-<code>make_unique</code></a>.</p>
-<h3
-id="example-2-the-managed-object-will-be-destroyed-when-it-is-not-held-by-any-shared_ptr">Example
-2: the managed object will be destroyed when it is not held by any
-<code>shared_ptr</code></h3>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    shared_ptr&lt;Obj&gt; sp2 = make_shared&lt;Obj&gt;(<span class="string">&quot;2&quot;</span>);</span><br><span class="line">    shared_ptr&lt;Obj&gt; sp3 = sp2;</span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;count = &quot;</span> &lt;&lt; sp2.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    sp3.<span class="built_in">reset</span>();        <span class="comment">// release the ownership from sp3</span></span><br><span class="line">    <span class="comment">//sp3 = nullptr;    // Same effect</span></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;count = &quot;</span> &lt;&lt; sp2.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    sp2.<span class="built_in">reset</span>();        <span class="comment">// the reference count of object 2 becomes 0, destroyed</span></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;count = &quot;</span> &lt;&lt; sp2.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;\n\n&lt;&lt;... END ...&gt;&gt;\n\n&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><strong>Output:</strong> <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Construct 2</span><br><span class="line">count = 2</span><br><span class="line">count = 1</span><br><span class="line">Destroy 2</span><br><span class="line">count = 0</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;&lt;... END ...&gt;&gt;</span><br></pre></td></tr></table></figure></p>
-<p>Object <code>2</code> is destroyed while its reference count becomes
-0.</p>
-<h2 id="construct-an-array-of-shared_ptr-objects">Construct an Array of
-<code>shared_ptr</code> Objects</h2>
-<p>Unlike <code>unique_ptr</code> objects, <code>shared_ptr</code>
-cannot dynamically allocate an array via <code>make_shared</code> until
-C++20. Moreover, prior to C++17, developers ought to specify the deleter
-to manage dynamically allocated arrays.<a href="#fn7"
-class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a></p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// suggest to provide a deleter for array</span></span><br><span class="line">    <span class="comment">// so it uses delete[] to free the resoure instead of delete</span></span><br><span class="line">    <span class="function">shared_ptr&lt;Obj[]&gt; <span class="title">spArray</span> <span class="params">(<span class="keyword">new</span> Obj[<span class="number">3</span>], std::default_delete&lt;Obj[]&gt;())</span></span>;  <span class="comment">// Okay, </span></span><br><span class="line">    <span class="comment">//shared_ptr&lt;Obj[]&gt; spArray (make_shared&lt;Obj[]&gt;(3));  // Not available until C++20</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;<span class="number">3</span>; ++i)</span><br><span class="line">        spArray[i].<span class="built_in">SayHi</span>();</span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;\n\n&lt;&lt;... END ...&gt;&gt;\n\n&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><strong>Output:</strong> <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Construct DEFAULT</span><br><span class="line">Construct DEFAULT</span><br><span class="line">Construct DEFAULT</span><br><span class="line">Hi DEFAULT!</span><br><span class="line">Hi DEFAULT!</span><br><span class="line">Hi DEFAULT!</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;&lt;... END ...&gt;&gt;</span><br><span class="line"></span><br><span class="line">Destroy DEFAULT</span><br><span class="line">Destroy DEFAULT</span><br><span class="line">Destroy DEFAULT</span><br></pre></td></tr></table></figure></p>
-<blockquote>
-<p>Actually, it is worth mentioning that since GCC 7.5, a default
-deleter to handle the dynamically allocated array has been provided by
-<code>struct __sp_array_delete</code>:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="comment">// The default deleter for shared_ptr&lt;T[]&gt; and shared_ptr&lt;T[N]&gt;.</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> __<span class="title">sp_array_delete</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    <span class="function"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Yp&gt;</span></span><br><span class="line"><span class="function">    <span class="keyword">void</span> <span class="title">operator</span><span class="params">()</span><span class="params">(_Yp* __p)</span> <span class="keyword">const</span> </span>&#123; <span class="keyword">delete</span>[] __p; &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>It works as follows:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Tp, _Lock_policy _Lp&gt;</span><br><span class="line"><span class="class"><span class="keyword">class</span> __<span class="title">shared_ptr</span> :</span> <span class="keyword">public</span> __shared_ptr_access&lt;_Tp, _Lp&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Constructor will check whether it is an array</span></span><br><span class="line">    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Yp, <span class="keyword">typename</span> = _SafeConv&lt;_Yp&gt;&gt;</span><br><span class="line">    <span class="keyword">explicit</span></span><br><span class="line">    __shared_ptr(_Yp* __p)</span><br><span class="line">    : _M_ptr(__p), _M_refcount(__p, <span class="keyword">typename</span> is_array&lt;_Tp&gt;::<span class="built_in">type</span>())</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// ...</span></span><br><span class="line">        _M_enable_shared_from_this_with(__p);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>The <code>__shared_ptr</code> constructor checks whether the managed
-object is an array.</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;_Lock_policy _Lp&gt;</span><br><span class="line"><span class="class"><span class="keyword">class</span> __<span class="title">shared_count</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Ptr&gt;</span><br><span class="line">    __shared_count(_Ptr __p, <span class="comment">/* is_array = */</span> true_type)</span><br><span class="line">    : __shared_count(__p, __sp_array_delete&#123;&#125;, allocator&lt;<span class="keyword">void</span>&gt;())</span><br><span class="line">    &#123; &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>If the pointer is an array, the default deleter will be designated as
-<code>__sp_array_delete</code>.</p>
-<p>Thus, the below code should work fine even if we do not provide a
-deleter:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="function">shared_ptr&lt;Obj[]&gt; <span class="title">spArray</span> <span class="params">(<span class="keyword">new</span> Obj[<span class="number">3</span>])</span></span>;  <span class="comment">// Okay if deleter is not provided</span></span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>However, prior to C++17, we still suggest developers follow the rule
-to avoid undefined behavior resulted from compiler dependency.</p>
-</blockquote>
-<h2 id="leakage-caused-by-circular-reference">Leakage caused by Circular
-Reference within <code>shared_ptr</code></h2>
-<p>Consider the case when you would like to implement list data
-structure, the code might look like as follows:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">List</span> &#123;</span></span><br><span class="line">    <span class="keyword">int</span> val;</span><br><span class="line">    shared_ptr&lt;List&gt; next;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">List</span>(<span class="keyword">int</span> val) : <span class="built_in">val</span>(val) &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Construct node &quot;</span> &lt;&lt; val &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ~<span class="built_in">List</span>()</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Destroy node &quot;</span> &lt;&lt; val &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>And the list might form a cycle:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="function">shared_ptr&lt;List&gt; <span class="title">node_1</span> <span class="params">(make_shared&lt;List&gt;(<span class="number">1</span>))</span></span>;</span><br><span class="line">    <span class="function">shared_ptr&lt;List&gt; <span class="title">node_2</span> <span class="params">(make_shared&lt;List&gt;(<span class="number">2</span>))</span></span>;</span><br><span class="line"></span><br><span class="line">    node_1-&gt;next = node_2;</span><br><span class="line">    node_2-&gt;next = node_1;      <span class="comment">// A cycle is formed</span></span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;count = &quot;</span> &lt;&lt; node_1.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;\n\n&lt;&lt;... END ...&gt;&gt;\n\n&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><strong>Output:</strong> <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Construct node 1</span><br><span class="line">Construct node 2</span><br><span class="line">count = 2</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;&lt;... END ...&gt;&gt;</span><br></pre></td></tr></table></figure></p>
-<p>Under this circumstance, both <code>node 1</code> and
-<code>node 2</code> are referenced to one another, the user count never
-degrades to zero even when the program terminates, leading to memory
-leakage. This problem is called <strong>circular reference</strong> or
-<strong>cyclic dependency</strong> issue.</p>
-<p>To solve this problem, <code>weak_ptr</code> could come into play,
-which won't affect the reference count of an object. We may simply
-modify our list structure as follows:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">List</span> &#123;</span></span><br><span class="line">    <span class="keyword">int</span> val;</span><br><span class="line">    weak_ptr&lt;List&gt; next;      <span class="comment">// weak reference</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">List</span>(<span class="keyword">int</span> val) : <span class="built_in">val</span>(val) &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Construct node &quot;</span> &lt;&lt; val &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ~<span class="built_in">List</span>()</span><br><span class="line">    &#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Destroy node &quot;</span> &lt;&lt; val &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p><strong>Output:</strong> <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Construct node 1</span><br><span class="line">Construct node 2</span><br><span class="line">count = 1</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;&lt;... END ...&gt;&gt;</span><br><span class="line"></span><br><span class="line">Destroy node 2</span><br><span class="line">Destroy node 1</span><br></pre></td></tr></table></figure></p>
-<p>Now, with the help of <code>weak_ptr</code>, the reference count does
-not increase for the reason that it is not considered an owner for this
-object. The memory leakage issue can be prevented.</p>
-<h2 id="weak_ptr"><code>weak_ptr</code></h2>
-<p><code>weak_ptr</code> can hold a "weak" reference to an object, which
-won't affect the reference count managed by <code>shared_ptr</code>. The
-main aim of <code>weak_ptr</code> is to own a temporary ownership so we
-can track this object. It is also an effective way to prevent <a
-href="#leakage-caused-by-circular-reference">the memory leakage problem
-caused by a cycle within <code>shared_ptr</code> objects</a>. In
-addition to that, we should be aware that even when the object held by
-<code>shared_ptr</code> is destroyed, the lifetime of its control block
-might be extended. To access the referenced object of
-<code>weak_ptr</code>, users should use the method <code>lock()</code>
-to get its original <code>shared_ptr</code> object first.</p>
-<h3 id="code-snippet-from-stdweak_ptr">Code Snippet from
-<code>std::weak_ptr</code></h3>
-<p>Let's take a look at the implementation in libstdc++ (detail is
-omitted):<a href="#fn8" class="footnote-ref" id="fnref8"
-role="doc-noteref"><sup>8</sup></a></p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Tp&gt;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">weak_ptr</span> :</span> <span class="keyword">public</span> __weak_ptr&lt;_Tp&gt;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Get the shared_ptr object</span></span><br><span class="line">    <span class="function">shared_ptr&lt;_Tp&gt; <span class="title">lock</span><span class="params">()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123; </span><br><span class="line">        <span class="keyword">return</span> shared_ptr&lt;_Tp&gt;(*<span class="keyword">this</span>, std::nothrow);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p><code>weak_ptr</code> inherits from <code>__weak_ptr</code> and using
-<code>lock()</code> would help the user get a converted
-<code>shared_ptr</code> object.</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Tp, _Lock_policy _Lp&gt;</span><br><span class="line"><span class="class"><span class="keyword">class</span> __<span class="title">weak_ptr</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// The default constructor would assign the pointer</span></span><br><span class="line">    <span class="comment">// and the reference count as null and 0 separately</span></span><br><span class="line">    <span class="keyword">constexpr</span> __weak_ptr() <span class="keyword">noexcept</span></span><br><span class="line">    : _M_ptr(<span class="literal">nullptr</span>), _M_refcount()</span><br><span class="line">    &#123; &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// assign the reference count managed by the shared_ptr object</span></span><br><span class="line">    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Yp&gt;</span><br><span class="line">    _Assignable&lt;_Yp&gt; <span class="keyword">operator</span>=(<span class="keyword">const</span> __shared_ptr&lt;_Yp, _Lp&gt;&amp; __r) <span class="keyword">noexcept</span></span><br><span class="line">    &#123;</span><br><span class="line">        _M_ptr = __r._M_ptr;</span><br><span class="line">        _M_refcount = __r._M_refcount;</span><br><span class="line">        <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Get the reference count held by the shared_ptr object</span></span><br><span class="line">    <span class="function"><span class="keyword">long</span> <span class="title">use_count</span><span class="params">()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123; </span><br><span class="line">        <span class="keyword">return</span> _M_refcount._M_get_use_count();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Equivelent to use_count() == 0,</span></span><br><span class="line">    <span class="comment">// meaning that the manged object has been deleted</span></span><br><span class="line">    <span class="function"><span class="keyword">bool</span> <span class="title">expired</span><span class="params">()</span> <span class="keyword">const</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> _M_refcount._M_get_use_count() == <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Construct an empty weak_ptr and replace with it</span></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">reset</span><span class="params">()</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        __weak_ptr().<span class="built_in">swap</span>(*<span class="keyword">this</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">private</span>:</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    element_type*      _M_ptr;        <span class="comment">// Contained pointer.</span></span><br><span class="line">    __weak_count&lt;_Lp&gt;  _M_refcount;   <span class="comment">// Reference counter.</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>Briefly, <code>weak_ptr</code> can be used to track the managed
-object held by <code>shared_ptr</code>. It also has its own weak
-reference count.</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;_Lock_policy _Lp&gt;</span><br><span class="line"><span class="class"><span class="keyword">class</span> __<span class="title">weak_count</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Increase the &quot;weak&quot; reference counter</span></span><br><span class="line">    __weak_count&amp; <span class="keyword">operator</span>=(<span class="keyword">const</span> __shared_count&lt;_Lp&gt;&amp; __r) <span class="keyword">noexcept</span></span><br><span class="line">    &#123;</span><br><span class="line">        _Sp_counted_base&lt;_Lp&gt;* __tmp = __r._M_pi;</span><br><span class="line">        <span class="keyword">if</span> (__tmp != <span class="literal">nullptr</span>)</span><br><span class="line">            __tmp-&gt;_M_weak_add_ref();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (_M_pi != <span class="literal">nullptr</span>)</span><br><span class="line">            _M_pi-&gt;_M_weak_release();</span><br><span class="line"></span><br><span class="line">        _M_pi = __tmp;</span><br><span class="line">        <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Increase the &quot;weak&quot; reference counter</span></span><br><span class="line">    __weak_count&amp; <span class="keyword">operator</span>=(<span class="keyword">const</span> __weak_count&amp; __r) <span class="keyword">noexcept</span></span><br><span class="line">    &#123;</span><br><span class="line">        _Sp_counted_base&lt;_Lp&gt;* __tmp = __r._M_pi;</span><br><span class="line">        <span class="keyword">if</span> (__tmp != <span class="literal">nullptr</span>)</span><br><span class="line">            __tmp-&gt;_M_weak_add_ref();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (_M_pi != <span class="literal">nullptr</span>)</span><br><span class="line">            _M_pi-&gt;_M_weak_release();</span><br><span class="line"></span><br><span class="line">        _M_pi = __tmp;</span><br><span class="line">        <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="keyword">friend</span> <span class="class"><span class="keyword">class</span> __<span class="title">shared_count</span>&lt;</span>_Lp&gt;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Define the operations of the stored pointer</span></span><br><span class="line">    _Sp_counted_base&lt;_Lp&gt;*  _M_pi;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>The mechanism of the reference counter in <code>weak_ptr</code> is
-quite similar to <code>shared_ptr</code>. Yet, <code>weak_ptr</code>
-mainly operates upon weak reference.</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;_Lock_policy _Lp = __default_lock_policy&gt;</span><br><span class="line">class _Sp_counted_base : <span class="keyword">public</span> _Mutex_base&lt;_Lp&gt;</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Called when _M_use_count drops to zero, to release the resources</span></span><br><span class="line">    <span class="comment">// managed by *this. (Can be redefined by the deriving class)</span></span><br><span class="line">    <span class="keyword">virtual</span> <span class="keyword">void</span> _M_dispose() <span class="keyword">noexcept</span> = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Called when _M_weak_count drops to zero.</span></span><br><span class="line">    <span class="comment">// (Can be redefined by the deriving class)</span></span><br><span class="line">    <span class="keyword">virtual</span> <span class="keyword">void</span> _M_destroy() <span class="keyword">noexcept</span></span><br><span class="line">    &#123; <span class="keyword">delete</span> <span class="keyword">this</span>; &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">    _Atomic_word  _M_use_count;     <span class="comment">// #shared</span></span><br><span class="line">    _Atomic_word  _M_weak_count;    <span class="comment">// #weak + (#shared != 0)</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p><code>_M_use_count</code> is used by <code>shared_ptr</code> to store
-the strong reference count, whereas <code>_M_weak_count</code> is used
-by <code>weak_ptr</code> to store the weak reference count.</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="keyword">inline</span> <span class="keyword">void</span> _Sp_counted_base&lt;_S_single&gt;::_M_release() <span class="keyword">noexcept</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (--_M_use_count == <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// the managed object will be destroyed once it is not held by any shared_ptr</span></span><br><span class="line">        _M_dispose();</span><br><span class="line">        <span class="keyword">if</span> (--_M_weak_count == <span class="number">0</span>)</span><br><span class="line">            <span class="comment">// the control block is not released until its weak_ptr count reaches zero</span></span><br><span class="line">            _M_destroy();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;&gt;</span><br><span class="line"><span class="keyword">inline</span> <span class="keyword">void</span> _Sp_counted_base&lt;_S_single&gt;::_M_weak_release() <span class="keyword">noexcept</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// the control block is not released until its weak_ptr count reaches zero</span></span><br><span class="line">    <span class="keyword">if</span> (--_M_weak_count == <span class="number">0</span>)</span><br><span class="line">        _M_destroy();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>Once the weak reference count reaches zero, the control block will be
-deallocated.</p>
-<h3
-id="example-1-weak_ptr-does-not-increase-the-reference-count-held-by-shared_ptr">Example
-1: <code>weak_ptr</code> does not increase the reference count held by
-<code>shared_ptr</code></h3>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    shared_ptr&lt;Obj&gt; sp = make_shared&lt;Obj&gt;(<span class="string">&quot;1&quot;</span>);</span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;count = &quot;</span> &lt;&lt; sp.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    weak_ptr&lt;Obj&gt; wp = sp;</span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;count = &quot;</span> &lt;&lt; sp.<span class="built_in">use_count</span>() &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;\n\n&lt;&lt;... END ...&gt;&gt;\n\n&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><strong>Output:</strong> <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">Construct <span class="number">1</span></span><br><span class="line">count = <span class="number">1</span></span><br><span class="line">count = <span class="number">1</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;&lt;... END ...&gt;&gt;</span><br><span class="line"></span><br><span class="line">Destroy <span class="number">1</span></span><br></pre></td></tr></table></figure></p>
-<p>Aside from this, <code>wp.use_count()</code> returns the number of
-<code>shared_ptr</code> that manages this object; thus the value should
-be the same as <code>sp.use_count()</code>.</p>
-<h3 id="example-2-access-the-object-through-lock">Example 2: access the
-object through <code>lock()</code></h3>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    shared_ptr&lt;Obj&gt; sp = make_shared&lt;Obj&gt;(<span class="string">&quot;1&quot;</span>);</span><br><span class="line">    weak_ptr&lt;Obj&gt; wp = sp;</span><br><span class="line"></span><br><span class="line">    wp.<span class="built_in">lock</span>()-&gt;<span class="built_in">SayHi</span>();</span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;\n\n&lt;&lt;... END ...&gt;&gt;\n\n&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><strong>Output:</strong> <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">Construct <span class="number">1</span></span><br><span class="line">Hi <span class="number">1</span>!</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;&lt;... END ...&gt;&gt;</span><br><span class="line"></span><br><span class="line">Destroy <span class="number">1</span></span><br></pre></td></tr></table></figure></p>
-<p>Users should use <code>lock()</code> to get the
-<code>shared_ptr</code> pointer to access this object.</p>
-<h3
-id="example-3-use-expired-to-check-the-availability-of-an-object">Example
-3: use <code>expired()</code> to check the availability of an
-object</h3>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    weak_ptr&lt;Obj&gt; wp;</span><br><span class="line"></span><br><span class="line">    &#123;</span><br><span class="line">        shared_ptr&lt;Obj&gt; sp = make_shared&lt;Obj&gt;(<span class="string">&quot;1&quot;</span>);</span><br><span class="line">        wp = sp;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (wp.<span class="built_in">expired</span>())</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Object has been destroyed!&quot;</span> &lt;&lt; <span class="string">&quot;\n&quot;</span>;</span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;\n\n&lt;&lt;... END ...&gt;&gt;\n\n&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><strong>Output:</strong> <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">Construct <span class="number">1</span></span><br><span class="line">Destroy <span class="number">1</span></span><br><span class="line">Object has been destroyed!</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;&lt;... END ...&gt;&gt;</span><br></pre></td></tr></table></figure></p>
-<p><code>expired()</code> is equivelent to
-<code>use_count() == 0</code>.</p>
-<h3 id="example-4-release-the-reference-from-weak_ptr">Example 4:
-release the reference from <code>weak_ptr</code></h3>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    shared_ptr&lt;Obj&gt; sp = make_shared&lt;Obj&gt;(<span class="string">&quot;1&quot;</span>);</span><br><span class="line">    weak_ptr&lt;Obj&gt; wp = sp;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//wp = nullptr;         // error</span></span><br><span class="line">    wp.<span class="built_in">reset</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">//wp.lock()-&gt;SayHi();   // error, not available anymore</span></span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;\n\n&lt;&lt;... END ...&gt;&gt;\n\n&quot;</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><strong>Output:</strong></p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Construct 1</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&lt;&lt;... END ...&gt;&gt;</span><br><span class="line"></span><br><span class="line">Destroy 1</span><br></pre></td></tr></table></figure>
-<p>You cannot assign a <code>weak_ptr</code> object as null
-directly.</p>
-<h2 id="construct-an-array-of-weak_ptr-objects">Construct an Array of
-<code>weak_ptr</code> Objects</h2>
-<p>You cannot construct an array of <code>weak_ptr</code> objects as the
-approach in <code>unique_ptr</code> and <code>shared_ptr</code> because
-the operator <code>[]</code> to access the array elements is not
-defined.</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">weak_ptr&lt;Obj[]&gt; wpArray;    <span class="comment">// ??? wpArray[i] is not defined</span></span><br></pre></td></tr></table></figure>
-<p>A workaround is to declare it as a regular array, then tackle its
-elements separately:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">weak_ptr&lt;Obj&gt; wpArray[<span class="number">3</span>];</span><br><span class="line"></span><br><span class="line">shared_ptr&lt;Obj&gt; sp1 = make_shared&lt;Obj&gt;(<span class="string">&quot;1&quot;</span>);</span><br><span class="line">shared_ptr&lt;Obj&gt; sp2 = make_shared&lt;Obj&gt;(<span class="string">&quot;2&quot;</span>);</span><br><span class="line">shared_ptr&lt;Obj&gt; sp3 = make_shared&lt;Obj&gt;(<span class="string">&quot;3&quot;</span>);</span><br><span class="line"></span><br><span class="line">wpArray[<span class="number">0</span>] = sp1;</span><br><span class="line">wpArray[<span class="number">1</span>] = sp2;</span><br><span class="line">wpArray[<span class="number">2</span>] = sp3;</span><br></pre></td></tr></table></figure>
 <section id="footnotes" class="footnotes footnotes-end-of-document"
 role="doc-endnotes">
 <hr />
 <ol>
-<li id="fn1"><p><a
-href="https://gcc.gnu.org/onlinedocs/gcc-11.2.0/libstdc++/api/a00371_source.html">Source
-code of std::unique_ptr in GCC 11.2</a><a href="#fnref1"
-class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn2"><p><a
-href="https://gcc.gnu.org/onlinedocs/gcc-11.2.0/libstdc++/api/a00371_source.html">Source
-code of std::make_unique in GCC 11.2</a><a href="#fnref2"
-class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn3"><p><a
-href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3588.txt">A
-proposal to add make_unique for symmetry, simplicity, and safety</a><a
-href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn4"><p><a
-href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0400r0.html">C++17
-- Wording for Order of Evaluation of Function Arguments</a><a
-href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn5"><p><a
-href="https://gcc.gnu.org/onlinedocs/gcc-11.2.0/libstdc++/api/a17923_source.html">Source
-code of std::shared_ptr in GCC 11.2</a><a href="#fnref5"
-class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn6"><p><a
-href="https://gcc.gnu.org/onlinedocs/gcc-11.2.0/libstdc++/api/a00494_source.html">Source
-code of __shared_ptr class in GCC 11.2</a><a href="#fnref6"
-class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn7"><p><a
-href="https://stackoverflow.com/questions/13061979/shared-ptr-to-an-array-should-it-be-used/13062069#13062069">shared_ptr
-to an array : should it be used?</a><a href="#fnref7"
-class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn8"><p><a
-href="https://gcc.gnu.org/onlinedocs/gcc-11.2.0/libstdc++/api/a00494_source.html">Source
-code of std::weak_ptr in GCC 11.2</a><a href="#fnref8"
+<li id="fn1"><p>A non-template constructor for class X is a copy
+constructor if its first parameter is of type <code>X&amp;</code>,
+<code>const X&amp;</code>, <code>volatile X&amp;</code> or
+<code>const volatile X&amp;</code><a href="#fnref1"
 class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section>

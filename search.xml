@@ -95,6 +95,164 @@ fcitx 的字碼表，再使用 fcitx 工具 <code>fcitx-tools</code>
       </tags>
   </entry>
   <entry>
+    <title>Using Python to Simulate Brownian Motion</title>
+    <url>/2021/07/27/Brownian-motion/</url>
+    <content><![CDATA[<p><strong>Brownian motion</strong> is a phenomenon that particles in
+the seemingly motionless liquid are still undergone unceasing collisions
+in an erratic way. It was firstly observed by Robert Brown in 1827. In
+1923, Norbert Wiener had attempted to formulate this observations in
+mathematical terms; thus it is also known as <strong>Wiener
+process</strong>.</p>
+<p>Owing to its randomness, Brownian motion has a wide range of
+applications, ranging from chaotic oscillations to stock market
+fluctuations. In this article, I will describe its basic property and
+how to visualise it and its variants with Python.</p>
+<span id="more"></span>
+<h2 id="The-Model-of-Brownian-Motion">The Model of Brownian Motion</h2>
+<p>To begin with, we should see how to make Brownian motion in a rather
+formal way.</p>
+<p>We firstly consider one dimensional coordinate system for simplicity.
+Imagine that you put a particle at the origin (<span
+class="math inline">\(x = 0\)</span>) in the very beginning, and it may
+encounter random collisions along the <span
+class="math inline">\(x\)</span>-coordinate afterwards. Let <span
+class="math inline">\(X(t)\)</span> be the position of the particle
+after <span class="math inline">\(t\)</span> units of time (<span
+class="math inline">\(X(0) = 0\)</span>).</p>
+<p>When the particle is undergone some collisions, we say there are
+events occurred. From physical obervations, scientists find that the
+probability of events occurred in any two equal time intervals, say
+<span class="math inline">\([s, t]\)</span> and <span
+class="math inline">\([s+h, t+h]\)</span>, are not only equal but also
+indepedent. In other words, they have the same probability distribution,
+and no matter how many events occurred in <span
+class="math inline">\([s, t]\)</span>, it would not affect the number of
+events occurred over <span class="math inline">\([s+h, t+h]\)</span>.
+This can be represented as</p>
+<p><span class="math display">\[ X(t) - X(s) \sim X(t+h) - X(s+h)
+\]</span></p>
+<p>Actually, such property that they possess stationary and independent
+increments are usually called <strong>stationary increments</strong>.
+This is the bedrock of Brownian motion.</p>
+<p>Thus, if $ t_1- t_0 = t_2-t_1 = t_3-t_2 = t_4-t_3 = $ ... ,</p>
+<p><span class="math display">\[  X(t_1)-X(t_0)
+\sim X(t_2)-X(t_1)
+\sim X(t_3)-X(t_2)
+\sim X(t_4)-X(t_3)
+\dots  
+\tag{1}
+\]</span></p>
+<p>For <span class="math inline">\(t&gt;s&gt;0\)</span>, we tend to
+assume increments are normal distribution:</p>
+<p><span class="math display">\[ X(t+s) - X(s) \sim \mathcal{N} (0,
+\sigma^2 t) \tag{2}\]</span></p>
+<p>If  $ \sigma = 1, $  it is also known as a <strong>standard Brownian
+motion</strong>, $ W(t) $.</p>
+<p>It is worth noting that the path of Brownian motion is <em>everywhere
+continuous but nowhere differentiable</em>.</p>
+<h2 id="visualise-the-brownian-motion">Visualise the Brownian
+Motion</h2>
+<p>Now we are ready to draw our Brownian motion in Python.</p>
+<h3 id="some-toolkits">Some Toolkits</h3>
+<p>Below are the modules we will use to draw our plots.</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> math <span class="keyword">import</span> sqrt, exp</span><br><span class="line"><span class="keyword">from</span> random <span class="keyword">import</span> random, gauss</span><br><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br></pre></td></tr></table></figure>
+<h3 id="visualisation">Visualisation</h3>
+<p>As shown in <span class="math inline">\((1)\)</span> and <span
+class="math inline">\((2),\)</span> the increments between any equal
+time interval share the same Gaussian distribution. We are able to
+compute <span class="math inline">\(X(t)\)</span> iteratively, i.e.</p>
+
+$$
+\displaylines {
+X(t_1) \sim X(t_0) + \mathcal{N} (0, dt \cdot \sigma^2) \\
+X(t_2) \sim X(t_1) + \mathcal{N} (0, dt \cdot \sigma^2) \\
+X(t_3) \sim X(t_2) + \mathcal{N} (0, dt \cdot \sigma^2) \\
+\dots  
+}
+$$
+
+<p>, where $ dt = t_1-t_0 = t_2-t_1 = t_3-t_2 = $ ... .</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">mean = <span class="number">0</span></span><br><span class="line">std = random()  <span class="comment"># standard deviation</span></span><br><span class="line"></span><br><span class="line">N = <span class="number">1000</span>    <span class="comment"># generate N points</span></span><br><span class="line">dt = <span class="number">1</span>/N    <span class="comment"># time interval = [0,1]</span></span><br><span class="line"></span><br><span class="line">data = []</span><br><span class="line">x = <span class="number">0</span></span><br><span class="line"><span class="keyword">for</span> t <span class="keyword">in</span> <span class="built_in">range</span>(N):</span><br><span class="line">    dx = gauss(mean, std*sqrt(dt))  <span class="comment"># gauss(mean, standard deviation)</span></span><br><span class="line">    x = x + dx                      <span class="comment"># compute X(t) incrementally</span></span><br><span class="line">    data.append((dt*t, x+dx))</span><br><span class="line"></span><br><span class="line">data = np.array(data)</span><br><span class="line"></span><br><span class="line">plt.figure()</span><br><span class="line">plt.plot(data[:, <span class="number">0</span>], data[:, <span class="number">1</span>], linewidth=<span class="number">0.5</span>)</span><br><span class="line">plt.scatter(data[<span class="number">0</span>, <span class="number">0</span>], data[<span class="number">0</span>, <span class="number">1</span>],marker=<span class="string">&quot;^&quot;</span>,color=<span class="string">&#x27;r&#x27;</span>,label=<span class="string">&quot;Origin&quot;</span>)</span><br><span class="line">plt.xlabel(<span class="string">&#x27;t&#x27;</span>)</span><br><span class="line">plt.ylabel(<span class="string">&#x27;x&#x27;</span>)</span><br><span class="line">plt.legend()</span><br><span class="line">plt.title(<span class="string">&quot;Brownian motion&quot;</span>)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
+<img src="/2021/07/27/Brownian-motion/brownian.png" class="" title="This is an image">
+<h2 id="d-brownian-motion">2D-Brownian Motion</h2>
+<p>Similarly, if we extend our coordinate system to two dimensions,</p>
+
+$$
+\displaylines {
+X(t_1) \sim X(t_0) + \mathcal{N} (0, dt \cdot \sigma^2) \; \; \; \; \; 
+Y(t_1) \sim Y(t_0) + \mathcal{N} (0, dt \cdot \sigma^2) \\
+X(t_2) \sim X(t_1) + \mathcal{N} (0, dt \cdot \sigma^2) \; \; \; \; \; 
+Y(t_2) \sim Y(t_1) + \mathcal{N} (0, dt \cdot \sigma^2) \\
+X(t_3) \sim X(t_2) + \mathcal{N} (0, dt \cdot \sigma^2) \; \; \; \; \; 
+Y(t_3) \sim Y(t_2) + \mathcal{N} (0, dt \cdot \sigma^2) \\
+\dots  
+}
+$$
+
+<p>, where $ dt = t_1-t_0 = t_2-t_1 = t_3-t_2 = $ ... .</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">mean = <span class="number">0</span></span><br><span class="line">std = random()</span><br><span class="line"></span><br><span class="line">N = <span class="number">1000</span>    <span class="comment"># generate N points</span></span><br><span class="line">dt = <span class="number">1</span>/N    <span class="comment"># time interval = [0,1]</span></span><br><span class="line"></span><br><span class="line">data = []</span><br><span class="line">x, y = <span class="number">0</span>, <span class="number">0</span></span><br><span class="line"><span class="keyword">for</span> t <span class="keyword">in</span> <span class="built_in">range</span>(N):</span><br><span class="line">    dx = gauss(mean, std*sqrt(dt))</span><br><span class="line">    dy = gauss(mean, std*sqrt(dt))</span><br><span class="line">    x, y = x+dx, y+dy</span><br><span class="line">    data.append((x, y))</span><br><span class="line"></span><br><span class="line">data = np.array(data)</span><br><span class="line"></span><br><span class="line">plt.figure()</span><br><span class="line">plt.plot(data[:, <span class="number">0</span>], data[:, <span class="number">1</span>], linewidth=<span class="number">0.5</span>)</span><br><span class="line">plt.scatter(data[<span class="number">0</span>, <span class="number">0</span>], data[<span class="number">0</span>, <span class="number">1</span>],marker=<span class="string">&quot;^&quot;</span>,color=<span class="string">&#x27;r&#x27;</span>,label=<span class="string">&quot;Origin&quot;</span>)</span><br><span class="line">plt.xlabel(<span class="string">&#x27;x&#x27;</span>)</span><br><span class="line">plt.ylabel(<span class="string">&#x27;y&#x27;</span>)</span><br><span class="line">plt.legend()</span><br><span class="line">plt.title(<span class="string">&quot;2D-Brownian motion&quot;</span>)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
+<img src="/2021/07/27/Brownian-motion/brownian_2d.png" class="" title="This is an image">
+<h2 id="d-brownian-motion-1">3D-Brownian Motion</h2>
+<p>The Brownian motion over 3-dim coordinate system is also trivial when
+you grasp the idea.</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">mean = <span class="number">0</span></span><br><span class="line">std = random()  <span class="comment"># standard deviation</span></span><br><span class="line"></span><br><span class="line">N = <span class="number">1000</span>    <span class="comment"># generate N points</span></span><br><span class="line">dt = <span class="number">1</span>/N    <span class="comment"># time interval = [0,1]</span></span><br><span class="line"></span><br><span class="line">data = []</span><br><span class="line">x, y, z = <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span></span><br><span class="line"><span class="keyword">for</span> t <span class="keyword">in</span> <span class="built_in">range</span>(N):</span><br><span class="line">    dx = gauss(mean, std*sqrt(dt))</span><br><span class="line">    dy = gauss(mean, std*sqrt(dt))</span><br><span class="line">    dz = gauss(mean, std*sqrt(dt))</span><br><span class="line">    x, y, z = x+dx, y+dy, z+dz</span><br><span class="line">    data.append((x, y, z))</span><br><span class="line"></span><br><span class="line">data = np.array(data)</span><br><span class="line"></span><br><span class="line">plt.figure()</span><br><span class="line">ax = plt.axes(projection=<span class="string">&#x27;3d&#x27;</span>)</span><br><span class="line">ax.plot3D(data[:, <span class="number">0</span>], data[:, <span class="number">1</span>], data[:, <span class="number">2</span>], linewidth=<span class="number">0.5</span>)</span><br><span class="line">ax.plot3D(data[<span class="number">0</span>, <span class="number">0</span>], data[<span class="number">0</span>, <span class="number">1</span>], data[<span class="number">0</span>, <span class="number">2</span>], marker=<span class="string">&#x27;^&#x27;</span>, color=<span class="string">&#x27;r&#x27;</span>)</span><br><span class="line">ax.set_xlabel(<span class="string">&#x27;x&#x27;</span>)</span><br><span class="line">ax.set_ylabel(<span class="string">&#x27;y&#x27;</span>)</span><br><span class="line">ax.set_zlabel(<span class="string">&#x27;z&#x27;</span>)</span><br><span class="line">ax.set_title(<span class="string">&#x27;3D-Brownian motion&#x27;</span>)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
+<img src="/2021/07/27/Brownian-motion/brownian_3d.png" class="" title="This is an image">
+<h2 id="geometric-brownian-motion">Geometric Brownian Motion</h2>
+<p>In finance, random fluctuations are quite common in stock prices or
+other derivatives and assets. To build the mathematical model upon the
+Brownian motion, we need to make a few tweaks because such prices would
+never be negative. A simple approach to tackling this is that we could
+assume the trend follows exponential growth or decay curves in the long
+run:</p>
+<p><span class="math display">\[ S(t) = s_0 \cdot e^{X(t)} = s_0 \cdot
+e^{\mu t + \sigma W(t)} \]</span></p>
+<p>, where <span class="math inline">\(S(t)\)</span> is the stock price
+at time <span class="math inline">\(t\)</span> and <span
+class="math inline">\(s_0\)</span> is the initial price. We use
+ 
+$ X(t) = \mu t + \sigma W(t) $ 
+ with drift parameter <span
+class="math inline">\(\mu\)</span> and <span
+class="math inline">\(W(t)\)</span> : the standard Brownian motion.
+Clearly, $ S(0) = s_0 $. The drift parameter can decide the trend for
+this model, whereas <span class="math inline">\(\sigma\)</span> implies
+the degree of unpredictability. This type of process is usually called
+<strong>exponential Brownian motion</strong> or <strong>geometric
+Brownian motion</strong>.</p>
+<h3 id="the-relationship-between-stock-prices-at-time-t">The
+Relationship between Stock Prices at Time <span
+class="math inline">\(t\)</span></h3>
+<p>As the model is established, we can observe the increments now lies
+in the ratio change</p>
+<p><span class="math display">\[
+\frac{S(t_i)}{S(t_{i-1})}  =
+e^{\mu(t_i - t_{i-1})} \cdot e^{\sigma [W(t_i) - W(t_{i-1}) ] }
+\]</span></p>
+<p>Therefore,</p>
+<p><span class="math display">\[
+\frac{S(t_1)}{S(t_0)} \sim
+\frac{S(t_2)}{S(t_1)} \sim
+\frac{S(t_3)}{S(t_2)}
+\dots
+\]</span></p>
+<p>, where $ dt = t_1-t_0 = t_2-t_1 = t_3-t_2 = $ ... .</p>
+<p>Below are a simple simulation of stock prices over the trading days
+in a year, with its initial at $10.</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">mean = random()</span><br><span class="line">std = random()</span><br><span class="line"></span><br><span class="line">N = <span class="number">253</span>     <span class="comment"># trading days in a year</span></span><br><span class="line">dt = <span class="number">1</span>/N</span><br><span class="line"></span><br><span class="line">x = <span class="number">10.0</span>    <span class="comment"># initial stock price</span></span><br><span class="line">data = [(<span class="number">0</span>, x)]</span><br><span class="line"><span class="keyword">for</span> t <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>, N):</span><br><span class="line">    ratio = exp(mean*dt) * exp(std * gauss(<span class="number">0</span>, sqrt(dt)))</span><br><span class="line">    x = x * ratio</span><br><span class="line">    data.append((dt*t, x))</span><br><span class="line"></span><br><span class="line">data = np.array(data)</span><br><span class="line"></span><br><span class="line">plt.figure()</span><br><span class="line">plt.plot(data[:, <span class="number">0</span>], data[:, <span class="number">1</span>], linewidth=<span class="number">0.5</span>)</span><br><span class="line">plt.plot(data[<span class="number">0</span>, <span class="number">0</span>], data[<span class="number">0</span>, <span class="number">1</span>], marker=<span class="string">&#x27;^&#x27;</span>, color=<span class="string">&#x27;r&#x27;</span>)</span><br><span class="line">plt.xlabel(<span class="string">&#x27;t&#x27;</span>)</span><br><span class="line">plt.ylabel(<span class="string">&#x27;price&#x27;</span>)</span><br><span class="line">plt.ylim([<span class="number">0</span>, <span class="built_in">max</span>(data[:,<span class="number">1</span>]+<span class="number">10</span>)])</span><br><span class="line">plt.title(<span class="string">&quot;Geometric Brownian motion&quot;</span>)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
+<img src="/2021/07/27/Brownian-motion/brownian_geo.png" class="" title="This is an image">
+]]></content>
+      <categories>
+        <category>Mathematics</category>
+        <category>Probability and Statistics</category>
+      </categories>
+      <tags>
+        <tag>Stochastic Process</tag>
+        <tag>Brownian Motion</tag>
+        <tag>Simulation</tag>
+        <tag>Python</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>[C++] Optimise the Efficiency when Using STL Containers - taking vector emplace_back as an example</title>
     <url>/2021/07/29/cpp-vector-emplace/</url>
     <content><![CDATA[<p>C++ provides a plethora of containers that allow us to dynamically
@@ -565,164 +723,6 @@ class="footnote-back" role="doc-backlink">↩︎</a></p></li>
       <tags>
         <tag>C++</tag>
         <tag>Optimisation</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Using Python to Simulate Brownian Motion</title>
-    <url>/2021/07/27/Brownian-motion/</url>
-    <content><![CDATA[<p><strong>Brownian motion</strong> is a phenomenon that particles in
-the seemingly motionless liquid are still undergone unceasing collisions
-in an erratic way. It was firstly observed by Robert Brown in 1827. In
-1923, Norbert Wiener had attempted to formulate this observations in
-mathematical terms; thus it is also known as <strong>Wiener
-process</strong>.</p>
-<p>Owing to its randomness, Brownian motion has a wide range of
-applications, ranging from chaotic oscillations to stock market
-fluctuations. In this article, I will describe its basic property and
-how to visualise it and its variants with Python.</p>
-<span id="more"></span>
-<h2 id="The-Model-of-Brownian-Motion">The Model of Brownian Motion</h2>
-<p>To begin with, we should see how to make Brownian motion in a rather
-formal way.</p>
-<p>We firstly consider one dimensional coordinate system for simplicity.
-Imagine that you put a particle at the origin (<span
-class="math inline">\(x = 0\)</span>) in the very beginning, and it may
-encounter random collisions along the <span
-class="math inline">\(x\)</span>-coordinate afterwards. Let <span
-class="math inline">\(X(t)\)</span> be the position of the particle
-after <span class="math inline">\(t\)</span> units of time (<span
-class="math inline">\(X(0) = 0\)</span>).</p>
-<p>When the particle is undergone some collisions, we say there are
-events occurred. From physical obervations, scientists find that the
-probability of events occurred in any two equal time intervals, say
-<span class="math inline">\([s, t]\)</span> and <span
-class="math inline">\([s+h, t+h]\)</span>, are not only equal but also
-indepedent. In other words, they have the same probability distribution,
-and no matter how many events occurred in <span
-class="math inline">\([s, t]\)</span>, it would not affect the number of
-events occurred over <span class="math inline">\([s+h, t+h]\)</span>.
-This can be represented as</p>
-<p><span class="math display">\[ X(t) - X(s) \sim X(t+h) - X(s+h)
-\]</span></p>
-<p>Actually, such property that they possess stationary and independent
-increments are usually called <strong>stationary increments</strong>.
-This is the bedrock of Brownian motion.</p>
-<p>Thus, if $ t_1- t_0 = t_2-t_1 = t_3-t_2 = t_4-t_3 = $ ... ,</p>
-<p><span class="math display">\[  X(t_1)-X(t_0)
-\sim X(t_2)-X(t_1)
-\sim X(t_3)-X(t_2)
-\sim X(t_4)-X(t_3)
-\dots  
-\tag{1}
-\]</span></p>
-<p>For <span class="math inline">\(t&gt;s&gt;0\)</span>, we tend to
-assume increments are normal distribution:</p>
-<p><span class="math display">\[ X(t+s) - X(s) \sim \mathcal{N} (0,
-\sigma^2 t) \tag{2}\]</span></p>
-<p>If  $ \sigma = 1, $  it is also known as a <strong>standard Brownian
-motion</strong>, $ W(t) $.</p>
-<p>It is worth noting that the path of Brownian motion is <em>everywhere
-continuous but nowhere differentiable</em>.</p>
-<h2 id="visualise-the-brownian-motion">Visualise the Brownian
-Motion</h2>
-<p>Now we are ready to draw our Brownian motion in Python.</p>
-<h3 id="some-toolkits">Some Toolkits</h3>
-<p>Below are the modules we will use to draw our plots.</p>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> math <span class="keyword">import</span> sqrt, exp</span><br><span class="line"><span class="keyword">from</span> random <span class="keyword">import</span> random, gauss</span><br><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br></pre></td></tr></table></figure>
-<h3 id="visualisation">Visualisation</h3>
-<p>As shown in <span class="math inline">\((1)\)</span> and <span
-class="math inline">\((2),\)</span> the increments between any equal
-time interval share the same Gaussian distribution. We are able to
-compute <span class="math inline">\(X(t)\)</span> iteratively, i.e.</p>
-
-$$
-\displaylines {
-X(t_1) \sim X(t_0) + \mathcal{N} (0, dt \cdot \sigma^2) \\
-X(t_2) \sim X(t_1) + \mathcal{N} (0, dt \cdot \sigma^2) \\
-X(t_3) \sim X(t_2) + \mathcal{N} (0, dt \cdot \sigma^2) \\
-\dots  
-}
-$$
-
-<p>, where $ dt = t_1-t_0 = t_2-t_1 = t_3-t_2 = $ ... .</p>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">mean = <span class="number">0</span></span><br><span class="line">std = random()  <span class="comment"># standard deviation</span></span><br><span class="line"></span><br><span class="line">N = <span class="number">1000</span>    <span class="comment"># generate N points</span></span><br><span class="line">dt = <span class="number">1</span>/N    <span class="comment"># time interval = [0,1]</span></span><br><span class="line"></span><br><span class="line">data = []</span><br><span class="line">x = <span class="number">0</span></span><br><span class="line"><span class="keyword">for</span> t <span class="keyword">in</span> <span class="built_in">range</span>(N):</span><br><span class="line">    dx = gauss(mean, std*sqrt(dt))  <span class="comment"># gauss(mean, standard deviation)</span></span><br><span class="line">    x = x + dx                      <span class="comment"># compute X(t) incrementally</span></span><br><span class="line">    data.append((dt*t, x+dx))</span><br><span class="line"></span><br><span class="line">data = np.array(data)</span><br><span class="line"></span><br><span class="line">plt.figure()</span><br><span class="line">plt.plot(data[:, <span class="number">0</span>], data[:, <span class="number">1</span>], linewidth=<span class="number">0.5</span>)</span><br><span class="line">plt.scatter(data[<span class="number">0</span>, <span class="number">0</span>], data[<span class="number">0</span>, <span class="number">1</span>],marker=<span class="string">&quot;^&quot;</span>,color=<span class="string">&#x27;r&#x27;</span>,label=<span class="string">&quot;Origin&quot;</span>)</span><br><span class="line">plt.xlabel(<span class="string">&#x27;t&#x27;</span>)</span><br><span class="line">plt.ylabel(<span class="string">&#x27;x&#x27;</span>)</span><br><span class="line">plt.legend()</span><br><span class="line">plt.title(<span class="string">&quot;Brownian motion&quot;</span>)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
-<img src="/2021/07/27/Brownian-motion/brownian.png" class="" title="This is an image">
-<h2 id="d-brownian-motion">2D-Brownian Motion</h2>
-<p>Similarly, if we extend our coordinate system to two dimensions,</p>
-
-$$
-\displaylines {
-X(t_1) \sim X(t_0) + \mathcal{N} (0, dt \cdot \sigma^2) \; \; \; \; \; 
-Y(t_1) \sim Y(t_0) + \mathcal{N} (0, dt \cdot \sigma^2) \\
-X(t_2) \sim X(t_1) + \mathcal{N} (0, dt \cdot \sigma^2) \; \; \; \; \; 
-Y(t_2) \sim Y(t_1) + \mathcal{N} (0, dt \cdot \sigma^2) \\
-X(t_3) \sim X(t_2) + \mathcal{N} (0, dt \cdot \sigma^2) \; \; \; \; \; 
-Y(t_3) \sim Y(t_2) + \mathcal{N} (0, dt \cdot \sigma^2) \\
-\dots  
-}
-$$
-
-<p>, where $ dt = t_1-t_0 = t_2-t_1 = t_3-t_2 = $ ... .</p>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">mean = <span class="number">0</span></span><br><span class="line">std = random()</span><br><span class="line"></span><br><span class="line">N = <span class="number">1000</span>    <span class="comment"># generate N points</span></span><br><span class="line">dt = <span class="number">1</span>/N    <span class="comment"># time interval = [0,1]</span></span><br><span class="line"></span><br><span class="line">data = []</span><br><span class="line">x, y = <span class="number">0</span>, <span class="number">0</span></span><br><span class="line"><span class="keyword">for</span> t <span class="keyword">in</span> <span class="built_in">range</span>(N):</span><br><span class="line">    dx = gauss(mean, std*sqrt(dt))</span><br><span class="line">    dy = gauss(mean, std*sqrt(dt))</span><br><span class="line">    x, y = x+dx, y+dy</span><br><span class="line">    data.append((x, y))</span><br><span class="line"></span><br><span class="line">data = np.array(data)</span><br><span class="line"></span><br><span class="line">plt.figure()</span><br><span class="line">plt.plot(data[:, <span class="number">0</span>], data[:, <span class="number">1</span>], linewidth=<span class="number">0.5</span>)</span><br><span class="line">plt.scatter(data[<span class="number">0</span>, <span class="number">0</span>], data[<span class="number">0</span>, <span class="number">1</span>],marker=<span class="string">&quot;^&quot;</span>,color=<span class="string">&#x27;r&#x27;</span>,label=<span class="string">&quot;Origin&quot;</span>)</span><br><span class="line">plt.xlabel(<span class="string">&#x27;x&#x27;</span>)</span><br><span class="line">plt.ylabel(<span class="string">&#x27;y&#x27;</span>)</span><br><span class="line">plt.legend()</span><br><span class="line">plt.title(<span class="string">&quot;2D-Brownian motion&quot;</span>)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
-<img src="/2021/07/27/Brownian-motion/brownian_2d.png" class="" title="This is an image">
-<h2 id="d-brownian-motion-1">3D-Brownian Motion</h2>
-<p>The Brownian motion over 3-dim coordinate system is also trivial when
-you grasp the idea.</p>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">mean = <span class="number">0</span></span><br><span class="line">std = random()  <span class="comment"># standard deviation</span></span><br><span class="line"></span><br><span class="line">N = <span class="number">1000</span>    <span class="comment"># generate N points</span></span><br><span class="line">dt = <span class="number">1</span>/N    <span class="comment"># time interval = [0,1]</span></span><br><span class="line"></span><br><span class="line">data = []</span><br><span class="line">x, y, z = <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span></span><br><span class="line"><span class="keyword">for</span> t <span class="keyword">in</span> <span class="built_in">range</span>(N):</span><br><span class="line">    dx = gauss(mean, std*sqrt(dt))</span><br><span class="line">    dy = gauss(mean, std*sqrt(dt))</span><br><span class="line">    dz = gauss(mean, std*sqrt(dt))</span><br><span class="line">    x, y, z = x+dx, y+dy, z+dz</span><br><span class="line">    data.append((x, y, z))</span><br><span class="line"></span><br><span class="line">data = np.array(data)</span><br><span class="line"></span><br><span class="line">plt.figure()</span><br><span class="line">ax = plt.axes(projection=<span class="string">&#x27;3d&#x27;</span>)</span><br><span class="line">ax.plot3D(data[:, <span class="number">0</span>], data[:, <span class="number">1</span>], data[:, <span class="number">2</span>], linewidth=<span class="number">0.5</span>)</span><br><span class="line">ax.plot3D(data[<span class="number">0</span>, <span class="number">0</span>], data[<span class="number">0</span>, <span class="number">1</span>], data[<span class="number">0</span>, <span class="number">2</span>], marker=<span class="string">&#x27;^&#x27;</span>, color=<span class="string">&#x27;r&#x27;</span>)</span><br><span class="line">ax.set_xlabel(<span class="string">&#x27;x&#x27;</span>)</span><br><span class="line">ax.set_ylabel(<span class="string">&#x27;y&#x27;</span>)</span><br><span class="line">ax.set_zlabel(<span class="string">&#x27;z&#x27;</span>)</span><br><span class="line">ax.set_title(<span class="string">&#x27;3D-Brownian motion&#x27;</span>)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
-<img src="/2021/07/27/Brownian-motion/brownian_3d.png" class="" title="This is an image">
-<h2 id="geometric-brownian-motion">Geometric Brownian Motion</h2>
-<p>In finance, random fluctuations are quite common in stock prices or
-other derivatives and assets. To build the mathematical model upon the
-Brownian motion, we need to make a few tweaks because such prices would
-never be negative. A simple approach to tackling this is that we could
-assume the trend follows exponential growth or decay curves in the long
-run:</p>
-<p><span class="math display">\[ S(t) = s_0 \cdot e^{X(t)} = s_0 \cdot
-e^{\mu t + \sigma W(t)} \]</span></p>
-<p>, where <span class="math inline">\(S(t)\)</span> is the stock price
-at time <span class="math inline">\(t\)</span> and <span
-class="math inline">\(s_0\)</span> is the initial price. We use
- 
-$ X(t) = \mu t + \sigma W(t) $ 
- with drift parameter <span
-class="math inline">\(\mu\)</span> and <span
-class="math inline">\(W(t)\)</span> : the standard Brownian motion.
-Clearly, $ S(0) = s_0 $. The drift parameter can decide the trend for
-this model, whereas <span class="math inline">\(\sigma\)</span> implies
-the degree of unpredictability. This type of process is usually called
-<strong>exponential Brownian motion</strong> or <strong>geometric
-Brownian motion</strong>.</p>
-<h3 id="the-relationship-between-stock-prices-at-time-t">The
-Relationship between Stock Prices at Time <span
-class="math inline">\(t\)</span></h3>
-<p>As the model is established, we can observe the increments now lies
-in the ratio change</p>
-<p><span class="math display">\[
-\frac{S(t_i)}{S(t_{i-1})}  =
-e^{\mu(t_i - t_{i-1})} \cdot e^{\sigma [W(t_i) - W(t_{i-1}) ] }
-\]</span></p>
-<p>Therefore,</p>
-<p><span class="math display">\[
-\frac{S(t_1)}{S(t_0)} \sim
-\frac{S(t_2)}{S(t_1)} \sim
-\frac{S(t_3)}{S(t_2)}
-\dots
-\]</span></p>
-<p>, where $ dt = t_1-t_0 = t_2-t_1 = t_3-t_2 = $ ... .</p>
-<p>Below are a simple simulation of stock prices over the trading days
-in a year, with its initial at $10.</p>
-<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">mean = random()</span><br><span class="line">std = random()</span><br><span class="line"></span><br><span class="line">N = <span class="number">253</span>     <span class="comment"># trading days in a year</span></span><br><span class="line">dt = <span class="number">1</span>/N</span><br><span class="line"></span><br><span class="line">x = <span class="number">10.0</span>    <span class="comment"># initial stock price</span></span><br><span class="line">data = [(<span class="number">0</span>, x)]</span><br><span class="line"><span class="keyword">for</span> t <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>, N):</span><br><span class="line">    ratio = exp(mean*dt) * exp(std * gauss(<span class="number">0</span>, sqrt(dt)))</span><br><span class="line">    x = x * ratio</span><br><span class="line">    data.append((dt*t, x))</span><br><span class="line"></span><br><span class="line">data = np.array(data)</span><br><span class="line"></span><br><span class="line">plt.figure()</span><br><span class="line">plt.plot(data[:, <span class="number">0</span>], data[:, <span class="number">1</span>], linewidth=<span class="number">0.5</span>)</span><br><span class="line">plt.plot(data[<span class="number">0</span>, <span class="number">0</span>], data[<span class="number">0</span>, <span class="number">1</span>], marker=<span class="string">&#x27;^&#x27;</span>, color=<span class="string">&#x27;r&#x27;</span>)</span><br><span class="line">plt.xlabel(<span class="string">&#x27;t&#x27;</span>)</span><br><span class="line">plt.ylabel(<span class="string">&#x27;price&#x27;</span>)</span><br><span class="line">plt.ylim([<span class="number">0</span>, <span class="built_in">max</span>(data[:,<span class="number">1</span>]+<span class="number">10</span>)])</span><br><span class="line">plt.title(<span class="string">&quot;Geometric Brownian motion&quot;</span>)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
-<img src="/2021/07/27/Brownian-motion/brownian_geo.png" class="" title="This is an image">
-]]></content>
-      <categories>
-        <category>Mathematics</category>
-        <category>Probability and Statistics</category>
-      </categories>
-      <tags>
-        <tag>Stochastic Process</tag>
-        <tag>Brownian Motion</tag>
-        <tag>Simulation</tag>
-        <tag>Python</tag>
       </tags>
   </entry>
   <entry>
@@ -1211,8 +1211,8 @@ role="doc-backlink">↩︎</a></p></li>
         <category>Machine Learning</category>
       </categories>
       <tags>
-        <tag>Optimisation</tag>
         <tag>Python</tag>
+        <tag>Optimisation</tag>
         <tag>Kernel Method</tag>
         <tag>SVM</tag>
       </tags>
@@ -1286,6 +1286,152 @@ class="footnote-back" role="doc-backlink">↩︎</a></p></li>
       <tags>
         <tag>C++</tag>
         <tag>Optimisation</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>[C++] Implement std::decay from scratch</title>
+    <url>/2023/05/27/cpp-implement-decay/</url>
+    <content><![CDATA[<p>Since C++11, <code>std::decay</code> is introduced along with
+<code>&lt;type_traits&gt;</code>. It is used to <em>decay</em> a type,
+or to convert a type into its corresponding <strong>by-value</strong>
+type. It will remove any top-level cv-qualifiers(<code>const</code>,
+<code>volatile</code>) and reference qualifiers for the specified type.
+For example, <code>int&amp;</code> is turned into <code>int</code> and
+an array type becomes a pointer to its element types. Knowing its usage,
+we could try to implement our own version of
+<code>std::decay</code>.</p>
+<span id="more"></span>
+<p>For <code>std::decay&lt;T&gt;</code>, the transformation of type
+<code>T</code> contains following parts:</p>
+<ul>
+<li>Removing references</li>
+<li>Removing cv-qualifiers (<code>const</code> and
+<code>volatile</code>)</li>
+<li>For an array type, yielding a pointer to its element type</li>
+<li>For a function type, yiedling its function pointer type</li>
+</ul>
+<h2 id="removing-references">Removing References</h2>
+<p>Firstly, we implement <code>RemoveReferenceT</code> trait to remove
+references:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">RemoveReferenceT</span> &#123;</span></span><br><span class="line">    <span class="keyword">using</span> Type = T;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// remove lvalue reference</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">RemoveReferenceT</span>&lt;</span>T&amp;&gt; &#123;</span><br><span class="line">    <span class="keyword">using</span> Type = T;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// remove ravlue reference</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">RemoveReferenceT</span>&lt;</span>T&amp;&amp;&gt; &#123;</span><br><span class="line">    <span class="keyword">using</span> Type = T;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// alias for usage convenience</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">using</span> RemoveReference = <span class="keyword">typename</span> RemoveReferenceT&lt;T&gt;::Type;</span><br></pre></td></tr></table></figure>
+<p>Results:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">RemoveReference&lt;<span class="keyword">int</span>&gt;          <span class="comment">// int</span></span><br><span class="line">RemoveReference&lt;<span class="keyword">int</span>&amp;&gt;         <span class="comment">// int</span></span><br><span class="line">RemoveReference&lt;<span class="keyword">int</span>&amp;&amp;&gt;        <span class="comment">// int</span></span><br><span class="line">RemoveReference&lt;<span class="keyword">const</span> <span class="keyword">int</span>&gt;    <span class="comment">// const int</span></span><br><span class="line">RemoveReference&lt;<span class="keyword">const</span> <span class="keyword">int</span>&amp;&gt;   <span class="comment">// const int</span></span><br></pre></td></tr></table></figure>
+<p>The corresponding type trait in C++ STL is <a
+href="https://en.cppreference.com/w/cpp/types/remove_reference">std::remove_reference</a></p>
+<h2 id="removing-cv-qualifiers">Removing cv-qualifiers</h2>
+<p>Then, <code>RemoveConstT</code> and <code>RemoveVolatileT</code> are
+to remove <code>const</code> and <code>volatile</code> qualifiers,
+respectively:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">RemoveConstT</span> &#123;</span></span><br><span class="line">	<span class="keyword">using</span> Type = T;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// remove const</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">RemoveConstT</span>&lt;</span><span class="keyword">const</span> T&gt; &#123;</span><br><span class="line">	<span class="keyword">using</span> Type = T;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// alias for usage convenience</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">using</span> RemoveConst = <span class="keyword">typename</span> RemoveConstT&lt;T&gt;::Type;</span><br></pre></td></tr></table></figure>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">RemoveVolatileT</span> &#123;</span></span><br><span class="line">	<span class="keyword">using</span> Type = T;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// remove volatile</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">RemoveVolatileT</span>&lt;</span><span class="keyword">volatile</span> T&gt; &#123;</span><br><span class="line">	<span class="keyword">using</span> Type = T;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// alias for usage convenience</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">using</span> RemoveVolatile = <span class="keyword">typename</span> RemoveVolatileT&lt;T&gt;::Type;</span><br></pre></td></tr></table></figure>
+<p><code>RemoveConstT</code> and <code>RemoveVolatileT</code> can be
+composed into <code>RemoveCVT</code>:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="comment">// metafunction forwarding: inherit the Type member from RemoveConstT</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">RemoveCVT</span> :</span> RemoveConstT&lt;RemoveVolatile&lt;T&gt;&gt; &#123;&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// alias for usage convenience</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">using</span> RemoveCV = <span class="keyword">typename</span> RemoveCVT&lt;T&gt;::Type;</span><br></pre></td></tr></table></figure>
+<p>Results:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">RemoveCV&lt;<span class="keyword">int</span>&gt;                  <span class="comment">// int</span></span><br><span class="line">RemoveCV&lt;<span class="keyword">const</span> <span class="keyword">int</span>&gt;            <span class="comment">// int</span></span><br><span class="line">RemoveCV&lt;<span class="keyword">volatile</span> <span class="keyword">int</span>&gt;         <span class="comment">// int</span></span><br><span class="line">RemoveCV&lt;<span class="keyword">const</span> <span class="keyword">volatile</span> <span class="keyword">int</span>&gt;   <span class="comment">// int</span></span><br><span class="line"></span><br><span class="line">RemoveCV&lt;<span class="keyword">const</span> <span class="keyword">volatile</span> <span class="keyword">int</span>*&gt;  <span class="comment">// const volatile int*</span></span><br><span class="line">RemoveCV&lt;<span class="keyword">int</span>* <span class="keyword">const</span> <span class="keyword">volatile</span>&gt;  <span class="comment">// int*</span></span><br></pre></td></tr></table></figure>
+<p>The corresponding type traits in C++ STL: <a
+href="https://en.cppreference.com/w/cpp/types/remove_cv">std::remove_cv,
+std::remove_const, std::remove_volatile</a></p>
+<blockquote>
+<p>Note that <code>const volatile int*</code> is not changed because the
+pointer itself is neither const or volatile. (See <a
+href="https://learn.microsoft.com/en-us/cpp/cpp/const-and-volatile-pointers?view=msvc-170">const
+and volatile pointers</a>)</p>
+</blockquote>
+<p>With <code>RemoveReference</code> and <code>RemoveCVT</code> traits
+above, we can get a decay trait for nonarray and nonfunction cases:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="comment">// remove reference firstly and then cv-qualifier</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">DecayT</span> :</span> RemoveCVT&lt;RemoveReference&lt;T&gt;&gt; &#123;&#125;;</span><br></pre></td></tr></table></figure>
+<p>We name our version <code>DecayT</code> in order not to confuse with
+original <code>std::decay</code>.</p>
+<h2 id="array-to-pointer-decay">Array-to-pointer Decay</h2>
+<p>Now we take array types into account. Below are partial
+specialisations to convert an array type into a pointer to its element
+type:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="comment">// unbounded array</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">DecayT</span>&lt;</span>T[]&gt; &#123;</span><br><span class="line">	<span class="keyword">using</span> Type = T*;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// bounded array</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, std::<span class="keyword">size_t</span> N&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">DecayT</span>&lt;</span>T[N]&gt; &#123;</span><br><span class="line">	<span class="keyword">using</span> Type = T*;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>Similarly, C++ STL provides <a
+href="https://en.cppreference.com/w/cpp/types/is_array">std::is_array</a>
+to check whether <code>T</code> is an array type.</p>
+<h2 id="function-to-pointer-decay">Function-to-pointer Decay</h2>
+<p>We want to recognise a function regardless of its return type and
+parameter types, and then get its function pointer. Because there are
+different number of parameters, we need to employ variadic
+templates:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Ret, <span class="keyword">typename</span>...Args&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">DecayT</span>&lt;</span><span class="built_in">Ret</span>(Args...)&gt; &#123;</span><br><span class="line">	<span class="keyword">using</span> Type = <span class="built_in">Ret</span>(*)(Args...);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// specialisation for variadic function</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Ret, <span class="keyword">typename</span>...Args&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">DecayT</span>&lt;</span><span class="built_in">Ret</span>(Args..., ...)&gt; &#123;</span><br><span class="line">	<span class="keyword">using</span> Type = <span class="built_in">Ret</span>(*)(Args..., ...);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>C++ STL also provides <a
+href="https://en.cppreference.com/w/cpp/types/is_function">std::is_function</a>
+to check the function type.</p>
+<blockquote>
+<p>It is worth mentioning that many compilers nowadays use fundamental
+properties to check a function type for better performance instead<a
+href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a>: <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">!std::is_const&lt;<span class="keyword">const</span> T&gt;::value &amp;&amp; !std::is_reference&lt;T&gt;::value</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>Functions are not objects; thus, <code>const</code> cannot be
+applied</li>
+<li>When <code>const T</code> fails to be a const-qualified type,
+<code>T</code> is either a function type or a reference type</li>
+<li>We can rule out reference types to get only with function types for
+<code>T</code></li>
+</ul>
+</blockquote>
+<p>Now, with alias template for convenience, we could get our own
+version of decay trait, <code>Decay</code>:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">using</span> Decay = <span class="keyword">typename</span> DecayT&lt;T&gt;::Type;</span><br></pre></td></tr></table></figure>
+<p>Results:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">Decay&lt;<span class="keyword">int</span>&amp;&gt;         <span class="comment">// int</span></span><br><span class="line">Decay&lt;<span class="keyword">const</span> <span class="keyword">int</span>&gt;    <span class="comment">// int</span></span><br><span class="line">Decay&lt;<span class="keyword">int</span> <span class="keyword">const</span>&amp;&gt;   <span class="comment">// int</span></span><br><span class="line">Decay&lt;<span class="keyword">int</span>[]&gt;        <span class="comment">// int*</span></span><br><span class="line">Decay&lt;<span class="keyword">int</span>[<span class="number">3</span>]&gt;       <span class="comment">// int*</span></span><br><span class="line">Decay&lt;<span class="keyword">int</span>[<span class="number">3</span>][<span class="number">2</span>]&gt;    <span class="comment">// int*</span></span><br><span class="line">Decay&lt;<span class="built_in"><span class="keyword">int</span></span>(<span class="keyword">int</span>)&gt;     <span class="comment">// int(*)(int)</span></span><br></pre></td></tr></table></figure>
+<h2 id="in-comparison-with-stddecay">In Comparison with
+<code>std::decay</code></h2>
+<p>In fact, <a
+href="https://timsong-cpp.github.io/cppwp/n4659/meta.trans.other#tab:type-traits.other">C++
+standard defines std::decay</a> as:</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Template</th>
+<th>Comments</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>template &lt;class T&gt; struct decay;</code></td>
+<td>Let U be <code>remove_­reference_­t&lt;T&gt;</code>. If
+<code>is_­array_­v&lt;U&gt;</code> is true, the member typedef type shall
+equal <code>remove_­extent_­t&lt;U&gt;*</code>. If
+<code>is_­function_­v&lt;U&gt;</code> is true, the member typedef type
+shall equal <code>add_­pointer_­t&lt;U&gt;</code>. Otherwise the member
+typedef type equals <code>remove_­cv_­t&lt;U&gt;</code>. [ Note: This
+behavior is similar to the lvalue-to-rvalue, array-to-pointer, and
+function-to-pointer conversions applied when an lvalue expression is
+used as an rvalue, but also strips cv-qualifiers from class types in
+order to more closely model by-value argument passing.  — end
+note ]</td>
+</tr>
+</tbody>
+</table>
+<p>Most compilers directly follow the comments to implement the decay
+trait. Our own version in this article is basically a step-by-step
+implementation mentioned in the note for pedagogical purposes.</p>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p><a
+href="https://stackoverflow.com/questions/59654482/how-is-stdis-function-implemented">How
+is std::is_function implemented?</a><a href="#fnref1"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+]]></content>
+      <categories>
+        <category>Programming Language</category>
+        <category>C++</category>
+      </categories>
+      <tags>
+        <tag>C++</tag>
       </tags>
   </entry>
 </search>

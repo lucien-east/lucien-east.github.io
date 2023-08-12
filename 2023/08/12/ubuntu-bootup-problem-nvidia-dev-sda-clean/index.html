@@ -20,17 +20,21 @@
     var CONFIG = {"hostname":"lucien-east.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="Let the light settle your heart">
-<meta property="og:type" content="website">
-<meta property="og:title" content="East TechNote">
-<meta property="og:url" content="https://lucien-east.github.io/archives/2023/05/index.html">
+  <meta name="description" content="有時候開機會莫名出現以下相關的訊息後就卡住了 &#x2F;dev&#x2F;sda*: clean, *******&#x2F;******* files 排查了一下發現問題常常是出在 Nvidia 的 driver 沒有正確被啟動">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[Ubuntu] 開機畫面卡在 &#x2F;dev&#x2F;sda*: clean, *&#x2F;* files ">
+<meta property="og:url" content="https://lucien-east.github.io/2023/08/12/ubuntu-bootup-problem-nvidia-dev-sda-clean/index.html">
 <meta property="og:site_name" content="East TechNote">
-<meta property="og:description" content="Let the light settle your heart">
-<meta property="og:locale" content="en_US">
+<meta property="og:description" content="有時候開機會莫名出現以下相關的訊息後就卡住了 &#x2F;dev&#x2F;sda*: clean, *******&#x2F;******* files 排查了一下發現問題常常是出在 Nvidia 的 driver 沒有正確被啟動">
+<meta property="og:locale" content="zh_TW">
+<meta property="article:published_time" content="2023-08-12T05:45:45.000Z">
+<meta property="article:modified_time" content="2023-08-12T06:46:35.544Z">
 <meta property="article:author" content="East">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="Ubuntu">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://lucien-east.github.io/archives/2023/05/">
+<link rel="canonical" href="https://lucien-east.github.io/2023/08/12/ubuntu-bootup-problem-nvidia-dev-sda-clean/">
 
 
 <script id="page-configurations">
@@ -38,12 +42,12 @@
   CONFIG.page = {
     sidebar: "",
     isHome : false,
-    isPost : false,
-    lang   : 'en'
+    isPost : true,
+    lang   : 'zh-tw'
   };
 </script>
 
-  <title>Archive | East TechNote</title>
+  <title>[Ubuntu] 開機畫面卡在 /dev/sda*: clean, */* files  | East TechNote</title>
   
 
 
@@ -186,70 +190,112 @@
         <div class="content-wrap">
           
 
-          <div class="content archive">
+          <div class="content post posts-expand">
             
 
+    
   
   
-  
-  <div class="post-block">
-    <div class="posts-collapse">
-      <div class="collection-title">
-        
-      </div>
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-tw">
+    <link itemprop="mainEntityOfPage" href="https://lucien-east.github.io/2023/08/12/ubuntu-bootup-problem-nvidia-dev-sda-clean/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="East">
+      <meta itemprop="description" content="Let the light settle your heart">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="East TechNote">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          [Ubuntu] 開機畫面卡在 /dev/sda*: clean, */* files 
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2023-08-12 13:45:45 / Modified: 14:46:35" itemprop="dateCreated datePublished" datetime="2023-08-12T13:45:45+08:00">2023-08-12</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Environment-SetUp/" itemprop="url" rel="index"><span itemprop="name">Environment SetUp</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
 
       
-    <div class="collection-year">
-      <span class="collection-header">2023</span>
-    </div>
-
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2023-05-27T08:52:20+08:00"
-              content="2023-05-27">
-          05-27
-        </time>
-      </div>
-
-      <div class="post-title">
-          <a class="post-title-link" href="/2023/05/27/cpp-implement-decay/" itemprop="url">
-            <span itemprop="name">[C++] Implement std::decay from scratch</span>
-          </a>
-      </div>
-
-    </header>
-  </article>
-
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2023-05-20T13:55:07+08:00"
-              content="2023-05-20">
-          05-20
-        </time>
-      </div>
-
-      <div class="post-title">
-          <a class="post-title-link" href="/2023/05/20/cpp-a-note-about-template-copy-move-constructor/" itemprop="url">
-            <span itemprop="name">[C++] A Note about Template Copy/Move Constructor</span>
-          </a>
-      </div>
-
-    </header>
-  </article>
-
+        <p>有時候開機會莫名出現以下相關的訊息後就卡住了</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">/dev/sda*: clean, *******/******* files</span><br></pre></td></tr></table></figure>
+<p>排查了一下發現問題常常是出在 Nvidia 的 driver 沒有正確被啟動</p>
+<span id="more"></span>
+<h2 id="enable-bootup-verbose-mode-from-grub">Enable Bootup Verbose Mode
+from GRUB</h2>
+<p>首先在開機時要能夠顯示更加詳細的訊息來除錯</p>
+<p>修改 <code>/etc/default/grub</code> 這支file</p>
+<p>預設模式是 <code>quiet splash</code></p>
+<p>一般來說改為空字串就足夠定位出錯誤發生的地方</p>
+<p>使用 <code>--verbose nosplash debug</code> 則可以顯示更多開機細節</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">...</span><br><span class="line"></span><br><span class="line"><span class="comment">#GRUB_CMDLINE_LINUX_DEFAULT=&quot;quiet splash&quot;</span></span><br><span class="line">GRUB_CMDLINE_LINUX_DEFAULT=<span class="string">&quot;&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># more log from upstart</span></span><br><span class="line"><span class="comment">#GRUB_CMDLINE_LINUX_DEFAULT=&quot;--verbose nosplash debug&quot;</span></span><br></pre></td></tr></table></figure>
+<p>更改完後要記得更新 GRUB 的設定 並重開機</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo update-grub</span><br><span class="line">sudo reboot</span><br></pre></td></tr></table></figure>
+<p>從 Bootup Log 裡可以確認出 Nvidia service
+有問題導致無法順利正常開機</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">...</span><br><span class="line"></span><br><span class="line">[FAILED] Failed to start NVIDIA Persistence.</span><br><span class="line"></span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<h2 id="重新安裝-nvidia-driver">重新安裝 Nvidia driver</h2>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt purge nvidia*    <span class="comment"># remove nvidia* packages</span></span><br><span class="line">sudo ubuntu-drivers autoinstall</span><br><span class="line">sudo reboot</span><br></pre></td></tr></table></figure>
+<p><code>autoinstall</code> 會自動幫你找到適合的下載版本</p>
+<p>如果找不到可以再自行去 <a
+target="_blank" rel="noopener" href="https://www.nvidia.com/Download/index.aspx?lang=en-us">Nvidia
+Download Drivers 官網</a> 來安裝需要的版本</p>
 
     </div>
-  </div>
-  
-  
-  
 
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"># Linux</a>
+              <a href="/tags/Ubuntu/" rel="tag"># Ubuntu</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/05/27/cpp-implement-decay/" rel="prev" title="[C++] Implement std::decay from scratch">
+      <i class="fa fa-chevron-left"></i> [C++] Implement std::decay from scratch
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
   
 
 
@@ -302,6 +348,8 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#enable-bootup-verbose-mode-from-grub"><span class="nav-number">1.</span> <span class="nav-text">Enable Bootup Verbose Mode
+from GRUB</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%87%8D%E6%96%B0%E5%AE%89%E8%A3%9D-nvidia-driver"><span class="nav-number">2.</span> <span class="nav-text">重新安裝 Nvidia driver</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 

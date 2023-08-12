@@ -906,6 +906,223 @@ href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
       </tags>
   </entry>
   <entry>
+    <title>[C++] A Note about Template Copy/Move Constructor</title>
+    <url>/2023/05/20/cpp-a-note-about-template-copy-move-constructor/</url>
+    <content><![CDATA[<p>In C++, even though a function generated from a function template has
+the same name and the same type as the ordinary function, they are
+<strong>never equivalent</strong>. Besides, the <a
+href="https://en.cppreference.com/w/cpp/language/overload_resolution#Best_viable_function">non-template
+function is more preferred</a>:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">foo</span><span class="params">(T)</span> </span>&#123; std::cout &lt;&lt; <span class="string">&quot;template foo()&quot;</span> &lt;&lt; std::endl; &#125;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">foo</span><span class="params">(<span class="keyword">int</span>)</span> </span>&#123; std::cout &lt;&lt; <span class="string">&quot;ordinary foo()&quot;</span> &lt;&lt; std::endl; &#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">foo</span>(<span class="number">5</span>);     <span class="comment">// print &quot;oridinary foo()&quot;</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>On top of that, it is not easy to templify a copy/move constructor
+because the compiler may implicitly define a copy/move constructor.</p>
+<span id="more"></span>
+<h2 id="example">Example</h2>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Obj</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Obj</span>() &#123;&#125;</span><br><span class="line">    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line">    <span class="built_in">Obj</span> (<span class="keyword">const</span> T&amp;) &#123; std::cout &lt;&lt; <span class="string">&quot;template copy ctor&quot;</span> &lt;&lt; std::endl; &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>It still uses the predefined copy constructor:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">Obj a;</span><br><span class="line">Obj b&#123;a&#125;;   <span class="comment">// use the predefined copy constructor rather than the template one</span></span><br></pre></td></tr></table></figure>
+<p><strong>The reason is that a member function template is never a <a
+href="https://en.cppreference.com/w/cpp/language/member_functions">special
+member function</a> and can be ignored when the latter is
+needed</strong>. Taking the above for an instance, the implicitly
+generated copy constructor is chosen.</p>
+<h2 id="deleting-predefined-copy-constructor">Deleting Predefined Copy
+Constructor</h2>
+<p>One may want to delete the the predefined copy constructor:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Obj</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Obj</span>() &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">Obj</span>(<span class="keyword">const</span> Obj&amp;) = <span class="keyword">delete</span>;   <span class="comment">// copying Obj results in an error</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line">    <span class="built_in">Obj</span> (<span class="keyword">const</span> T&amp;) &#123; std::cout &lt;&lt; <span class="string">&quot;template copy ctor&quot;</span> &lt;&lt; std::endl; &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>However, this would result in an error when trying to copy
+<code>Obj</code>:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">Obj a;</span><br><span class="line">Obj b&#123;a&#125;;   <span class="comment">// error: call to deleted constructor of &#x27;Obj&#x27;</span></span><br></pre></td></tr></table></figure>
+<h2 id="const-volatile-trick"><code>const volatile</code> Trick</h2>
+<p>There is a tricky solution for this: deleting the copy constructor
+with <code>const volatile</code> type. With this, it prevents another
+copy constructor from being implicitly generated<a href="#fn1"
+class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> and
+the template copy constuctor can be preferred over the deleted copy
+constructor for <strong>non-volatile</strong> types:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Obj</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Obj</span>() &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// the predefined copy constructor is deleted</span></span><br><span class="line">    <span class="comment">// with conversion to volatile to enable better match</span></span><br><span class="line">    <span class="built_in">Obj</span>(<span class="keyword">const</span> <span class="keyword">volatile</span> Obj&amp;) = <span class="keyword">delete</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line">    <span class="built_in">Obj</span> (<span class="keyword">const</span> T&amp;) &#123; std::cout &lt;&lt; <span class="string">&quot;template copy ctor&quot;</span> &lt;&lt; std::endl; &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>The overload resolution candidates now are
+<code>Obj(const volatile Obj&amp;)</code> and
+<code>Obj&lt;Obj&amp;&gt;(const Obj&amp;)</code>, and the latter is a
+better match:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">Obj a;</span><br><span class="line">Obj b&#123;a&#125;;   <span class="comment">// call to the templified version: print &quot;template copy ctor&quot;</span></span><br></pre></td></tr></table></figure>
+<hr />
+<p>Similarly, we can templify move constructor or other special member
+functions by deleting the predefined special member functions for
+<code>const volatile</code> type.</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Obj</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Obj</span>() &#123;&#125;</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">Obj</span> (<span class="keyword">const</span> <span class="keyword">volatile</span> Obj&amp;&amp;) = <span class="keyword">delete</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line">    <span class="built_in">Obj</span> (T&amp;&amp;) &#123; std::cout &lt;&lt; <span class="string">&quot;template move ctor&quot;</span> &lt;&lt; std::endl; &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    Obj a;</span><br><span class="line">    Obj c&#123;std::<span class="built_in">move</span>(a)&#125;;  <span class="comment">// print &quot;template move ctor&quot;</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>Note that this still leads to error if we try to operate
+<code>Obj</code> with volatile type. Fortunately, it is rarely used.</p>
+</blockquote>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>A non-template constructor for class X is a copy
+constructor if its first parameter is of type <code>X&amp;</code>,
+<code>const X&amp;</code>, <code>volatile X&amp;</code> or
+<code>const volatile X&amp;</code><a href="#fnref1"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+]]></content>
+      <categories>
+        <category>Programming Language</category>
+        <category>C++</category>
+      </categories>
+      <tags>
+        <tag>C++</tag>
+        <tag>Optimisation</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>[C++] Implement std::decay from scratch</title>
+    <url>/2023/05/27/cpp-implement-decay/</url>
+    <content><![CDATA[<p>Since C++11, <code>std::decay</code> is introduced along with
+<code>&lt;type_traits&gt;</code>. It is used to <em>decay</em> a type,
+or to convert a type into its corresponding <strong>by-value</strong>
+type. It will remove any top-level cv-qualifiers(<code>const</code>,
+<code>volatile</code>) and reference qualifiers for the specified type.
+For example, <code>int&amp;</code> is turned into <code>int</code> and
+an array type becomes a pointer to its element types. Knowing its usage,
+we could try to implement our own version of
+<code>std::decay</code>.</p>
+<span id="more"></span>
+<p>For <code>std::decay&lt;T&gt;</code>, the transformation of type
+<code>T</code> contains following parts:</p>
+<ul>
+<li>Removing references</li>
+<li>Removing cv-qualifiers (<code>const</code> and
+<code>volatile</code>)</li>
+<li>For an array type, yielding a pointer to its element type</li>
+<li>For a function type, yiedling its function pointer type</li>
+</ul>
+<h2 id="removing-references">Removing References</h2>
+<p>Firstly, we implement <code>RemoveReferenceT</code> trait to remove
+references:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">RemoveReferenceT</span> &#123;</span></span><br><span class="line">    <span class="keyword">using</span> Type = T;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// remove lvalue reference</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">RemoveReferenceT</span>&lt;</span>T&amp;&gt; &#123;</span><br><span class="line">    <span class="keyword">using</span> Type = T;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// remove ravlue reference</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">RemoveReferenceT</span>&lt;</span>T&amp;&amp;&gt; &#123;</span><br><span class="line">    <span class="keyword">using</span> Type = T;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// alias for usage convenience</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">using</span> RemoveReference = <span class="keyword">typename</span> RemoveReferenceT&lt;T&gt;::Type;</span><br></pre></td></tr></table></figure>
+<p>Results:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">RemoveReference&lt;<span class="keyword">int</span>&gt;          <span class="comment">// int</span></span><br><span class="line">RemoveReference&lt;<span class="keyword">int</span>&amp;&gt;         <span class="comment">// int</span></span><br><span class="line">RemoveReference&lt;<span class="keyword">int</span>&amp;&amp;&gt;        <span class="comment">// int</span></span><br><span class="line">RemoveReference&lt;<span class="keyword">const</span> <span class="keyword">int</span>&gt;    <span class="comment">// const int</span></span><br><span class="line">RemoveReference&lt;<span class="keyword">const</span> <span class="keyword">int</span>&amp;&gt;   <span class="comment">// const int</span></span><br></pre></td></tr></table></figure>
+<p>The corresponding type trait in C++ STL is <a
+href="https://en.cppreference.com/w/cpp/types/remove_reference">std::remove_reference</a></p>
+<h2 id="removing-cv-qualifiers">Removing cv-qualifiers</h2>
+<p>Then, <code>RemoveConstT</code> and <code>RemoveVolatileT</code> are
+to remove <code>const</code> and <code>volatile</code> qualifiers,
+respectively:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">RemoveConstT</span> &#123;</span></span><br><span class="line">	<span class="keyword">using</span> Type = T;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// remove const</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">RemoveConstT</span>&lt;</span><span class="keyword">const</span> T&gt; &#123;</span><br><span class="line">	<span class="keyword">using</span> Type = T;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// alias for usage convenience</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">using</span> RemoveConst = <span class="keyword">typename</span> RemoveConstT&lt;T&gt;::Type;</span><br></pre></td></tr></table></figure>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">RemoveVolatileT</span> &#123;</span></span><br><span class="line">	<span class="keyword">using</span> Type = T;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// remove volatile</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">RemoveVolatileT</span>&lt;</span><span class="keyword">volatile</span> T&gt; &#123;</span><br><span class="line">	<span class="keyword">using</span> Type = T;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// alias for usage convenience</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">using</span> RemoveVolatile = <span class="keyword">typename</span> RemoveVolatileT&lt;T&gt;::Type;</span><br></pre></td></tr></table></figure>
+<p><code>RemoveConstT</code> and <code>RemoveVolatileT</code> can be
+composed into <code>RemoveCVT</code>:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="comment">// metafunction forwarding: inherit the Type member from RemoveConstT</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">RemoveCVT</span> :</span> RemoveConstT&lt;RemoveVolatile&lt;T&gt;&gt; &#123;&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// alias for usage convenience</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">using</span> RemoveCV = <span class="keyword">typename</span> RemoveCVT&lt;T&gt;::Type;</span><br></pre></td></tr></table></figure>
+<p>Results:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">RemoveCV&lt;<span class="keyword">int</span>&gt;                  <span class="comment">// int</span></span><br><span class="line">RemoveCV&lt;<span class="keyword">const</span> <span class="keyword">int</span>&gt;            <span class="comment">// int</span></span><br><span class="line">RemoveCV&lt;<span class="keyword">volatile</span> <span class="keyword">int</span>&gt;         <span class="comment">// int</span></span><br><span class="line">RemoveCV&lt;<span class="keyword">const</span> <span class="keyword">volatile</span> <span class="keyword">int</span>&gt;   <span class="comment">// int</span></span><br><span class="line"></span><br><span class="line">RemoveCV&lt;<span class="keyword">const</span> <span class="keyword">volatile</span> <span class="keyword">int</span>*&gt;  <span class="comment">// const volatile int*</span></span><br><span class="line">RemoveCV&lt;<span class="keyword">int</span>* <span class="keyword">const</span> <span class="keyword">volatile</span>&gt;  <span class="comment">// int*</span></span><br></pre></td></tr></table></figure>
+<p>The corresponding type traits in C++ STL: <a
+href="https://en.cppreference.com/w/cpp/types/remove_cv">std::remove_cv,
+std::remove_const, std::remove_volatile</a></p>
+<blockquote>
+<p>Note that <code>const volatile int*</code> is not changed because the
+pointer itself is neither const or volatile. (See <a
+href="https://learn.microsoft.com/en-us/cpp/cpp/const-and-volatile-pointers?view=msvc-170">const
+and volatile pointers</a>)</p>
+</blockquote>
+<p>With <code>RemoveReference</code> and <code>RemoveCVT</code> traits
+above, we can get a decay trait for nonarray and nonfunction cases:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="comment">// remove reference firstly and then cv-qualifier</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">DecayT</span> :</span> RemoveCVT&lt;RemoveReference&lt;T&gt;&gt; &#123;&#125;;</span><br></pre></td></tr></table></figure>
+<p>We name our version <code>DecayT</code> in order not to confuse with
+original <code>std::decay</code>.</p>
+<h2 id="array-to-pointer-decay">Array-to-pointer Decay</h2>
+<p>Now we take array types into account. Below are partial
+specialisations to convert an array type into a pointer to its element
+type:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="comment">// unbounded array</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">DecayT</span>&lt;</span>T[]&gt; &#123;</span><br><span class="line">	<span class="keyword">using</span> Type = T*;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// bounded array</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, std::<span class="keyword">size_t</span> N&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">DecayT</span>&lt;</span>T[N]&gt; &#123;</span><br><span class="line">	<span class="keyword">using</span> Type = T*;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>Similarly, C++ STL provides <a
+href="https://en.cppreference.com/w/cpp/types/is_array">std::is_array</a>
+to check whether <code>T</code> is an array type.</p>
+<h2 id="function-to-pointer-decay">Function-to-pointer Decay</h2>
+<p>We want to recognise a function regardless of its return type and
+parameter types, and then get its function pointer. Because there are
+different number of parameters, we need to employ variadic
+templates:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Ret, <span class="keyword">typename</span>...Args&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">DecayT</span>&lt;</span><span class="built_in">Ret</span>(Args...)&gt; &#123;</span><br><span class="line">	<span class="keyword">using</span> Type = <span class="built_in">Ret</span>(*)(Args...);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// specialisation for variadic function</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Ret, <span class="keyword">typename</span>...Args&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">DecayT</span>&lt;</span><span class="built_in">Ret</span>(Args..., ...)&gt; &#123;</span><br><span class="line">	<span class="keyword">using</span> Type = <span class="built_in">Ret</span>(*)(Args..., ...);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>C++ STL also provides <a
+href="https://en.cppreference.com/w/cpp/types/is_function">std::is_function</a>
+to check the function type.</p>
+<blockquote>
+<p>It is worth mentioning that many compilers nowadays use fundamental
+properties to check a function type for better performance instead<a
+href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a>: <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">!std::is_const&lt;<span class="keyword">const</span> T&gt;::value &amp;&amp; !std::is_reference&lt;T&gt;::value</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>Functions are not objects; thus, <code>const</code> cannot be
+applied</li>
+<li>When <code>const T</code> fails to be a const-qualified type,
+<code>T</code> is either a function type or a reference type</li>
+<li>We can rule out reference types to get only with function types for
+<code>T</code></li>
+</ul>
+</blockquote>
+<p>Now, with alias template for convenience, we could get our own
+version of decay trait, <code>Decay</code>:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">using</span> Decay = <span class="keyword">typename</span> DecayT&lt;T&gt;::Type;</span><br></pre></td></tr></table></figure>
+<p>Results:</p>
+<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">Decay&lt;<span class="keyword">int</span>&amp;&gt;         <span class="comment">// int</span></span><br><span class="line">Decay&lt;<span class="keyword">const</span> <span class="keyword">int</span>&gt;    <span class="comment">// int</span></span><br><span class="line">Decay&lt;<span class="keyword">int</span> <span class="keyword">const</span>&amp;&gt;   <span class="comment">// int</span></span><br><span class="line">Decay&lt;<span class="keyword">int</span>[]&gt;        <span class="comment">// int*</span></span><br><span class="line">Decay&lt;<span class="keyword">int</span>[<span class="number">3</span>]&gt;       <span class="comment">// int*</span></span><br><span class="line">Decay&lt;<span class="keyword">int</span>[<span class="number">3</span>][<span class="number">2</span>]&gt;    <span class="comment">// int*</span></span><br><span class="line">Decay&lt;<span class="built_in"><span class="keyword">int</span></span>(<span class="keyword">int</span>)&gt;     <span class="comment">// int(*)(int)</span></span><br></pre></td></tr></table></figure>
+<h2 id="in-comparison-with-stddecay">In Comparison with
+<code>std::decay</code></h2>
+<p>In fact, <a
+href="https://timsong-cpp.github.io/cppwp/n4659/meta.trans.other#tab:type-traits.other">C++
+standard defines std::decay</a> as:</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Template</th>
+<th>Comments</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>template &lt;class T&gt; struct decay;</code></td>
+<td>Let U be <code>remove_­reference_­t&lt;T&gt;</code>. If
+<code>is_­array_­v&lt;U&gt;</code> is true, the member typedef type shall
+equal <code>remove_­extent_­t&lt;U&gt;*</code>. If
+<code>is_­function_­v&lt;U&gt;</code> is true, the member typedef type
+shall equal <code>add_­pointer_­t&lt;U&gt;</code>. Otherwise the member
+typedef type equals <code>remove_­cv_­t&lt;U&gt;</code>. [ Note: This
+behavior is similar to the lvalue-to-rvalue, array-to-pointer, and
+function-to-pointer conversions applied when an lvalue expression is
+used as an rvalue, but also strips cv-qualifiers from class types in
+order to more closely model by-value argument passing.  — end
+note ]</td>
+</tr>
+</tbody>
+</table>
+<p>Most compilers directly follow the comments to implement the decay
+trait. Our own version in this article is basically a step-by-step
+implementation mentioned in the note for pedagogical purposes.</p>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p><a
+href="https://stackoverflow.com/questions/59654482/how-is-stdis-function-implemented">How
+is std::is_function implemented?</a><a href="#fnref1"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+]]></content>
+      <categories>
+        <category>Programming Language</category>
+        <category>C++</category>
+      </categories>
+      <tags>
+        <tag>C++</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Implement SVM with SMO from scratch in Python</title>
     <url>/2022/07/30/Implement-SVM-with-SMO-from-scratch/</url>
     <content><![CDATA[<p><strong>Support vector machine</strong> (SVM) plays an important role
@@ -1218,220 +1435,38 @@ role="doc-backlink">↩︎</a></p></li>
       </tags>
   </entry>
   <entry>
-    <title>[C++] A Note about Template Copy/Move Constructor</title>
-    <url>/2023/05/20/cpp-a-note-about-template-copy-move-constructor/</url>
-    <content><![CDATA[<p>In C++, even though a function generated from a function template has
-the same name and the same type as the ordinary function, they are
-<strong>never equivalent</strong>. Besides, the <a
-href="https://en.cppreference.com/w/cpp/language/overload_resolution#Best_viable_function">non-template
-function is more preferred</a>:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">foo</span><span class="params">(T)</span> </span>&#123; std::cout &lt;&lt; <span class="string">&quot;template foo()&quot;</span> &lt;&lt; std::endl; &#125;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">foo</span><span class="params">(<span class="keyword">int</span>)</span> </span>&#123; std::cout &lt;&lt; <span class="string">&quot;ordinary foo()&quot;</span> &lt;&lt; std::endl; &#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">foo</span>(<span class="number">5</span>);     <span class="comment">// print &quot;oridinary foo()&quot;</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>On top of that, it is not easy to templify a copy/move constructor
-because the compiler may implicitly define a copy/move constructor.</p>
+    <title>[Ubuntu] 開機畫面卡在 /dev/sda*: clean, */* files </title>
+    <url>/2023/08/12/ubuntu-bootup-problem-nvidia-dev-sda-clean/</url>
+    <content><![CDATA[<p>有時候開機會莫名出現以下相關的訊息後就卡住了</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">/dev/sda*: clean, *******/******* files</span><br></pre></td></tr></table></figure>
+<p>排查了一下發現問題常常是出在 Nvidia 的 driver 沒有正確被啟動</p>
 <span id="more"></span>
-<h2 id="example">Example</h2>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Obj</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Obj</span>() &#123;&#125;</span><br><span class="line">    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line">    <span class="built_in">Obj</span> (<span class="keyword">const</span> T&amp;) &#123; std::cout &lt;&lt; <span class="string">&quot;template copy ctor&quot;</span> &lt;&lt; std::endl; &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>It still uses the predefined copy constructor:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">Obj a;</span><br><span class="line">Obj b&#123;a&#125;;   <span class="comment">// use the predefined copy constructor rather than the template one</span></span><br></pre></td></tr></table></figure>
-<p><strong>The reason is that a member function template is never a <a
-href="https://en.cppreference.com/w/cpp/language/member_functions">special
-member function</a> and can be ignored when the latter is
-needed</strong>. Taking the above for an instance, the implicitly
-generated copy constructor is chosen.</p>
-<h2 id="deleting-predefined-copy-constructor">Deleting Predefined Copy
-Constructor</h2>
-<p>One may want to delete the the predefined copy constructor:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Obj</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Obj</span>() &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">Obj</span>(<span class="keyword">const</span> Obj&amp;) = <span class="keyword">delete</span>;   <span class="comment">// copying Obj results in an error</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line">    <span class="built_in">Obj</span> (<span class="keyword">const</span> T&amp;) &#123; std::cout &lt;&lt; <span class="string">&quot;template copy ctor&quot;</span> &lt;&lt; std::endl; &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>However, this would result in an error when trying to copy
-<code>Obj</code>:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">Obj a;</span><br><span class="line">Obj b&#123;a&#125;;   <span class="comment">// error: call to deleted constructor of &#x27;Obj&#x27;</span></span><br></pre></td></tr></table></figure>
-<h2 id="const-volatile-trick"><code>const volatile</code> Trick</h2>
-<p>There is a tricky solution for this: deleting the copy constructor
-with <code>const volatile</code> type. With this, it prevents another
-copy constructor from being implicitly generated<a href="#fn1"
-class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> and
-the template copy constuctor can be preferred over the deleted copy
-constructor for <strong>non-volatile</strong> types:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Obj</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Obj</span>() &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// the predefined copy constructor is deleted</span></span><br><span class="line">    <span class="comment">// with conversion to volatile to enable better match</span></span><br><span class="line">    <span class="built_in">Obj</span>(<span class="keyword">const</span> <span class="keyword">volatile</span> Obj&amp;) = <span class="keyword">delete</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line">    <span class="built_in">Obj</span> (<span class="keyword">const</span> T&amp;) &#123; std::cout &lt;&lt; <span class="string">&quot;template copy ctor&quot;</span> &lt;&lt; std::endl; &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>The overload resolution candidates now are
-<code>Obj(const volatile Obj&amp;)</code> and
-<code>Obj&lt;Obj&amp;&gt;(const Obj&amp;)</code>, and the latter is a
-better match:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">Obj a;</span><br><span class="line">Obj b&#123;a&#125;;   <span class="comment">// call to the templified version: print &quot;template copy ctor&quot;</span></span><br></pre></td></tr></table></figure>
-<hr />
-<p>Similarly, we can templify move constructor or other special member
-functions by deleting the predefined special member functions for
-<code>const volatile</code> type.</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Obj</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Obj</span>() &#123;&#125;</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">Obj</span> (<span class="keyword">const</span> <span class="keyword">volatile</span> Obj&amp;&amp;) = <span class="keyword">delete</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line">    <span class="built_in">Obj</span> (T&amp;&amp;) &#123; std::cout &lt;&lt; <span class="string">&quot;template move ctor&quot;</span> &lt;&lt; std::endl; &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    Obj a;</span><br><span class="line">    Obj c&#123;std::<span class="built_in">move</span>(a)&#125;;  <span class="comment">// print &quot;template move ctor&quot;</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>Note that this still leads to error if we try to operate
-<code>Obj</code> with volatile type. Fortunately, it is rarely used.</p>
-</blockquote>
-<section id="footnotes" class="footnotes footnotes-end-of-document"
-role="doc-endnotes">
-<hr />
-<ol>
-<li id="fn1"><p>A non-template constructor for class X is a copy
-constructor if its first parameter is of type <code>X&amp;</code>,
-<code>const X&amp;</code>, <code>volatile X&amp;</code> or
-<code>const volatile X&amp;</code><a href="#fnref1"
-class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-</ol>
-</section>
+<h2 id="enable-bootup-verbose-mode-from-grub">Enable Bootup Verbose Mode
+from GRUB</h2>
+<p>首先在開機時要能夠顯示更加詳細的訊息來除錯</p>
+<p>修改 <code>/etc/default/grub</code> 這支file</p>
+<p>預設模式是 <code>quiet splash</code></p>
+<p>一般來說改為空字串就足夠定位出錯誤發生的地方</p>
+<p>使用 <code>--verbose nosplash debug</code> 則可以顯示更多開機細節</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">...</span><br><span class="line"></span><br><span class="line"><span class="comment">#GRUB_CMDLINE_LINUX_DEFAULT=&quot;quiet splash&quot;</span></span><br><span class="line">GRUB_CMDLINE_LINUX_DEFAULT=<span class="string">&quot;&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># more log from upstart</span></span><br><span class="line"><span class="comment">#GRUB_CMDLINE_LINUX_DEFAULT=&quot;--verbose nosplash debug&quot;</span></span><br></pre></td></tr></table></figure>
+<p>更改完後要記得更新 GRUB 的設定 並重開機</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo update-grub</span><br><span class="line">sudo reboot</span><br></pre></td></tr></table></figure>
+<p>從 Bootup Log 裡可以確認出 Nvidia service
+有問題導致無法順利正常開機</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">...</span><br><span class="line"></span><br><span class="line">[FAILED] Failed to start NVIDIA Persistence.</span><br><span class="line"></span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<h2 id="重新安裝-nvidia-driver">重新安裝 Nvidia driver</h2>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo apt purge nvidia*    <span class="comment"># remove nvidia* packages</span></span><br><span class="line">sudo ubuntu-drivers autoinstall</span><br><span class="line">sudo reboot</span><br></pre></td></tr></table></figure>
+<p><code>autoinstall</code> 會自動幫你找到適合的下載版本</p>
+<p>如果找不到可以再自行去 <a
+href="https://www.nvidia.com/Download/index.aspx?lang=en-us">Nvidia
+Download Drivers 官網</a> 來安裝需要的版本</p>
 ]]></content>
       <categories>
-        <category>Programming Language</category>
-        <category>C++</category>
+        <category>Environment SetUp</category>
       </categories>
       <tags>
-        <tag>C++</tag>
-        <tag>Optimisation</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>[C++] Implement std::decay from scratch</title>
-    <url>/2023/05/27/cpp-implement-decay/</url>
-    <content><![CDATA[<p>Since C++11, <code>std::decay</code> is introduced along with
-<code>&lt;type_traits&gt;</code>. It is used to <em>decay</em> a type,
-or to convert a type into its corresponding <strong>by-value</strong>
-type. It will remove any top-level cv-qualifiers(<code>const</code>,
-<code>volatile</code>) and reference qualifiers for the specified type.
-For example, <code>int&amp;</code> is turned into <code>int</code> and
-an array type becomes a pointer to its element types. Knowing its usage,
-we could try to implement our own version of
-<code>std::decay</code>.</p>
-<span id="more"></span>
-<p>For <code>std::decay&lt;T&gt;</code>, the transformation of type
-<code>T</code> contains following parts:</p>
-<ul>
-<li>Removing references</li>
-<li>Removing cv-qualifiers (<code>const</code> and
-<code>volatile</code>)</li>
-<li>For an array type, yielding a pointer to its element type</li>
-<li>For a function type, yiedling its function pointer type</li>
-</ul>
-<h2 id="removing-references">Removing References</h2>
-<p>Firstly, we implement <code>RemoveReferenceT</code> trait to remove
-references:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">RemoveReferenceT</span> &#123;</span></span><br><span class="line">    <span class="keyword">using</span> Type = T;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// remove lvalue reference</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">RemoveReferenceT</span>&lt;</span>T&amp;&gt; &#123;</span><br><span class="line">    <span class="keyword">using</span> Type = T;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// remove ravlue reference</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">RemoveReferenceT</span>&lt;</span>T&amp;&amp;&gt; &#123;</span><br><span class="line">    <span class="keyword">using</span> Type = T;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// alias for usage convenience</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">using</span> RemoveReference = <span class="keyword">typename</span> RemoveReferenceT&lt;T&gt;::Type;</span><br></pre></td></tr></table></figure>
-<p>Results:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">RemoveReference&lt;<span class="keyword">int</span>&gt;          <span class="comment">// int</span></span><br><span class="line">RemoveReference&lt;<span class="keyword">int</span>&amp;&gt;         <span class="comment">// int</span></span><br><span class="line">RemoveReference&lt;<span class="keyword">int</span>&amp;&amp;&gt;        <span class="comment">// int</span></span><br><span class="line">RemoveReference&lt;<span class="keyword">const</span> <span class="keyword">int</span>&gt;    <span class="comment">// const int</span></span><br><span class="line">RemoveReference&lt;<span class="keyword">const</span> <span class="keyword">int</span>&amp;&gt;   <span class="comment">// const int</span></span><br></pre></td></tr></table></figure>
-<p>The corresponding type trait in C++ STL is <a
-href="https://en.cppreference.com/w/cpp/types/remove_reference">std::remove_reference</a></p>
-<h2 id="removing-cv-qualifiers">Removing cv-qualifiers</h2>
-<p>Then, <code>RemoveConstT</code> and <code>RemoveVolatileT</code> are
-to remove <code>const</code> and <code>volatile</code> qualifiers,
-respectively:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">RemoveConstT</span> &#123;</span></span><br><span class="line">	<span class="keyword">using</span> Type = T;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// remove const</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">RemoveConstT</span>&lt;</span><span class="keyword">const</span> T&gt; &#123;</span><br><span class="line">	<span class="keyword">using</span> Type = T;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// alias for usage convenience</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">using</span> RemoveConst = <span class="keyword">typename</span> RemoveConstT&lt;T&gt;::Type;</span><br></pre></td></tr></table></figure>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">RemoveVolatileT</span> &#123;</span></span><br><span class="line">	<span class="keyword">using</span> Type = T;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// remove volatile</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">RemoveVolatileT</span>&lt;</span><span class="keyword">volatile</span> T&gt; &#123;</span><br><span class="line">	<span class="keyword">using</span> Type = T;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// alias for usage convenience</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">using</span> RemoveVolatile = <span class="keyword">typename</span> RemoveVolatileT&lt;T&gt;::Type;</span><br></pre></td></tr></table></figure>
-<p><code>RemoveConstT</code> and <code>RemoveVolatileT</code> can be
-composed into <code>RemoveCVT</code>:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="comment">// metafunction forwarding: inherit the Type member from RemoveConstT</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">RemoveCVT</span> :</span> RemoveConstT&lt;RemoveVolatile&lt;T&gt;&gt; &#123;&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// alias for usage convenience</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">using</span> RemoveCV = <span class="keyword">typename</span> RemoveCVT&lt;T&gt;::Type;</span><br></pre></td></tr></table></figure>
-<p>Results:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">RemoveCV&lt;<span class="keyword">int</span>&gt;                  <span class="comment">// int</span></span><br><span class="line">RemoveCV&lt;<span class="keyword">const</span> <span class="keyword">int</span>&gt;            <span class="comment">// int</span></span><br><span class="line">RemoveCV&lt;<span class="keyword">volatile</span> <span class="keyword">int</span>&gt;         <span class="comment">// int</span></span><br><span class="line">RemoveCV&lt;<span class="keyword">const</span> <span class="keyword">volatile</span> <span class="keyword">int</span>&gt;   <span class="comment">// int</span></span><br><span class="line"></span><br><span class="line">RemoveCV&lt;<span class="keyword">const</span> <span class="keyword">volatile</span> <span class="keyword">int</span>*&gt;  <span class="comment">// const volatile int*</span></span><br><span class="line">RemoveCV&lt;<span class="keyword">int</span>* <span class="keyword">const</span> <span class="keyword">volatile</span>&gt;  <span class="comment">// int*</span></span><br></pre></td></tr></table></figure>
-<p>The corresponding type traits in C++ STL: <a
-href="https://en.cppreference.com/w/cpp/types/remove_cv">std::remove_cv,
-std::remove_const, std::remove_volatile</a></p>
-<blockquote>
-<p>Note that <code>const volatile int*</code> is not changed because the
-pointer itself is neither const or volatile. (See <a
-href="https://learn.microsoft.com/en-us/cpp/cpp/const-and-volatile-pointers?view=msvc-170">const
-and volatile pointers</a>)</p>
-</blockquote>
-<p>With <code>RemoveReference</code> and <code>RemoveCVT</code> traits
-above, we can get a decay trait for nonarray and nonfunction cases:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="comment">// remove reference firstly and then cv-qualifier</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">DecayT</span> :</span> RemoveCVT&lt;RemoveReference&lt;T&gt;&gt; &#123;&#125;;</span><br></pre></td></tr></table></figure>
-<p>We name our version <code>DecayT</code> in order not to confuse with
-original <code>std::decay</code>.</p>
-<h2 id="array-to-pointer-decay">Array-to-pointer Decay</h2>
-<p>Now we take array types into account. Below are partial
-specialisations to convert an array type into a pointer to its element
-type:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="comment">// unbounded array</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">DecayT</span>&lt;</span>T[]&gt; &#123;</span><br><span class="line">	<span class="keyword">using</span> Type = T*;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// bounded array</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, std::<span class="keyword">size_t</span> N&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">DecayT</span>&lt;</span>T[N]&gt; &#123;</span><br><span class="line">	<span class="keyword">using</span> Type = T*;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>Similarly, C++ STL provides <a
-href="https://en.cppreference.com/w/cpp/types/is_array">std::is_array</a>
-to check whether <code>T</code> is an array type.</p>
-<h2 id="function-to-pointer-decay">Function-to-pointer Decay</h2>
-<p>We want to recognise a function regardless of its return type and
-parameter types, and then get its function pointer. Because there are
-different number of parameters, we need to employ variadic
-templates:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Ret, <span class="keyword">typename</span>...Args&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">DecayT</span>&lt;</span><span class="built_in">Ret</span>(Args...)&gt; &#123;</span><br><span class="line">	<span class="keyword">using</span> Type = <span class="built_in">Ret</span>(*)(Args...);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// specialisation for variadic function</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Ret, <span class="keyword">typename</span>...Args&gt;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">DecayT</span>&lt;</span><span class="built_in">Ret</span>(Args..., ...)&gt; &#123;</span><br><span class="line">	<span class="keyword">using</span> Type = <span class="built_in">Ret</span>(*)(Args..., ...);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>C++ STL also provides <a
-href="https://en.cppreference.com/w/cpp/types/is_function">std::is_function</a>
-to check the function type.</p>
-<blockquote>
-<p>It is worth mentioning that many compilers nowadays use fundamental
-properties to check a function type for better performance instead<a
-href="#fn1" class="footnote-ref" id="fnref1"
-role="doc-noteref"><sup>1</sup></a>: <figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">!std::is_const&lt;<span class="keyword">const</span> T&gt;::value &amp;&amp; !std::is_reference&lt;T&gt;::value</span><br></pre></td></tr></table></figure></p>
-<ul>
-<li>Functions are not objects; thus, <code>const</code> cannot be
-applied</li>
-<li>When <code>const T</code> fails to be a const-qualified type,
-<code>T</code> is either a function type or a reference type</li>
-<li>We can rule out reference types to get only with function types for
-<code>T</code></li>
-</ul>
-</blockquote>
-<p>Now, with alias template for convenience, we could get our own
-version of decay trait, <code>Decay</code>:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">using</span> Decay = <span class="keyword">typename</span> DecayT&lt;T&gt;::Type;</span><br></pre></td></tr></table></figure>
-<p>Results:</p>
-<figure class="highlight c++"><table><tr><td class="code"><pre><span class="line">Decay&lt;<span class="keyword">int</span>&amp;&gt;         <span class="comment">// int</span></span><br><span class="line">Decay&lt;<span class="keyword">const</span> <span class="keyword">int</span>&gt;    <span class="comment">// int</span></span><br><span class="line">Decay&lt;<span class="keyword">int</span> <span class="keyword">const</span>&amp;&gt;   <span class="comment">// int</span></span><br><span class="line">Decay&lt;<span class="keyword">int</span>[]&gt;        <span class="comment">// int*</span></span><br><span class="line">Decay&lt;<span class="keyword">int</span>[<span class="number">3</span>]&gt;       <span class="comment">// int*</span></span><br><span class="line">Decay&lt;<span class="keyword">int</span>[<span class="number">3</span>][<span class="number">2</span>]&gt;    <span class="comment">// int*</span></span><br><span class="line">Decay&lt;<span class="built_in"><span class="keyword">int</span></span>(<span class="keyword">int</span>)&gt;     <span class="comment">// int(*)(int)</span></span><br></pre></td></tr></table></figure>
-<h2 id="in-comparison-with-stddecay">In Comparison with
-<code>std::decay</code></h2>
-<p>In fact, <a
-href="https://timsong-cpp.github.io/cppwp/n4659/meta.trans.other#tab:type-traits.other">C++
-standard defines std::decay</a> as:</p>
-<table>
-<colgroup>
-<col style="width: 50%" />
-<col style="width: 50%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th>Template</th>
-<th>Comments</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>template &lt;class T&gt; struct decay;</code></td>
-<td>Let U be <code>remove_­reference_­t&lt;T&gt;</code>. If
-<code>is_­array_­v&lt;U&gt;</code> is true, the member typedef type shall
-equal <code>remove_­extent_­t&lt;U&gt;*</code>. If
-<code>is_­function_­v&lt;U&gt;</code> is true, the member typedef type
-shall equal <code>add_­pointer_­t&lt;U&gt;</code>. Otherwise the member
-typedef type equals <code>remove_­cv_­t&lt;U&gt;</code>. [ Note: This
-behavior is similar to the lvalue-to-rvalue, array-to-pointer, and
-function-to-pointer conversions applied when an lvalue expression is
-used as an rvalue, but also strips cv-qualifiers from class types in
-order to more closely model by-value argument passing.  — end
-note ]</td>
-</tr>
-</tbody>
-</table>
-<p>Most compilers directly follow the comments to implement the decay
-trait. Our own version in this article is basically a step-by-step
-implementation mentioned in the note for pedagogical purposes.</p>
-<section id="footnotes" class="footnotes footnotes-end-of-document"
-role="doc-endnotes">
-<hr />
-<ol>
-<li id="fn1"><p><a
-href="https://stackoverflow.com/questions/59654482/how-is-stdis-function-implemented">How
-is std::is_function implemented?</a><a href="#fnref1"
-class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-</ol>
-</section>
-]]></content>
-      <categories>
-        <category>Programming Language</category>
-        <category>C++</category>
-      </categories>
-      <tags>
-        <tag>C++</tag>
+        <tag>Linux</tag>
+        <tag>Ubuntu</tag>
       </tags>
   </entry>
 </search>
